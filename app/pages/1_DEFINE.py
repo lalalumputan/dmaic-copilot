@@ -2,22 +2,10 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from unittest import result
-from attrs import inspect
 import streamlit as st
 import app.agents.define_agent as _da
 
-st.sidebar.caption(f"define_agent.py loaded from: {_da.__file__}")
 
-try:
-    src = inspect.getsource(_da.evaluate_define_gate)
-    st.sidebar.markdown("### evaluate_define_gate source (runtime)")
-    st.sidebar.code(src, language="python")
-except Exception as e:
-    st.sidebar.error(f"Cannot inspect evaluate_define_gate: {e}")
-
-from app.agents.define_agent import run_define_agent, finalize_define_agent
-from app.utils import data_processing as dp, memory, audit, reporting, llm_engine
 
 # ============================================
 #helper for md
