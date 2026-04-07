@@ -1,7 +1,7 @@
+from __future__ import annotations
 import json
 import re
 
-from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from app.utils import (
