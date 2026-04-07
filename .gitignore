@@ -22,3 +22,7 @@ Thumbs.db
 
 .venv/
 dmaic_memory.db
+
+dmaic_memory.db
+dmaic_memory/
+migrate_to_sqlite.py
