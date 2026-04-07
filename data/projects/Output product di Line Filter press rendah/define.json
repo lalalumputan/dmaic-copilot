@@ -1,0 +1,46 @@
+{
+    "CTQ": [
+        "CTQ_umum"
+    ],
+    "SIPOC": {
+        "Supplier": [
+            "Produksi",
+            "QA",
+            "Pembelian"
+        ],
+        "Input": [
+            "Bahan baku",
+            "Parameter proses",
+            "VOC Pelanggan"
+        ],
+        "Process": [
+            "Mixing",
+            "Filling",
+            "Packing"
+        ],
+        "Output": [
+            "Produk sesuai spesifikasi"
+        ],
+        "Customer": [
+            "End user",
+            "Distributor"
+        ]
+    },
+    "Charter": {
+        "Problem": "Variasi kualitas produk terlihat oleh pelanggan (berdasarkan VOC).",
+        "Goal": "Menurunkan variasi CTQ kunci hingga memenuhi target spesifikasi dalam 3 bulan.",
+        "Scope": "Line A (batch reguler); tidak termasuk produk trial.",
+        "Benefit": "Penurunan reject dan komplain pelanggan; stabilitas proses meningkat."
+    },
+    "keyword_hits": {
+        "kualitas_warna": 0,
+        "viskositas": 0,
+        "dimensi": 0,
+        "cacat_permukaan": 0,
+        "yield_reject": 0,
+        "delivery": 0
+    },
+    "timestamp": "2025-12-05T13:46:14.343942",
+    "agent": "define_charter",
+    "llm_insight": "1. **Problem Statement**: \"Filter press saat ini hanya mampu memproduksi 5 ton per jam, jauh di bawah kapasitas maksimal 10 ton per jam, yang berdampak pada kepuasan pelanggan dan efisiensi proses.\"\n\n2. **Evaluasi Goal**: Goal yang ada belum sepenuhnya SMART. Berikut perbaikannya:\n   - **Spesifik**: Menurunkan variasi CTQ kunci.\n   - **Terukur**: Mencapai kapasitas produksi 10 ton per jam.\n   - **Achievable**: Memastikan bahwa target realistis dalam konteks sumber daya dan waktu.\n   - **Relevan**: Mengurangi komplain pelanggan dan meningkatkan stabilitas proses.\n   - **Time-bound**: Dalam waktu 3 bulan.\n   \n   **Goal yang diperbaiki**: \"Mencapai kapasitas produksi filter press sebesar 10 ton per jam dalam waktu 3 bulan untuk mengurangi variasi kualitas produk dan meningkatkan kepuasan pelanggan.\"\n\n3. **Scope**:\n   - **In-scope**: Proses produksi pada Line A (batch reguler).\n   - **Out-of-scope**: Produk trial dan proses di luar Line A.\n   - **Risiko utama**: Potensi keterlambatan dalam implementasi perbaikan yang dapat mempengaruhi kepuasan pelanggan dan biaya produksi.\n\n4. **Pertanyaan klarifikasi untuk sponsor**:\n   - Apa saja parameter proses yang saat ini digunakan dan bagaimana pengaruhnya terhadap kapasitas produksi?\n   - Apakah ada batasan atau kendala tertentu yang perlu diperhatikan dalam upaya peningkatan kapasitas?\n   - Bagaimana feedback dari pelanggan terkait kualitas produk saat ini, dan apa yang paling mereka keluhkan?\n   - Apakah ada rencana atau strategi lain yang sedang berjalan yang dapat mempengaruhi proyek ini?\n   - Siapa saja stakeholder utama yang harus dilibatkan dalam proses perbaikan ini?"
+}

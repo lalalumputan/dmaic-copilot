@@ -1,0 +1,52 @@
+{
+  "episodes": [
+    {
+      "define_state": {
+        "goal_statement": "Reduce moisture content from 16% to 15% within the next 3 months, ensuring compliance with specification limits.",
+        "project_scope": {
+          "in_scope": [
+            "Moisture measurement processes",
+            "Quality control measures related to moisture content",
+            "Training for operators on moisture management with a defined curriculum and schedule"
+          ],
+          "out_of_scope": [
+            "Other quality metrics not related to moisture content",
+            "Supplier management outside of moisture-related issues"
+          ]
+        },
+        "ctq_list": [
+          {
+            "name": "Moisture Content",
+            "description": "The amount of moisture present in the product, aiming for a maximum of 15%.",
+            "metric": "Percentage",
+            "unit": "%"
+          },
+          {
+            "name": "Product Consistency",
+            "description": "The uniformity of moisture content across different batches.",
+            "metric": "Standard Deviation of Moisture Content",
+            "unit": "%"
+          },
+          {
+            "name": "Product Quality Rating",
+            "description": "Overall quality assessment based on moisture content and other factors, defined by specific criteria.",
+            "metric": "Quality Score",
+            "unit": "Score (1-10)"
+          }
+        ],
+        "early_measure_plan": {
+          "measures": [
+            "Monitor moisture content weekly with baseline measurements established",
+            "Track product quality ratings bi-weekly with defined criteria",
+            "Conduct regular training sessions for operators based on a detailed curriculum"
+          ],
+          "responsible": "Quality Assurance Team"
+        },
+        "risk_level": "Medium with a detailed risk assessment and mitigation plan to be developed."
+      },
+      "feedback": {
+        "user_feedback": "goal is to reduce max 14.5%, ctq is mositure content product max 14.5% optimizing production cost (drying cost) yet stil fulfilling specification"
+      }
+    }
+  ]
+}

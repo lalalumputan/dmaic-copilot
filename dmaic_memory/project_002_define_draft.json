@@ -1,0 +1,141 @@
+{
+  "project_id": "project_002",
+  "status": "draft",
+  "define_state": {
+    "schema_version": "v1.0",
+    "phase": "define",
+    "status": "draft",
+    "created_at": "2025-12-18T14:57:03.833501+00:00",
+    "updated_at": "2025-12-18T14:57:13.891534+00:00",
+    "project_id": "project_002",
+    "inputs": {
+      "project_name": "project_002",
+      "industry": "Manufacturing",
+      "process_area": "Production",
+      "pain_theme": "Quality",
+      "problem_text": "From January to April 2017, monthly average % non FPQ of filtration process by batch (per discharge) was 18 % \nNote: % non FPQ  filtration process  means number of  %  batch offspec acidity  in filter cake out put per month ",
+      "goal_text": "Reduce  % non FPQ  on Filtration  Process by batch to 8% (tbc) by end of December 2017. ",
+      "voc_list": [
+        "filter cake output maintain the acidity contain per product specification"
+      ],
+      "key_issue": "Acidity Filter Cake [%]"
+    },
+    "meta": {
+      "industry": "Manufacturing",
+      "pain_theme": "Quality",
+      "process_area": "Production"
+    },
+    "outputs": {
+      "problem_statement": "From January to April 2017, the monthly average percentage of non-FPQ (First Pass Quality) batches in the filtration process was 18%. This indicates a significant portion of batches did not meet the acidity specifications in the filter cake output.",
+      "goal_statement": "Reduce the percentage of non-FPQ batches in the Filtration Process to 8% by the end of December 2017.",
+      "business_case": "Improving the quality of the filter cake output by reducing off-spec batches will enhance product quality, reduce waste, and improve customer satisfaction, potentially leading to increased market share and profitability.",
+      "project_scope": {
+        "in_scope": [
+          "Filtration process within the production area",
+          "Operator training and shift patterns",
+          "Calibration and maintenance of filter equipment",
+          "Filtration process parameters and standard operating procedures",
+          "Quality of raw materials and chemical additives",
+          "Accuracy of acidity measurements and calibration of pH meters",
+          "Environmental factors such as ambient temperature and humidity levels"
+        ],
+        "out_of_scope": [
+          "Upstream processes such as raw material sourcing",
+          "Downstream processes such as packaging and distribution"
+        ]
+      },
+      "ctq_list": [
+        {
+          "name": "Percentage of Off-Spec Batches",
+          "description": "The percentage of batches that do not meet the acidity specifications in the filter cake output.",
+          "metric": "Percentage of Non-FPQ Batches",
+          "unit": "%"
+        },
+        {
+          "name": "Acidity Level in Filter Cake",
+          "description": "The acidity level of the filter cake output must meet product specifications to ensure quality.",
+          "metric": "Acidity Level",
+          "unit": "pH"
+        }
+      ],
+      "y_variable": "Percentage of Non-FPQ Batches",
+      "x_categories": {
+        "Man": [
+          "Operator training",
+          "Shift patterns"
+        ],
+        "Machine": [
+          "Filter equipment calibration",
+          "Maintenance schedule"
+        ],
+        "Method": [
+          "Filtration process parameters",
+          "Standard operating procedures"
+        ],
+        "Material": [
+          "Raw material quality",
+          "Chemical additives"
+        ],
+        "Measurement": [
+          "Acidity measurement accuracy",
+          "Calibration of pH meters"
+        ],
+        "Environment": [
+          "Ambient temperature",
+          "Humidity levels"
+        ]
+      },
+      "sipoc": {
+        "Suppliers": [
+          "Raw material suppliers",
+          "Equipment manufacturers"
+        ],
+        "Inputs": [
+          "Raw materials",
+          "Filtration equipment",
+          "Chemical additives"
+        ],
+        "Process": [
+          "Filtration process",
+          "Quality control checks"
+        ],
+        "Outputs": [
+          "Filter cake output"
+        ],
+        "Customers": [
+          "Internal quality control",
+          "End customers"
+        ]
+      },
+      "early_measure_plan": {
+        "measures": [
+          "Monitor the percentage of non-FPQ batches monthly",
+          "Track acidity levels in filter cake outputs bi-weekly",
+          "Conduct regular calibration checks on pH meters"
+        ],
+        "responsible": "Production Quality Assurance Team"
+      },
+      "risk_level": "Medium",
+      "project_type": "Process Improvement"
+    },
+    "insight_md": "- The selected CTQ, \"Percentage of Off-Spec Batches,\" directly addresses the key issue of maintaining acidity levels in filter cake output, aligning with the primary pain theme of quality.\n- The scope is well-defined to focus on the filtration process, ensuring targeted improvements without overextending resources into unrelated areas.\n- Key risks include potential inaccuracies in acidity measurement and variability in raw material quality, which could affect the project's success.\n- Assumptions include consistent environmental conditions and operator adherence to standard operating procedures.\n- Past successful projects in manufacturing quality improvement suggest focusing on equipment calibration and operator training as critical factors.\n- Similar episodes highlight the importance of defining clear measurement systems and regularly reviewing process parameters to ensure consistent quality.\n- Next steps for Measure: \n  - Develop a detailed measurement plan to track the percentage of non-FPQ batches and acidity levels in filter cake outputs.\n  - Implement a system for regular calibration checks of pH meters and other measurement equipment.\n  - Conduct an initial baseline measurement to validate current process performance and identify any immediate discrepancies.\n",
+    "summary_md": null,
+    "perception_trace": {
+      "industry": "Manufacturing",
+      "pain_theme": "Quality",
+      "process_area": "Production"
+    },
+    "decision_trace": {
+      "primary_ctq": {
+        "name": "Percentage of Off-Spec Batches",
+        "description": "The percentage of batches that do not meet the acidity specifications in the filter cake output.",
+        "metric": "Percentage of Non-FPQ Batches",
+        "unit": "%"
+      },
+      "y_variable": "Percentage of Non-FPQ Batches",
+      "risk_level": "Medium",
+      "project_type": "Process Improvement"
+    }
+  },
+  "updated_at": null
+}

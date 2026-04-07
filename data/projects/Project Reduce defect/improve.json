@@ -1,0 +1,18 @@
+{
+    "mode": "Kaizen",
+    "problem": "karena tidak adanya WI di proses bagging untuk pengecekan",
+    "ideas": [
+        "dibuatkan WI pengecekan di bagging"
+    ],
+    "impact": "Defect",
+    "action_plan": [
+        {
+            "No": 1,
+            "Ide Perbaikan": "dibuatkan WI pengecekan di bagging",
+            "PIC": "",
+            "Target Waktu": "",
+            "Kategori": "Quick Win"
+        }
+    ],
+    "insight": "1. Masalah yang dihadapi adalah kurangnya Work Instruction (WI) dalam proses bagging, yang mengakibatkan ketidakpastian dalam pengecekan dan berpotensi meningkatkan tingkat defect.\n\n2. Kategori ide perbaikan:\n   - **Quick Win**: \n     - Membuat WI pengecekan di bagging.\n   - **Project**: \n     - Mengembangkan pelatihan untuk operator mengenai WI yang baru.\n     - Melakukan audit berkala untuk memastikan kepatuhan terhadap WI.\n\n3. Rekomendasi tambahan:\n   - Melibatkan operator dalam pengembangan WI untuk memastikan kepraktisan dan penerimaan.\n   - Mengimplementasikan sistem feedback untuk perbaikan berkelanjutan dari WI yang telah dibuat.\n   - Menggunakan checklist visual di area bagging untuk memudahkan pengecekan dan meningkatkan kesadaran operator.\n\n4. Metrik yang sebaiknya dipantau:\n   - **Defect Rate**: untuk mengukur jumlah produk cacat yang dihasilkan setelah penerapan WI.\n   - **First Pass Yield (FPY)**: untuk menilai efektivitas proses bagging dalam menghasilkan produk yang memenuhi standar tanpa perlu rework.\n   - **Cycle Time**: untuk memantau waktu yang dibutuhkan dalam proses bagging dan mengevaluasi efisiensi setelah implementasi perbaikan."
+}

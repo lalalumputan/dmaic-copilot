@@ -1,0 +1,158 @@
+{
+  "episodes": [
+    {
+      "define_state": {
+        "schema_version": "v1.0",
+        "phase": "define",
+        "status": "final",
+        "created_at": "2025-12-22T01:56:23.115398+00:00",
+        "updated_at": "2025-12-22T01:57:38.202218+00:00",
+        "project_id": "project_003",
+        "inputs": {
+          "project_name": "project_003_SAP reliability",
+          "industry": "Manufacturing",
+          "process_area": "Supply Chain",
+          "pain_theme": "Delivery",
+          "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+          "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% starting November 2019.",
+          "voc_list": [],
+          "key_issue": ""
+        },
+        "meta": {
+          "industry": "Manufacturing",
+          "pain_theme": "Delivery",
+          "process_area": "Supply Chain"
+        },
+        "outputs": {
+          "problem_statement": "From August 2018 to March 2019, there were discrepancies in 52% of cases between physical and SAP data for incoming Granule 238 (BGZ). This issue hampers the TECO production process and causes inefficiencies in the planning process due to the need for daily physical stock checks.",
+          "goal_statement": "Reduce the percentage of data discrepancies for incoming Granule 238 (BGZ) between physical and SAP records to 10% by November 2019.",
+          "business_case": "Improving data accuracy between physical and SAP records will enhance the efficiency of the TECO production process, reduce waste in planning, and minimize the need for daily physical stock checks, leading to better resource allocation and cost savings.",
+          "project_scope": {
+            "in_scope": [
+              "Improving data accuracy between physical and SAP records",
+              "Enhancing TECO process efficiency",
+              "Reducing waste in the planning process"
+            ],
+            "out_of_scope": [
+              "Supplier management outside of intercompany supplier coordination",
+              "Non-SAP related data management issues"
+            ],
+            "focus_areas": [
+              "Good receipt by admin warehouse",
+              "TECO process",
+              "Good issue process",
+              "Create DN from intercompany supplier"
+            ],
+            "stakeholders": [
+              "Warehouse admin",
+              "Intercompany supplier",
+              "Production planning team"
+            ]
+          },
+          "ctq_list": [
+            {
+              "name": "Data Accuracy",
+              "description": "Percentage of cases where incoming Granule 238 (BGZ) data matches between physical and SAP records.",
+              "metric": "Percentage of matching cases",
+              "unit": "%"
+            },
+            {
+              "name": "TECO Process Efficiency",
+              "description": "Time taken to complete the TECO production process without delays caused by data discrepancies.",
+              "metric": "Time to complete TECO process",
+              "unit": "hours"
+            },
+            {
+              "name": "Planning Process Waste",
+              "description": "Frequency of additional checks required for actual physical stock due to data discrepancies.",
+              "metric": "Number of additional checks",
+              "unit": "checks/day"
+            }
+          ],
+          "y_variable": "Data Accuracy",
+          "x_categories": {
+            "Man": [
+              "Training of warehouse admin",
+              "Intercompany supplier coordination"
+            ],
+            "Machine": [
+              "SAP system configuration",
+              "Warehouse scanning equipment"
+            ],
+            "Method": [
+              "Good receipt process",
+              "TECO process",
+              "Good issue process",
+              "Create DN process"
+            ],
+            "Material": [
+              "Granule 238 (BGZ) handling"
+            ],
+            "Measurement": [
+              "Accuracy of data entry",
+              "Frequency of stock checks"
+            ],
+            "Environment": [
+              "Warehouse conditions",
+              "Intercompany supplier logistics"
+            ]
+          },
+          "sipoc": {
+            "Suppliers": [
+              "Intercompany supplier"
+            ],
+            "Inputs": [
+              "Granule 238 (BGZ)",
+              "SAP data entry",
+              "Warehouse scanning equipment"
+            ],
+            "Process": [
+              "Good receipt by admin warehouse",
+              "TECO process",
+              "Good issue process",
+              "Create DN from intercompany supplier"
+            ],
+            "Outputs": [
+              "Accurate SAP records",
+              "Efficient TECO process",
+              "Reduced planning process waste"
+            ],
+            "Customers": [
+              "Production planning team",
+              "Warehouse operations"
+            ]
+          },
+          "early_measure_plan": {
+            "measures": [
+              "Monitor data accuracy weekly",
+              "Track TECO process efficiency bi-weekly",
+              "Record frequency of additional checks daily"
+            ],
+            "responsible": "Warehouse Management Team"
+          },
+          "risk_level": "Medium",
+          "project_type": "Process Improvement"
+        },
+        "insight_md": "- The primary CTQ, \"Data Accuracy,\" is crucial as discrepancies in SAP data directly impact the TECO production process and planning efficiency, leading to significant operational delays.\n- A 52% discrepancy rate in data accuracy highlights a critical need for improvement to achieve the goal of reducing discrepancies to 10% by November 2019.\n- Key risks include potential resistance to process changes from stakeholders and technological limitations in the current SAP system configuration.\n- Assumptions include the availability of accurate historical data for baseline measurement and the capability of existing systems to support process improvements.\n- Previous audits in the manufacturing supply chain have shown that improving data accuracy can significantly enhance on-time delivery rates and reduce operational waste.\n- Learning from past process improvement projects indicates that focusing on training and system configuration can lead to substantial improvements in data accuracy.\n- Next steps for Measure: Conduct a detailed data collection plan to establish a baseline for current data accuracy levels.\n- Implement a pilot study to test potential improvements in the good receipt and data entry processes.\n- Engage with stakeholders to ensure alignment and gather insights on potential barriers to accurate data entry and process efficiency.\n",
+        "summary_md": null,
+        "perception_trace": {
+          "industry": "Manufacturing",
+          "pain_theme": "Delivery",
+          "process_area": "Supply Chain"
+        },
+        "decision_trace": {
+          "primary_ctq": {
+            "name": "Data Accuracy",
+            "description": "Percentage of cases where incoming Granule 238 (BGZ) data matches between physical and SAP records.",
+            "metric": "Percentage of matching cases",
+            "unit": "%"
+          },
+          "y_variable": "Data Accuracy",
+          "risk_level": "Medium",
+          "project_type": "Process Improvement"
+        }
+      },
+      "feedback": {}
+    }
+  ]
+}

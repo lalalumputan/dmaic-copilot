@@ -1,0 +1,48 @@
+{
+    "pareto": [
+        {
+            "defect_type": "Scratch",
+            "qty": 60,
+            "cum_%": 54.54545454545454
+        },
+        {
+            "defect_type": "Dent",
+            "qty": 25,
+            "cum_%": 77.27272727272727
+        },
+        {
+            "defect_type": "Bubble",
+            "qty": 15,
+            "cum_%": 90.9090909090909
+        },
+        {
+            "defect_type": "Color Deviation",
+            "qty": 10,
+            "cum_%": 100.0
+        }
+    ],
+    "rca": [
+        {
+            "Cause": "Penyebab terkait 'Scratch'",
+            "Contribution_%": 54.55,
+            "Confidence": "High"
+        },
+        {
+            "Cause": "Penyebab terkait 'Dent'",
+            "Contribution_%": 22.73,
+            "Confidence": "Medium"
+        },
+        {
+            "Cause": "Penyebab terkait 'Bubble'",
+            "Contribution_%": 13.64,
+            "Confidence": "Low"
+        },
+        {
+            "Cause": "Penyebab terkait 'Color Deviation'",
+            "Contribution_%": 9.09,
+            "Confidence": "Low"
+        }
+    ],
+    "timestamp": "2025-12-04T03:08:53.992704",
+    "agent": "analyze_rootcause"
+}
