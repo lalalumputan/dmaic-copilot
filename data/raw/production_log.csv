@@ -1,0 +1,6 @@
+machine,shift,qty,defect_type
+M01,A,500,OK
+M01,B,480,Dent
+M02,A,510,OK
+M02,C,490,Scratch
+M03,A,505,OK

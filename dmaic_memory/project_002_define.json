@@ -1,0 +1,429 @@
+{
+  "episodes": [
+    {
+      "define_state": {
+        "project_name": "Menaikkan throughput",
+        "problem_statement": "Throughput proses filter press saat ini 5 ton/jam sedangkan kapasitas terpasang adalah 8 ton per jam. Penyebab potensial termasuk malfungsi peralatan dan ketidakefisienan operator.",
+        "goal_statement": "Meningkatkan throughput menjadi mendekati kapasitas terpasang 8 ton/jam dalam waktu 6 bulan.",
+        "business_case": "Meningkatkan throughput akan mengurangi biaya per ton dan meningkatkan profitabilitas perusahaan, dengan estimasi penghematan biaya sebesar 15% per ton.",
+        "ctq_list": [
+          {
+            "name": "Throughput Rate",
+            "description": "Jumlah material yang diproses oleh filter press per jam.",
+            "metric": "Tons per hour",
+            "unit": "ton/jam"
+          },
+          {
+            "name": "Cost per Ton",
+            "description": "Total biaya yang dikeluarkan untuk memproses satu ton material melalui filter press.",
+            "metric": "Cost per ton",
+            "unit": "currency/ton"
+          },
+          {
+            "name": "Operational Efficiency",
+            "description": "Rasio antara throughput aktual dengan kapasitas maksimum filter press.",
+            "metric": "Efficiency Ratio",
+            "unit": "%"
+          },
+          {
+            "name": "Product Quality",
+            "description": "Kualitas produk akhir yang dihasilkan dari proses filter press.",
+            "metric": "Quality Score",
+            "unit": "score"
+          }
+        ],
+        "x_categories": {
+          "Man": [
+            "Pelatihan operator pada operasi filter press",
+            "Tingkat staf selama waktu produksi puncak",
+            "Efektivitas pelatihan operator"
+          ],
+          "Machine": [
+            "Kondisi dan pemeliharaan peralatan filter press",
+            "Kalibrasi pengaturan tekanan dan aliran"
+          ],
+          "Method": [
+            "Prosedur operasi standar untuk operasi filter press",
+            "Langkah-langkah pengendalian proses untuk memastikan kinerja optimal"
+          ],
+          "Material": [
+            "Kualitas material input yang diproses",
+            "Konsistensi karakteristik material yang mempengaruhi throughput"
+          ],
+          "Measurement": [
+            "Monitoring throughput rates secara real-time",
+            "Pengumpulan data tentang efisiensi operasional"
+          ],
+          "Environment": [
+            "Kontrol suhu dan kelembapan di area produksi",
+            "Jadwal pemeliharaan untuk peralatan"
+          ]
+        },
+        "early_measure_plan": {
+          "measures": [
+            "Monitor throughput rates setiap minggu dengan target 6 ton/jam dalam 3 bulan",
+            "Lacak biaya per ton setiap dua minggu dengan target pengurangan 10%",
+            "Lakukan inspeksi rutin pada peralatan filter press dan catat hasilnya"
+          ],
+          "responsible": "Tim Manajemen Operasional"
+        },
+        "risk_level": "Medium - Risiko terkait malfungsi peralatan dan ketidakpuasan operator dapat mempengaruhi hasil proyek."
+      },
+      "feedback": {
+        "user_feedback": "masuk kedalam scope adalah proses filter press untuk product yang low acid"
+      }
+    },
+    {
+      "define_state": {
+        "schema_version": "1.0",
+        "phase": "define",
+        "status": "final",
+        "created_at": "2025-12-17T08:39:41.777019+00:00",
+        "updated_at": "2025-12-17T08:53:35.992715+00:00",
+        "project_id": "Increase_Throughput_Line_1",
+        "inputs": {
+          "project_name": "Increase Throughput Line 1",
+          "industry": "Manufacturing",
+          "process_area": "Production",
+          "pain_theme": "Cost",
+          "problem_text": "throughput line 1 was cutrrently 5 ton/hour in jan - auguts 2025, while target is 7 ton/h with installed capacity 10 ton/h, this create cost pe rton product higher due to lower output",
+          "goal_text": "increase throughput from 5 ton/hour into 7 ton/hour",
+          "voc_list": [
+            "low cost per ton"
+          ],
+          "key_issue": ""
+        },
+        "meta": {
+          "industry": "Manufacturing",
+          "pain_theme": "Cost",
+          "process_area": "Production"
+        },
+        "outputs": {
+          "schema_version": "1.0",
+          "project_id": "Increase_Throughput_Line_1",
+          "project_name": "Increase Throughput Line 1",
+          "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+          "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+          "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+          "project_scope": {
+            "in_scope": [
+              "Throughput line operations",
+              "Training programs for operators",
+              "Monitoring and maintenance of production equipment"
+            ],
+            "out_of_scope": [
+              "Other production lines not related to throughput line 1",
+              "Non-production related issues",
+              "Supplier management outside of material quality"
+            ]
+          },
+          "ctq_list": [
+            {
+              "name": "Throughput Rate",
+              "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 ton/hour.",
+              "metric": "Tons per hour",
+              "unit": "ton/h"
+            },
+            {
+              "name": "Cost per Ton",
+              "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+              "metric": "Cost per ton",
+              "unit": "currency/ton"
+            },
+            {
+              "name": "Installed Capacity Utilization",
+              "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+              "metric": "Utilization Rate",
+              "unit": "%"
+            }
+          ],
+          "y_variable": "Throughput Rate",
+          "x_categories": {
+            "Man": [
+              "Operator training on production processes",
+              "Staffing levels on throughput line"
+            ],
+            "Machine": [
+              "Condition and maintenance of production equipment",
+              "Calibration of machinery for optimal performance"
+            ],
+            "Method": [
+              "Production process standard operating procedures",
+              "Efficiency of workflow and task allocation"
+            ],
+            "Material": [
+              "Quality of raw materials used in production",
+              "Supplier consistency and reliability"
+            ],
+            "Measurement": [
+              "Monitoring throughput rates regularly",
+              "Data collection methods for production output"
+            ],
+            "Environment": [
+              "Production area layout and ergonomics",
+              "Temperature and humidity control in the production area"
+            ]
+          },
+          "sipoc": {
+            "Suppliers": [
+              "Raw material suppliers",
+              "Equipment manufacturers"
+            ],
+            "Inputs": [
+              "Raw materials",
+              "Production equipment",
+              "Operator training"
+            ],
+            "Process": [
+              "Production process",
+              "Quality control checks"
+            ],
+            "Outputs": [
+              "Finished products"
+            ],
+            "Customers": [
+              "End customers",
+              "Distributors"
+            ]
+          },
+          "early_measure_plan": {
+            "measures": [
+              "Monitor throughput rates weekly",
+              "Track cost per ton bi-weekly",
+              "Conduct regular maintenance checks on production equipment"
+            ],
+            "responsible": "Production Management Team"
+          },
+          "risk_level": "Medium",
+          "project_type": "Process Improvement"
+        },
+        "insight_md": "",
+        "summary_md": "## DEFINE PHASE SUMMARY \u2014 Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 tons/hour to 7 tons/hour.\n\n### Business Case\nAchieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.\n\n### Scope\n- In Scope: Throughput line operations, Training programs for operators, Monitoring and maintenance of production equipment\n- Out of Scope: Other production lines not related to throughput line 1, Non-production related issues, Supplier management outside of material quality\n\n### CTQs\n- Throughput Rate: The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.\n- Cost per Ton: The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.\n- Installed Capacity Utilization: The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+        "project_name": "Increase Throughput Line 1",
+        "problem_statement": "Throughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.",
+        "goal_statement": "Increase throughput from 5 tons/hour to 7 tons/hour.",
+        "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+        "project_scope": {
+          "in_scope": [
+            "Throughput line operations",
+            "Training programs for operators",
+            "Monitoring and maintenance of production equipment"
+          ],
+          "out_of_scope": [
+            "Other production lines not related to throughput line 1",
+            "Non-production related issues",
+            "Supplier management outside of material quality"
+          ]
+        },
+        "ctq_list": [
+          {
+            "name": "Throughput Rate",
+            "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.",
+            "metric": "Tons per hour",
+            "unit": "tons/hour"
+          },
+          {
+            "name": "Cost per Ton",
+            "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+            "metric": "Cost per ton",
+            "unit": "currency/ton"
+          },
+          {
+            "name": "Installed Capacity Utilization",
+            "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+            "metric": "Utilization Rate",
+            "unit": "%"
+          }
+        ],
+        "y_variable": "Throughput Rate",
+        "x_categories": {
+          "Man": [
+            "Operator training on production processes",
+            "Staffing levels on throughput line"
+          ],
+          "Machine": [
+            "Condition and maintenance of production equipment",
+            "Calibration of machinery for optimal performance"
+          ],
+          "Method": [
+            "Production process standard operating procedures",
+            "Efficiency of workflow and task allocation"
+          ],
+          "Material": [
+            "Quality of raw materials used in production",
+            "Supplier consistency and reliability"
+          ],
+          "Measurement": [
+            "Monitoring throughput rates regularly",
+            "Data collection methods for production output"
+          ],
+          "Environment": [
+            "Production area layout and ergonomics",
+            "Temperature and humidity control in the production area"
+          ]
+        },
+        "sipoc": {
+          "Suppliers": [
+            "Raw material suppliers",
+            "Equipment manufacturers"
+          ],
+          "Inputs": [
+            "Raw materials",
+            "Production equipment",
+            "Operator training"
+          ],
+          "Process": [
+            "Production process",
+            "Quality control checks"
+          ],
+          "Outputs": [
+            "Finished products"
+          ],
+          "Customers": [
+            "End customers",
+            "Distributors"
+          ]
+        },
+        "early_measure_plan": {
+          "measures": [
+            "Monitor throughput rates weekly",
+            "Track cost per ton bi-weekly",
+            "Conduct regular maintenance checks on production equipment"
+          ],
+          "responsible": "Production Management Team"
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      },
+      "feedback": {}
+    },
+    {
+      "define_state": {
+        "schema_version": "v1.0",
+        "phase": "define",
+        "status": "final",
+        "created_at": "2025-12-17T15:44:48.577644+00:00",
+        "updated_at": "2025-12-17T15:45:41.922799+00:00",
+        "project_id": "project_002",
+        "inputs": {
+          "project_name": "Increase Throughput Line 1",
+          "industry": "Manufacturing",
+          "process_area": "Production",
+          "pain_theme": "Cost",
+          "problem_text": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+          "goal_text": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+          "voc_list": [
+            "low cost per ton"
+          ],
+          "key_issue": "Insufficient throughput leading to increased production costs."
+        },
+        "meta": {
+          "industry": "Manufacturing",
+          "pain_theme": "Cost",
+          "process_area": "Production"
+        },
+        "outputs": {
+          "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+          "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+          "business_case": "Increasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.",
+          "project_scope": {
+            "in_scope": [
+              "Line 1 production operations",
+              "Operator training programs",
+              "Maintenance and calibration of production equipment",
+              "Quality control measures during production"
+            ],
+            "out_of_scope": [
+              "Other production lines",
+              "Non-production related issues",
+              "Supplier management outside of raw material quality"
+            ]
+          },
+          "ctq_list": [
+            {
+              "name": "Throughput Rate",
+              "description": "The rate at which the production line processes material, aiming for a target of 7 ton/hour.",
+              "metric": "Tons per hour",
+              "unit": "ton/h"
+            },
+            {
+              "name": "Cost per Ton",
+              "description": "The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.",
+              "metric": "Cost",
+              "unit": "currency/ton"
+            },
+            {
+              "name": "Installed Capacity Utilization",
+              "description": "The percentage of the installed capacity that is being used for production, aiming for optimal utilization.",
+              "metric": "Utilization Rate",
+              "unit": "%"
+            }
+          ],
+          "y_variable": "Throughput Rate",
+          "x_categories": {
+            "Man": [
+              "Operator training on production processes",
+              "Staffing levels on line 1"
+            ],
+            "Machine": [
+              "Condition of production equipment",
+              "Maintenance schedules for machinery",
+              "Calibration of production equipment"
+            ],
+            "Method": [
+              "Production process standard operating procedures",
+              "Quality control measures during production"
+            ],
+            "Material": [
+              "Quality of raw materials used in production",
+              "Supplier consistency and reliability"
+            ],
+            "Measurement": [
+              "Monitoring throughput rates regularly",
+              "Tracking production efficiency metrics"
+            ],
+            "Environment": [
+              "Production area layout and workflow",
+              "Temperature and humidity control in production area"
+            ]
+          },
+          "sipoc": {
+            "Suppliers": [
+              "Raw material suppliers",
+              "Equipment manufacturers"
+            ],
+            "Inputs": [
+              "Raw materials",
+              "Production equipment",
+              "Operator training"
+            ],
+            "Process": [
+              "Production process",
+              "Quality control checks"
+            ],
+            "Outputs": [
+              "Finished products"
+            ],
+            "Customers": [
+              "End customers",
+              "Distributors"
+            ]
+          },
+          "early_measure_plan": {
+            "measures": [
+              "Monitor throughput rates weekly with a target of 7 ton/hour",
+              "Track cost per ton bi-weekly with a target reduction of 10%",
+              "Conduct regular inspections of production equipment"
+            ],
+            "responsible": "Production Management Team"
+          },
+          "risk_level": "Medium",
+          "project_type": "Process Improvement using Lean methodologies"
+        },
+        "insight_md": "",
+        "summary_md": "## DEFINE PHASE SUMMARY \u2014 Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 ton/hour to 7 ton/hour.\n\n### Business Case\nIncreasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.\n\n### Scope\n- In Scope: Line 1 production operations, Operator training programs, Maintenance and calibration of production equipment, Quality control measures during production\n- Out of Scope: Other production lines, Non-production related issues, Supplier management outside of raw material quality\n\n### CTQs\n- **Throughput Rate**(Tons per hour ton/h) \u2014 The rate at which the production line processes material, aiming for a target of 7 ton/hour.\n- **Cost per Ton**(Cost currency/ton) \u2014 The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.\n- **Installed Capacity Utilization**(Utilization Rate %) \u2014 The percentage of the installed capacity that is being used for production, aiming for optimal utilization.\n"
+      },
+      "feedback": {}
+    }
+  ]
+}

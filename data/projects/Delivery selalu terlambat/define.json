@@ -1,0 +1,46 @@
+{
+    "CTQ": [
+        "delivery"
+    ],
+    "SIPOC": {
+        "Supplier": [
+            "Produksi",
+            "QA",
+            "Pembelian"
+        ],
+        "Input": [
+            "Bahan baku",
+            "Parameter proses",
+            "VOC Pelanggan"
+        ],
+        "Process": [
+            "Mixing",
+            "Filling",
+            "Packing"
+        ],
+        "Output": [
+            "Produk sesuai spesifikasi"
+        ],
+        "Customer": [
+            "End user",
+            "Distributor"
+        ]
+    },
+    "Charter": {
+        "Problem": "Variasi kualitas produk terlihat oleh pelanggan (berdasarkan VOC).",
+        "Goal": "Menurunkan variasi CTQ kunci hingga memenuhi target spesifikasi dalam 3 bulan.",
+        "Scope": "Line A (batch reguler); tidak termasuk produk trial.",
+        "Benefit": "Penurunan reject dan komplain pelanggan; stabilitas proses meningkat."
+    },
+    "keyword_hits": {
+        "kualitas_warna": 0,
+        "viskositas": 0,
+        "dimensi": 0,
+        "cacat_permukaan": 0,
+        "yield_reject": 0,
+        "delivery": 1
+    },
+    "timestamp": "2025-12-05T01:35:40.283586",
+    "agent": "define_charter",
+    "llm_insight": "1. **Problem Statement**: Pengiriman produk dari Line A selalu terlambat dari jadwal yang telah ditentukan, mengakibatkan ketidakpuasan pelanggan dalam 3 bulan terakhir.\n\n2. **Evaluasi Goal**: Goal yang ada belum sepenuhnya SMART. Berikut adalah perbaikan:\n   - **Spesifik**: Menurunkan variasi waktu pengiriman produk.\n   - **Terukur**: Target penurunan keterlambatan pengiriman hingga 90% tepat waktu.\n   - **Achievable**: Memastikan bahwa target dapat dicapai dengan perbaikan proses.\n   - **Relevan**: Terkait langsung dengan kepuasan pelanggan.\n   - **Time-bound**: Dalam waktu 3 bulan.\n   - **Revised Goal**: \"Menurunkan keterlambatan pengiriman produk dari Line A hingga 90% tepat waktu dalam 3 bulan.\"\n\n3. **Scope**:\n   - **In-scope**: Proses pengiriman dari Line A (batch reguler).\n   - **Out-of-scope**: Produk trial dan proses dari line lain.\n   - **Risiko utama**: Keterlambatan pengiriman dapat berdampak pada reputasi perusahaan dan kepuasan pelanggan, serta potensi kehilangan pelanggan.\n\n4. **Pertanyaan Klarifikasi untuk Sponsor**:\n   - Apa kriteria spesifik yang digunakan untuk mengukur keterlambatan pengiriman?\n   - Apakah ada data historis mengenai keterlambatan pengiriman yang bisa dianalisis?\n   - Apa saja faktor yang dianggap berkontribusi terhadap keterlambatan pengiriman saat ini?\n   - Apakah ada batasan atau kendala yang perlu diperhatikan dalam perbaikan proses ini?\n   - Bagaimana dampak keterlambatan pengiriman ini terhadap hubungan dengan pelanggan dan distributor?"
+}

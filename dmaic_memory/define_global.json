@@ -1,0 +1,3019 @@
+{
+  "episodes": [
+    {
+      "llm_raw": "```json\n{\n  \"schema_version\": \"1.0\",\n  \"project_id\": \"Reduce_Packaging_Defects_001\",\n  \"project_name\": \"Reduce Packaging Defects\",\n  \"industry\": \"Manufacturing\",\n  \"process_area\": \"Production\",\n  \"pain_theme\": \"Quality\",\n  \"problem_statement\": \"Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir, terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\",\n  \"goal_statement\": \"Reduce defect\",\n  \"business_case\": \"Meningkatkan kualitas produk dan mengurangi biaya rework serta scrap akan meningkatkan kepuasan pelanggan dan profitabilitas perusahaan.\",\n  \"project_scope\": {\n    \"in_scope\": [\n      \"Sealing line operations\",\n      \"Inner packaging processes\",\n      \"Training and quality control measures\"\n    ],\n    \"out_of_scope\": [\n      \"Outer packaging processes\",\n      \"Non-production related issues\",\n      \"Supplier management\"\n    ]\n  },\n  \"ctq_list\": [\n    {\n      \"name\": \"Inner Packaging Defect Rate\",\n      \"description\": \"The percentage of inner packaging that fails to meet quality standards due to defects.\",\n      \"metric\": \"Defect Rate\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Rework Rate on Sealing Line\",\n      \"description\": \"The percentage of products that require rework due to defects in the sealing process.\",\n      \"metric\": \"Rework Rate\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Scrap Cost\",\n      \"description\": \"The total cost incurred due to scrap resulting from defective inner packaging.\",\n      \"metric\": \"Total Cost\",\n      \"unit\": \"Currency\"\n    }\n  ],\n  \"y_variable\": \"Inner Packaging Defect Rate\",\n  \"x_categories\": {\n    \"Man\": [\n      \"Operator training on sealing process\",\n      \"Staffing levels on sealing line\"\n    ],\n    \"Machine\": [\n      \"Condition of sealing jaws\",\n      \"Calibration of sealing equipment\",\n      \"Heat stability of sealing jaws\"\n    ],\n    \"Method\": [\n      \"Sealing process standard operating procedures\",\n      \"Quality control checks during sealing\"\n    ],\n    \"Material\": [\n      \"Quality of packaging materials\",\n      \"Supplier consistency\"\n    ],\n    \"Measurement\": [\n      \"Defect tracking system\",\n      \"Inspection frequency\"\n    ],\n    \"Environment\": [\n      \"Temperature and humidity in production area\",\n      \"Maintenance schedules\"\n    ]\n  },\n  \"sipoc\": {\n    \"Suppliers\": [\"Packaging material suppliers\", \"Equipment manufacturers\"],\n    \"Inputs\": [\"Packaging materials\", \"Sealing equipment\", \"Operator training\"],\n    \"Process\": [\"Sealing process\", \"Quality control checks\"],\n    \"Outputs\": [\"Inner packaged products\"],\n    \"Customers\": [\"End customers\", \"Retailers\"]\n  },\n  \"early_measure_plan\": {\n    \"measures\": [\n      \"Monitor defect rates weekly\",\n      \"Track rework and scrap costs bi-weekly\",\n      \"Conduct regular inspections of sealing equipment\"\n    ],\n    \"responsible\": \"Quality Assurance Team\"\n  },\n  \"risk_level\": \"Medium\",\n  \"project_type\": \"Quality Improvement\"\n}\n```",
+      "schema_version": "v1.0",
+      "project_id": "proj_001",
+      "project_name": "Reduce Packaging Defects"
+    },
+    {
+      "goal_statement": "Reduce the inner packaging defect rate from 6% to 2% within the next 6 months.",
+      "ctq_list": [
+        {
+          "name": "Inner Packaging Defect Rate",
+          "description": "The percentage of inner packaging that fails to meet quality standards due to defects, aiming for a target of 2%.",
+          "metric": "Defect Rate",
+          "unit": "%"
+        },
+        {
+          "name": "Rework Rate on Sealing Line",
+          "description": "The percentage of products that require rework due to defects in the sealing process, aiming for a reduction to 5%.",
+          "metric": "Rework Rate",
+          "unit": "%"
+        },
+        {
+          "name": "Scrap Cost",
+          "description": "The total cost incurred due to scrap resulting from defective inner packaging, aiming to reduce costs by 30%.",
+          "metric": "Total Cost",
+          "unit": "Currency"
+        }
+      ],
+      "early_measure_plan": {
+        "measures": [
+          "Monitor defect rates weekly with detailed reporting",
+          "Track rework and scrap costs bi-weekly with variance analysis",
+          "Conduct regular inspections of sealing equipment with documented findings and action items"
+        ],
+        "responsible": "Quality Assurance Team, with weekly updates to project stakeholders"
+      }
+    },
+    {
+      "goal_statement": "Reduce moisture content from 16% to 15% within the next 3 months, ensuring compliance with specification limits.",
+      "project_scope": {
+        "in_scope": [
+          "Moisture measurement processes",
+          "Quality control measures related to moisture content",
+          "Training for operators on moisture management with a defined curriculum and schedule"
+        ],
+        "out_of_scope": [
+          "Other quality metrics not related to moisture content",
+          "Supplier management outside of moisture-related issues"
+        ]
+      },
+      "ctq_list": [
+        {
+          "name": "Moisture Content",
+          "description": "The amount of moisture present in the product, aiming for a maximum of 15%.",
+          "metric": "Percentage",
+          "unit": "%"
+        },
+        {
+          "name": "Product Consistency",
+          "description": "The uniformity of moisture content across different batches.",
+          "metric": "Standard Deviation of Moisture Content",
+          "unit": "%"
+        },
+        {
+          "name": "Product Quality Rating",
+          "description": "Overall quality assessment based on moisture content and other factors, defined by specific criteria.",
+          "metric": "Quality Score",
+          "unit": "Score (1-10)"
+        }
+      ],
+      "early_measure_plan": {
+        "measures": [
+          "Monitor moisture content weekly with baseline measurements established",
+          "Track product quality ratings bi-weekly with defined criteria",
+          "Conduct regular training sessions for operators based on a detailed curriculum"
+        ],
+        "responsible": "Quality Assurance Team"
+      },
+      "risk_level": "Medium with a detailed risk assessment and mitigation plan to be developed."
+    },
+    {
+      "project_name": "Menaikkan throughput",
+      "problem_statement": "Throughput proses filter press saat ini 5 ton/jam sedangkan kapasitas terpasang adalah 8 ton per jam. Penyebab potensial termasuk malfungsi peralatan dan ketidakefisienan operator.",
+      "goal_statement": "Meningkatkan throughput menjadi mendekati kapasitas terpasang 8 ton/jam dalam waktu 6 bulan.",
+      "business_case": "Meningkatkan throughput akan mengurangi biaya per ton dan meningkatkan profitabilitas perusahaan, dengan estimasi penghematan biaya sebesar 15% per ton.",
+      "ctq_list": [
+        {
+          "name": "Throughput Rate",
+          "description": "Jumlah material yang diproses oleh filter press per jam.",
+          "metric": "Tons per hour",
+          "unit": "ton/jam"
+        },
+        {
+          "name": "Cost per Ton",
+          "description": "Total biaya yang dikeluarkan untuk memproses satu ton material melalui filter press.",
+          "metric": "Cost per ton",
+          "unit": "currency/ton"
+        },
+        {
+          "name": "Operational Efficiency",
+          "description": "Rasio antara throughput aktual dengan kapasitas maksimum filter press.",
+          "metric": "Efficiency Ratio",
+          "unit": "%"
+        },
+        {
+          "name": "Product Quality",
+          "description": "Kualitas produk akhir yang dihasilkan dari proses filter press.",
+          "metric": "Quality Score",
+          "unit": "score"
+        }
+      ],
+      "x_categories": {
+        "Man": [
+          "Pelatihan operator pada operasi filter press",
+          "Tingkat staf selama waktu produksi puncak",
+          "Efektivitas pelatihan operator"
+        ],
+        "Machine": [
+          "Kondisi dan pemeliharaan peralatan filter press",
+          "Kalibrasi pengaturan tekanan dan aliran"
+        ],
+        "Method": [
+          "Prosedur operasi standar untuk operasi filter press",
+          "Langkah-langkah pengendalian proses untuk memastikan kinerja optimal"
+        ],
+        "Material": [
+          "Kualitas material input yang diproses",
+          "Konsistensi karakteristik material yang mempengaruhi throughput"
+        ],
+        "Measurement": [
+          "Monitoring throughput rates secara real-time",
+          "Pengumpulan data tentang efisiensi operasional"
+        ],
+        "Environment": [
+          "Kontrol suhu dan kelembapan di area produksi",
+          "Jadwal pemeliharaan untuk peralatan"
+        ]
+      },
+      "early_measure_plan": {
+        "measures": [
+          "Monitor throughput rates setiap minggu dengan target 6 ton/jam dalam 3 bulan",
+          "Lacak biaya per ton setiap dua minggu dengan target pengurangan 10%",
+          "Lakukan inspeksi rutin pada peralatan filter press dan catat hasilnya"
+        ],
+        "responsible": "Tim Manajemen Operasional"
+      },
+      "risk_level": "Medium - Risiko terkait malfungsi peralatan dan ketidakpuasan operator dapat mempengaruhi hasil proyek."
+    },
+    {
+      "schema_version": "1.0",
+      "phase": "define",
+      "status": "final",
+      "created_at": "2025-12-17T08:39:41.777019+00:00",
+      "updated_at": "2025-12-17T08:53:35.992715+00:00",
+      "project_id": "Increase_Throughput_Line_1",
+      "inputs": {
+        "project_name": "Increase Throughput Line 1",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Cost",
+        "problem_text": "throughput line 1 was cutrrently 5 ton/hour in jan - auguts 2025, while target is 7 ton/h with installed capacity 10 ton/h, this create cost pe rton product higher due to lower output",
+        "goal_text": "increase throughput from 5 ton/hour into 7 ton/hour",
+        "voc_list": [
+          "low cost per ton"
+        ],
+        "key_issue": ""
+      },
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Cost",
+        "process_area": "Production"
+      },
+      "outputs": {
+        "schema_version": "1.0",
+        "project_id": "Increase_Throughput_Line_1",
+        "project_name": "Increase Throughput Line 1",
+        "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+        "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+        "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+        "project_scope": {
+          "in_scope": [
+            "Throughput line operations",
+            "Training programs for operators",
+            "Monitoring and maintenance of production equipment"
+          ],
+          "out_of_scope": [
+            "Other production lines not related to throughput line 1",
+            "Non-production related issues",
+            "Supplier management outside of material quality"
+          ]
+        },
+        "ctq_list": [
+          {
+            "name": "Throughput Rate",
+            "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 ton/hour.",
+            "metric": "Tons per hour",
+            "unit": "ton/h"
+          },
+          {
+            "name": "Cost per Ton",
+            "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+            "metric": "Cost per ton",
+            "unit": "currency/ton"
+          },
+          {
+            "name": "Installed Capacity Utilization",
+            "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+            "metric": "Utilization Rate",
+            "unit": "%"
+          }
+        ],
+        "y_variable": "Throughput Rate",
+        "x_categories": {
+          "Man": [
+            "Operator training on production processes",
+            "Staffing levels on throughput line"
+          ],
+          "Machine": [
+            "Condition and maintenance of production equipment",
+            "Calibration of machinery for optimal performance"
+          ],
+          "Method": [
+            "Production process standard operating procedures",
+            "Efficiency of workflow and task allocation"
+          ],
+          "Material": [
+            "Quality of raw materials used in production",
+            "Supplier consistency and reliability"
+          ],
+          "Measurement": [
+            "Monitoring throughput rates regularly",
+            "Data collection methods for production output"
+          ],
+          "Environment": [
+            "Production area layout and ergonomics",
+            "Temperature and humidity control in the production area"
+          ]
+        },
+        "sipoc": {
+          "Suppliers": [
+            "Raw material suppliers",
+            "Equipment manufacturers"
+          ],
+          "Inputs": [
+            "Raw materials",
+            "Production equipment",
+            "Operator training"
+          ],
+          "Process": [
+            "Production process",
+            "Quality control checks"
+          ],
+          "Outputs": [
+            "Finished products"
+          ],
+          "Customers": [
+            "End customers",
+            "Distributors"
+          ]
+        },
+        "early_measure_plan": {
+          "measures": [
+            "Monitor throughput rates weekly",
+            "Track cost per ton bi-weekly",
+            "Conduct regular maintenance checks on production equipment"
+          ],
+          "responsible": "Production Management Team"
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      },
+      "insight_md": "",
+      "summary_md": "## DEFINE PHASE SUMMARY — Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 tons/hour to 7 tons/hour.\n\n### Business Case\nAchieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.\n\n### Scope\n- In Scope: Throughput line operations, Training programs for operators, Monitoring and maintenance of production equipment\n- Out of Scope: Other production lines not related to throughput line 1, Non-production related issues, Supplier management outside of material quality\n\n### CTQs\n- Throughput Rate: The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.\n- Cost per Ton: The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.\n- Installed Capacity Utilization: The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+      "project_name": "Increase Throughput Line 1",
+      "problem_statement": "Throughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.",
+      "goal_statement": "Increase throughput from 5 tons/hour to 7 tons/hour.",
+      "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+      "project_scope": {
+        "in_scope": [
+          "Throughput line operations",
+          "Training programs for operators",
+          "Monitoring and maintenance of production equipment"
+        ],
+        "out_of_scope": [
+          "Other production lines not related to throughput line 1",
+          "Non-production related issues",
+          "Supplier management outside of material quality"
+        ]
+      },
+      "ctq_list": [
+        {
+          "name": "Throughput Rate",
+          "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.",
+          "metric": "Tons per hour",
+          "unit": "tons/hour"
+        },
+        {
+          "name": "Cost per Ton",
+          "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+          "metric": "Cost per ton",
+          "unit": "currency/ton"
+        },
+        {
+          "name": "Installed Capacity Utilization",
+          "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+          "metric": "Utilization Rate",
+          "unit": "%"
+        }
+      ],
+      "y_variable": "Throughput Rate",
+      "x_categories": {
+        "Man": [
+          "Operator training on production processes",
+          "Staffing levels on throughput line"
+        ],
+        "Machine": [
+          "Condition and maintenance of production equipment",
+          "Calibration of machinery for optimal performance"
+        ],
+        "Method": [
+          "Production process standard operating procedures",
+          "Efficiency of workflow and task allocation"
+        ],
+        "Material": [
+          "Quality of raw materials used in production",
+          "Supplier consistency and reliability"
+        ],
+        "Measurement": [
+          "Monitoring throughput rates regularly",
+          "Data collection methods for production output"
+        ],
+        "Environment": [
+          "Production area layout and ergonomics",
+          "Temperature and humidity control in the production area"
+        ]
+      },
+      "sipoc": {
+        "Suppliers": [
+          "Raw material suppliers",
+          "Equipment manufacturers"
+        ],
+        "Inputs": [
+          "Raw materials",
+          "Production equipment",
+          "Operator training"
+        ],
+        "Process": [
+          "Production process",
+          "Quality control checks"
+        ],
+        "Outputs": [
+          "Finished products"
+        ],
+        "Customers": [
+          "End customers",
+          "Distributors"
+        ]
+      },
+      "early_measure_plan": {
+        "measures": [
+          "Monitor throughput rates weekly",
+          "Track cost per ton bi-weekly",
+          "Conduct regular maintenance checks on production equipment"
+        ],
+        "responsible": "Production Management Team"
+      },
+      "risk_level": "Medium",
+      "project_type": "Process Improvement"
+    },
+    {
+      "schema_version": "v1.0",
+      "phase": "define",
+      "status": "final",
+      "created_at": "2025-12-17T12:13:44.238408+00:00",
+      "updated_at": "2025-12-17T12:14:47.686445+00:00",
+      "project_id": "proj_003",
+      "inputs": {
+        "project_name": "proj_003_ Late_delivery",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+        "goal_text": "no more late delivery",
+        "voc_list": [
+          "on time delivery"
+        ],
+        "key_issue": ""
+      },
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Delivery",
+        "process_area": "Supply Chain"
+      },
+      "outputs": {
+        "problem_statement": "It's been more than 3 times that shipments to customer AAJ in Jakarta are consistently late, averaging 5-6 days beyond the scheduled delivery date.",
+        "goal_statement": "Achieve 100% on-time delivery with no late shipments.",
+        "business_case": "Improving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to higher profitability.",
+        "project_scope": {
+          "in_scope": [
+            "Supply chain operations",
+            "Logistics and delivery processes",
+            "Scheduling and tracking improvements",
+            "Training for staff involved in delivery",
+            "Production processes related to delivery schedules"
+          ],
+          "out_of_scope": [
+            "Supplier management outside of delivery impact",
+            "Non-logistics related customer service issues"
+          ]
+        },
+        "ctq_list": [
+          {
+            "name": "On-Time Delivery Rate",
+            "description": "The percentage of shipments delivered to the customer on or before the scheduled delivery date.",
+            "metric": "Number of on-time deliveries",
+            "unit": "%"
+          },
+          {
+            "name": "Average Delay Duration",
+            "description": "The average number of days that shipments are delayed beyond the scheduled delivery date.",
+            "metric": "Average delay in days",
+            "unit": "days"
+          },
+          {
+            "name": "Customer Satisfaction Score",
+            "description": "A measure of customer satisfaction regarding the timeliness of delivery.",
+            "metric": "Customer satisfaction rating",
+            "unit": "scale (1-10)"
+          }
+        ],
+        "y_variable": "On-Time Delivery Rate",
+        "x_categories": {
+          "Man": [
+            "Training for logistics and delivery personnel",
+            "Staffing levels in the supply chain department"
+          ],
+          "Machine": [
+            "Condition of delivery vehicles",
+            "Tracking systems for shipments"
+          ],
+          "Method": [
+            "Scheduling and routing procedures",
+            "Standard operating procedures for order processing"
+          ],
+          "Material": [
+            "Quality and reliability of packaging materials",
+            "Availability of inventory for timely shipments"
+          ],
+          "Measurement": [
+            "Tracking of delivery times and delays",
+            "Customer feedback mechanisms"
+          ],
+          "Environment": [
+            "Traffic conditions in Jakarta",
+            "Weather-related disruptions"
+          ]
+        },
+        "sipoc": {
+          "Suppliers": [
+            "Raw material suppliers",
+            "Logistics partners"
+          ],
+          "Inputs": [
+            "Orders from customers",
+            "Inventory",
+            "Delivery schedules"
+          ],
+          "Process": [
+            "Order processing",
+            "Logistics planning",
+            "Delivery execution"
+          ],
+          "Outputs": [
+            "Delivered products to customers"
+          ],
+          "Customers": [
+            "End customers",
+            "Retailers"
+          ]
+        },
+        "early_measure_plan": {
+          "measures": [
+            "Monitor on-time delivery rates weekly",
+            "Track average delay durations bi-weekly",
+            "Conduct customer satisfaction surveys monthly"
+          ],
+          "responsible": "Supply Chain Management Team"
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      },
+      "insight_md": "",
+      "summary_md": "## DEFINE PHASE SUMMARY — proj_003_ Late_delivery\n\n### Problem Statement\nIt's been more than 3 times that shipments to customer AAJ in Jakarta are consistently late, averaging 5-6 days beyond the scheduled delivery date.\n\n### Goal Statement\nAchieve 100% on-time delivery with no late shipments.\n\n### Business Case\nImproving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to higher profitability.\n\n### Scope\n- In Scope: Supply chain operations, Logistics and delivery processes, Scheduling and tracking improvements, Training for staff involved in delivery, Production processes related to delivery schedules\n- Out of Scope: Supplier management outside of delivery impact, Non-logistics related customer service issues\n\n### CTQs\n- **On-Time Delivery Rate**(Number of on-time deliveries %) — The percentage of shipments delivered to the customer on or before the scheduled delivery date.\n- **Average Delay Duration**(Average delay in days days) — The average number of days that shipments are delayed beyond the scheduled delivery date.\n- **Customer Satisfaction Score**(Customer satisfaction rating scale (1-10)) — A measure of customer satisfaction regarding the timeliness of delivery.\n",
+      "problem_text": "Shipments to customer AAJ in Jakarta have been consistently late, averaging 5-6 days beyond the scheduled delivery date, occurring more than three times.",
+      "goal_statement": "Achieve 100% on-time delivery with no late shipments by the end of Q2 2026.",
+      "business_case": "Improving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to an estimated 15% increase in profitability.",
+      "project_scope": {
+        "in_scope": [
+          "Supply chain operations",
+          "Logistics and delivery processes",
+          "Scheduling and tracking improvements",
+          "Training for staff involved in delivery",
+          "Production processes related to delivery schedules"
+        ],
+        "out_of_scope": [
+          "Supplier management outside of delivery impact, specifically contract negotiations and supplier selection",
+          "Non-logistics related customer service issues such as product quality complaints"
+        ]
+      },
+      "ctq_list": [
+        {
+          "name": "On-Time Delivery Rate",
+          "description": "The percentage of shipments delivered to the customer on or before the scheduled delivery date.",
+          "metric": "Number of on-time deliveries",
+          "unit": "%",
+          "baseline": "Current rate is 70%"
+        },
+        {
+          "name": "Average Delay Duration",
+          "description": "The average number of days that shipments are delayed beyond the scheduled delivery date.",
+          "metric": "Average delay in days",
+          "unit": "days",
+          "baseline": "Current average delay is 5 days"
+        },
+        {
+          "name": "Customer Satisfaction Score",
+          "description": "A measure of customer satisfaction regarding the timeliness of delivery.",
+          "metric": "Customer satisfaction rating",
+          "unit": "scale (1-10)",
+          "baseline": "Current score is 6"
+        }
+      ],
+      "early_measure_plan": {
+        "measures": [
+          "Monitor on-time delivery rates weekly with a target of 85% by the end of Q1 2026",
+          "Track average delay durations bi-weekly aiming to reduce to 3 days by Q2 2026",
+          "Conduct customer satisfaction surveys monthly with a goal to increase the score to 8 by Q2 2026"
+        ],
+        "responsible": "Supply Chain Management Team"
+      },
+      "risk_level": "Medium - Risks include potential disruptions from traffic conditions and weather-related issues in Jakarta, as well as internal process inefficiencies."
+    },
+    {
+      "schema_version": "v1.0",
+      "phase": "define",
+      "status": "final",
+      "created_at": "2025-12-17T15:44:48.577644+00:00",
+      "updated_at": "2025-12-17T15:45:41.922799+00:00",
+      "project_id": "project_002",
+      "inputs": {
+        "project_name": "Increase Throughput Line 1",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Cost",
+        "problem_text": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+        "goal_text": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+        "voc_list": [
+          "low cost per ton"
+        ],
+        "key_issue": "Insufficient throughput leading to increased production costs."
+      },
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Cost",
+        "process_area": "Production"
+      },
+      "outputs": {
+        "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+        "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+        "business_case": "Increasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.",
+        "project_scope": {
+          "in_scope": [
+            "Line 1 production operations",
+            "Operator training programs",
+            "Maintenance and calibration of production equipment",
+            "Quality control measures during production"
+          ],
+          "out_of_scope": [
+            "Other production lines",
+            "Non-production related issues",
+            "Supplier management outside of raw material quality"
+          ]
+        },
+        "ctq_list": [
+          {
+            "name": "Throughput Rate",
+            "description": "The rate at which the production line processes material, aiming for a target of 7 ton/hour.",
+            "metric": "Tons per hour",
+            "unit": "ton/h"
+          },
+          {
+            "name": "Cost per Ton",
+            "description": "The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.",
+            "metric": "Cost",
+            "unit": "currency/ton"
+          },
+          {
+            "name": "Installed Capacity Utilization",
+            "description": "The percentage of the installed capacity that is being used for production, aiming for optimal utilization.",
+            "metric": "Utilization Rate",
+            "unit": "%"
+          }
+        ],
+        "y_variable": "Throughput Rate",
+        "x_categories": {
+          "Man": [
+            "Operator training on production processes",
+            "Staffing levels on line 1"
+          ],
+          "Machine": [
+            "Condition of production equipment",
+            "Maintenance schedules for machinery",
+            "Calibration of production equipment"
+          ],
+          "Method": [
+            "Production process standard operating procedures",
+            "Quality control measures during production"
+          ],
+          "Material": [
+            "Quality of raw materials used in production",
+            "Supplier consistency and reliability"
+          ],
+          "Measurement": [
+            "Monitoring throughput rates regularly",
+            "Tracking production efficiency metrics"
+          ],
+          "Environment": [
+            "Production area layout and workflow",
+            "Temperature and humidity control in production area"
+          ]
+        },
+        "sipoc": {
+          "Suppliers": [
+            "Raw material suppliers",
+            "Equipment manufacturers"
+          ],
+          "Inputs": [
+            "Raw materials",
+            "Production equipment",
+            "Operator training"
+          ],
+          "Process": [
+            "Production process",
+            "Quality control checks"
+          ],
+          "Outputs": [
+            "Finished products"
+          ],
+          "Customers": [
+            "End customers",
+            "Distributors"
+          ]
+        },
+        "early_measure_plan": {
+          "measures": [
+            "Monitor throughput rates weekly with a target of 7 ton/hour",
+            "Track cost per ton bi-weekly with a target reduction of 10%",
+            "Conduct regular inspections of production equipment"
+          ],
+          "responsible": "Production Management Team"
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement using Lean methodologies"
+      },
+      "insight_md": "",
+      "summary_md": "## DEFINE PHASE SUMMARY — Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 ton/hour to 7 ton/hour.\n\n### Business Case\nIncreasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.\n\n### Scope\n- In Scope: Line 1 production operations, Operator training programs, Maintenance and calibration of production equipment, Quality control measures during production\n- Out of Scope: Other production lines, Non-production related issues, Supplier management outside of raw material quality\n\n### CTQs\n- **Throughput Rate**(Tons per hour ton/h) — The rate at which the production line processes material, aiming for a target of 7 ton/hour.\n- **Cost per Ton**(Cost currency/ton) — The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.\n- **Installed Capacity Utilization**(Utilization Rate %) — The percentage of the installed capacity that is being used for production, aiming for optimal utilization.\n"
+    },
+    {
+      "schema_version": "v1.0",
+      "phase": "define",
+      "status": "final",
+      "created_at": "2025-12-18T04:16:55.235704+00:00",
+      "updated_at": "2025-12-18T04:18:10.256141+00:00",
+      "project_id": "proj_003",
+      "inputs": {
+        "project_name": "proj_003_ Late_delivery",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+        "goal_text": "no more late delivery",
+        "voc_list": [
+          "on time delivery"
+        ],
+        "key_issue": ""
+      },
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Delivery",
+        "process_area": "Supply Chain"
+      },
+      "outputs": {
+        "problem_statement": "Shipments to customers in Jakarta have been consistently late, averaging 5-6 days beyond the scheduled delivery date, affecting customer satisfaction.",
+        "goal_statement": "Achieve 100% on-time delivery for all shipments within the next 6 months.",
+        "business_case": "Improving on-time delivery will enhance customer satisfaction, reduce complaints, and strengthen the company's reputation in the market, ultimately leading to increased sales and customer loyalty.",
+        "project_scope": {
+          "in_scope": [
+            "Logistics operations related to shipment processing",
+            "Communication with customers regarding delivery timelines",
+            "Training programs for logistics staff"
+          ],
+          "out_of_scope": [
+            "Supplier management and procurement processes",
+            "Production scheduling unrelated to delivery"
+          ]
+        },
+        "ctq_list": [
+          {
+            "name": "On-Time Delivery Rate",
+            "description": "The percentage of shipments delivered on or before the scheduled delivery date.",
+            "metric": "Percentage of on-time deliveries",
+            "unit": "%"
+          },
+          {
+            "name": "Average Delay Duration",
+            "description": "The average number of days shipments are delayed beyond the scheduled delivery date.",
+            "metric": "Average days late",
+            "unit": "days"
+          },
+          {
+            "name": "Customer Satisfaction Score",
+            "description": "The level of customer satisfaction regarding delivery timeliness, measured through surveys.",
+            "metric": "Customer satisfaction rating",
+            "unit": "scale (1-10)"
+          }
+        ],
+        "y_variable": "On-Time Delivery Rate",
+        "x_categories": {
+          "Man": [
+            "Training for logistics personnel on delivery schedules",
+            "Staffing levels in logistics and transportation"
+          ],
+          "Machine": [
+            "Condition of transportation vehicles",
+            "Routing software efficiency"
+          ],
+          "Method": [
+            "Standard operating procedures for shipment processing",
+            "Communication protocols for delays"
+          ],
+          "Material": [
+            "Quality of packaging materials affecting delivery speed",
+            "Availability of inventory for timely shipments"
+          ],
+          "Measurement": [
+            "Tracking system for shipment status",
+            "Monitoring delivery performance metrics"
+          ],
+          "Environment": [
+            "Traffic conditions in Jakarta",
+            "Weather impact on transportation"
+          ]
+        },
+        "sipoc": {
+          "Outputs": [
+            "On-time deliveries",
+            "Delayed shipment reports",
+            "Customer satisfaction feedback"
+          ]
+        },
+        "early_measure_plan": {
+          "measures": [
+            "Monitor on-time delivery rates weekly",
+            "Track average delay duration bi-weekly",
+            "Conduct customer satisfaction surveys quarterly"
+          ],
+          "responsible": "Logistics and Customer Service Teams",
+          "frequency": "Weekly and Bi-weekly",
+          "data_source": "Logistics tracking system and customer feedback surveys"
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      },
+      "insight_md": "### Agent Insight for proj_003_Late_delivery\n\n- **Justification of CTQ/Y/Scope**: The primary CTQ, \"On-Time Delivery Rate,\" directly addresses the critical customer expectation of timely shipments, which is crucial for customer satisfaction and retention. The scope focuses on logistics operations and communication, ensuring that all factors influencing delivery are considered.\n\n- **Key Risks/Assumptions**: \n  - Assumes that training logistics personnel will significantly improve delivery timelines.\n  - Risks include potential disruptions from external factors like traffic and weather, which may not be controllable.\n  - Dependence on the efficiency of routing software and vehicle conditions could impact delivery performance.\n\n- **Learning from Past Episodes**: Similar projects have successfully improved delivery performance by enhancing training programs and standard operating procedures. Past audits indicate that effective communication with customers regarding delays significantly boosts satisfaction.\n\n- **Actionable Next Steps for Measure**:\n  1. Establish a baseline by monitoring the current on-time delivery rates and average delay durations over the next month.\n  2. Implement a tracking system for real-time shipment status updates to identify bottlenecks in the delivery process.\n  3. Conduct a survey to gauge customer satisfaction regarding delivery timelines and communication, to inform improvement strategies.\n",
+      "summary_md": null,
+      "perception_trace": {
+        "project_name": "proj_003_ Late_delivery",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+        "voc_list": [
+          "on time delivery"
+        ],
+        "key_issue": "",
+        "ctq_voc_info": {
+          "candidate_ctqs": [],
+          "voc_clusters": [],
+          "raw_llm_output": "```json\n{\n  \"candidate_ctqs\": [\n    {\n      \"name\": \"On-Time Delivery Rate\",\n      \"description\": \"The percentage of shipments delivered on or before the scheduled delivery date.\",\n      \"metric\": \"Percentage of on-time deliveries\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Average Delay Duration\",\n      \"description\": \"The average number of days shipments are delayed beyond the scheduled delivery date.\",\n      \"metric\": \"Average days late\",\n      \"unit\": \"days\"\n    },\n    {\n      \"name\": \"Customer Satisfaction Score\",\n      \"description\": \"The level of customer satisfaction regarding delivery timeliness, measured through surveys.\",\n      \"metric\": \"Customer satisfaction rating\",\n      \"unit\": \"scale (1-10)\"\n    }\n  ],\n  \"voc_clusters\": [\n    {\n      \"theme\": \"Delivery Performance\",\n      \"items\": [\n        \"Shipments consistently late\",\n        \"Need for improved delivery timelines\",\n        \"Expectations for on-time delivery\"\n      ]\n    },\n    {\n      \"theme\": \"Customer Experience\",\n      \"items\": [\n        \"Impact of late deliveries on customer satisfaction\",\n        \"Feedback on communication regarding delays\",\n        \"Desire for better updates on shipment status\"\n      ]\n    }\n  ]\n}\n```"
+        },
+        "baseline_summary": {},
+        "similar_audit_episodes": [
+          {
+            "timestamp": "2025-12-17T12:14:47.691845",
+            "project_id": "proj_003",
+            "phase": "Define",
+            "status": "success",
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Delivery",
+              "process_area": "Supply Chain",
+              "project_type": "Process Improvement"
+            }
+          },
+          {
+            "timestamp": "2025-12-17T08:53:36.040746",
+            "project_id": "project_002",
+            "phase": "Define",
+            "status": "success",
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Cost",
+              "process_area": "Production",
+              "project_type": "Process Improvement"
+            }
+          },
+          {
+            "timestamp": "2025-12-17T15:45:41.961798",
+            "project_id": "project_002",
+            "phase": "Define",
+            "status": "success",
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Cost",
+              "process_area": "Production",
+              "project_type": "Process Improvement using Lean methodologies"
+            }
+          }
+        ],
+        "similar_memory_episodes": [
+          {
+            "llm_raw": "```json\n{\n  \"schema_version\": \"1.0\",\n  \"project_id\": \"Reduce_Packaging_Defects_001\",\n  \"project_name\": \"Reduce Packaging Defects\",\n  \"industry\": \"Manufacturing\",\n  \"process_area\": \"Production\",\n  \"pain_theme\": \"Quality\",\n  \"problem_statement\": \"Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir, terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\",\n  \"goal_statement\": \"Reduce defect\",\n  \"business_case\": \"Meningkatkan kualitas produk dan mengurangi biaya rework serta scrap akan meningkatkan kepuasan pelanggan dan profitabilitas perusahaan.\",\n  \"project_scope\": {\n    \"in_scope\": [\n      \"Sealing line operations\",\n      \"Inner packaging processes\",\n      \"Training and quality control measures\"\n    ],\n    \"out_of_scope\": [\n      \"Outer packaging processes\",\n      \"Non-production related issues\",\n      \"Supplier management\"\n    ]\n  },\n  \"ctq_list\": [\n    {\n      \"name\": \"Inner Packaging Defect Rate\",\n      \"description\": \"The percentage of inner packaging that fails to meet quality standards due to defects.\",\n      \"metric\": \"Defect Rate\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Rework Rate on Sealing Line\",\n      \"description\": \"The percentage of products that require rework due to defects in the sealing process.\",\n      \"metric\": \"Rework Rate\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Scrap Cost\",\n      \"description\": \"The total cost incurred due to scrap resulting from defective inner packaging.\",\n      \"metric\": \"Total Cost\",\n      \"unit\": \"Currency\"\n    }\n  ],\n  \"y_variable\": \"Inner Packaging Defect Rate\",\n  \"x_categories\": {\n    \"Man\": [\n      \"Operator training on sealing process\",\n      \"Staffing levels on sealing line\"\n    ],\n    \"Machine\": [\n      \"Condition of sealing jaws\",\n      \"Calibration of sealing equipment\",\n      \"Heat stability of sealing jaws\"\n    ],\n    \"Method\": [\n      \"Sealing process standard operating procedures\",\n      \"Quality control checks during sealing\"\n    ],\n    \"Material\": [\n      \"Quality of packaging materials\",\n      \"Supplier consistency\"\n    ],\n    \"Measurement\": [\n      \"Defect tracking system\",\n      \"Inspection frequency\"\n    ],\n    \"Environment\": [\n      \"Temperature and humidity in production area\",\n      \"Maintenance schedules\"\n    ]\n  },\n  \"sipoc\": {\n    \"Suppliers\": [\"Packaging material suppliers\", \"Equipment manufacturers\"],\n    \"Inputs\": [\"Packaging materials\", \"Sealing equipment\", \"Operator training\"],\n    \"Process\": [\"Sealing process\", \"Quality control checks\"],\n    \"Outputs\": [\"Inner packaged products\"],\n    \"Customers\": [\"End customers\", \"Retailers\"]\n  },\n  \"early_measure_plan\": {\n    \"measures\": [\n      \"Monitor defect rates weekly\",\n      \"Track rework and scrap costs bi-weekly\",\n      \"Conduct regular inspections of sealing equipment\"\n    ],\n    \"responsible\": \"Quality Assurance Team\"\n  },\n  \"risk_level\": \"Medium\",\n  \"project_type\": \"Quality Improvement\"\n}\n```",
+            "schema_version": "v1.0",
+            "project_id": "proj_001",
+            "project_name": "Reduce Packaging Defects"
+          },
+          {
+            "goal_statement": "Reduce the inner packaging defect rate from 6% to 2% within the next 6 months.",
+            "ctq_list": [
+              {
+                "name": "Inner Packaging Defect Rate",
+                "description": "The percentage of inner packaging that fails to meet quality standards due to defects, aiming for a target of 2%.",
+                "metric": "Defect Rate",
+                "unit": "%"
+              },
+              {
+                "name": "Rework Rate on Sealing Line",
+                "description": "The percentage of products that require rework due to defects in the sealing process, aiming for a reduction to 5%.",
+                "metric": "Rework Rate",
+                "unit": "%"
+              },
+              {
+                "name": "Scrap Cost",
+                "description": "The total cost incurred due to scrap resulting from defective inner packaging, aiming to reduce costs by 30%.",
+                "metric": "Total Cost",
+                "unit": "Currency"
+              }
+            ],
+            "early_measure_plan": {
+              "measures": [
+                "Monitor defect rates weekly with detailed reporting",
+                "Track rework and scrap costs bi-weekly with variance analysis",
+                "Conduct regular inspections of sealing equipment with documented findings and action items"
+              ],
+              "responsible": "Quality Assurance Team, with weekly updates to project stakeholders"
+            }
+          },
+          {
+            "goal_statement": "Reduce moisture content from 16% to 15% within the next 3 months, ensuring compliance with specification limits.",
+            "project_scope": {
+              "in_scope": [
+                "Moisture measurement processes",
+                "Quality control measures related to moisture content",
+                "Training for operators on moisture management with a defined curriculum and schedule"
+              ],
+              "out_of_scope": [
+                "Other quality metrics not related to moisture content",
+                "Supplier management outside of moisture-related issues"
+              ]
+            },
+            "ctq_list": [
+              {
+                "name": "Moisture Content",
+                "description": "The amount of moisture present in the product, aiming for a maximum of 15%.",
+                "metric": "Percentage",
+                "unit": "%"
+              },
+              {
+                "name": "Product Consistency",
+                "description": "The uniformity of moisture content across different batches.",
+                "metric": "Standard Deviation of Moisture Content",
+                "unit": "%"
+              },
+              {
+                "name": "Product Quality Rating",
+                "description": "Overall quality assessment based on moisture content and other factors, defined by specific criteria.",
+                "metric": "Quality Score",
+                "unit": "Score (1-10)"
+              }
+            ],
+            "early_measure_plan": {
+              "measures": [
+                "Monitor moisture content weekly with baseline measurements established",
+                "Track product quality ratings bi-weekly with defined criteria",
+                "Conduct regular training sessions for operators based on a detailed curriculum"
+              ],
+              "responsible": "Quality Assurance Team"
+            },
+            "risk_level": "Medium with a detailed risk assessment and mitigation plan to be developed."
+          }
+        ]
+      },
+      "decision_trace": {
+        "primary_ctq": "On-Time Delivery Rate",
+        "secondary_ctqs": [
+          "Average Delay Duration",
+          "Customer Satisfaction Score"
+        ],
+        "y_variable": "On-Time Delivery Rate",
+        "x_categories": {
+          "Man": [
+            "Training for logistics personnel on delivery schedules",
+            "Staffing levels in logistics and transportation"
+          ],
+          "Machine": [
+            "Condition of transportation vehicles",
+            "Routing software efficiency"
+          ],
+          "Method": [
+            "Standard operating procedures for shipment processing",
+            "Communication protocols for delays"
+          ],
+          "Material": [
+            "Quality of packaging materials affecting delivery speed",
+            "Availability of inventory for timely shipments"
+          ],
+          "Measurement": [
+            "Tracking system for shipment status",
+            "Monitoring delivery performance metrics"
+          ],
+          "Environment": [
+            "Traffic conditions in Jakarta",
+            "Weather impact on transportation"
+          ]
+        },
+        "project_scope": {
+          "in_scope": [
+            "Logistics operations related to shipment processing",
+            "Communication with customers regarding delivery timelines",
+            "Training programs for logistics staff"
+          ],
+          "out_of_scope": [
+            "Supplier management and procurement processes",
+            "Production scheduling unrelated to delivery"
+          ]
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      }
+    },
+    {
+      "schema_version": "v1.0",
+      "phase": "define",
+      "status": "final",
+      "created_at": "2025-12-18T11:56:37.730089+00:00",
+      "updated_at": "2025-12-18T11:57:34.587414+00:00",
+      "project_id": "project_001",
+      "inputs": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      },
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Cost",
+        "process_area": "Supply Chain"
+      },
+      "outputs": {
+        "llm_raw": null
+      },
+      "insight_md": "- **Justification for CTQ/Y/Scope:**\n  - The primary CTQ, \"A/R Overdue Percentage,\" directly impacts cash flow and operational efficiency, making it crucial for project focus.\n  - Focusing on PT Smart, which accounts for 36.20% of overdue A/R, aligns with the goal to improve cash flow performance significantly.\n  - The project scope includes critical areas like accounts receivable processes and credit policy reviews, ensuring comprehensive coverage of factors affecting A/R overdue.\n\n- **Key Risks/Assumptions:**\n  - Assumes that changes in credit policies and collection strategies will significantly reduce overdue A/R.\n  - Economic conditions could impact customer payment behavior, posing a risk to achieving the desired A/R overdue reduction.\n  - Assumes that the finance team will effectively implement new training and strategies to improve collection rates.\n\n- **Learning from Similar Past Episodes/Audit:**\n  - Previous projects highlighted the importance of targeted training for the finance team in reducing A/R overdue percentages.\n  - Past audits indicated that automated reminders and improved credit evaluations can significantly impact overdue reduction.\n\n- **Actionable Next Steps for Measure:**\n  - Collect and analyze historical data on A/R overdue percentages and DSO for PT Smart to establish a baseline.\n  - Implement tracking mechanisms for blocked orders due to overdue A/R to identify patterns and root causes.\n  - Engage with the finance team to review and refine data collection methods, ensuring accuracy and consistency in measurement.\n",
+      "summary_md": null,
+      "perception_trace": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue",
+        "ctq_voc_info": {
+          "candidate_ctqs": [],
+          "voc_clusters": [],
+          "raw_llm_output": "```json\n{\n  \"candidate_ctqs\": [\n    {\n      \"name\": \"A/R Overdue Percentage\",\n      \"description\": \"The percentage of accounts receivable that are overdue for PT Smart.\",\n      \"metric\": \"Percentage\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Days Sales Outstanding (DSO)\",\n      \"description\": \"The average number of days it takes PT Smart to pay its invoices.\",\n      \"metric\": \"Days\",\n      \"unit\": \"days\"\n    },\n    {\n      \"name\": \"Blocked Orders Due to Overdue A/R\",\n      \"description\": \"The number of orders blocked because PT Smart has overdue accounts receivable.\",\n      \"metric\": \"Count\",\n      \"unit\": \"orders\"\n    }\n  ],\n  \"voc_clusters\": [\n    {\n      \"theme\": \"Cash Flow Impact\",\n      \"items\": [\n        \"High A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money.\",\n        \"It means company has less readily available cash to finance our operation.\"\n      ]\n    },\n    {\n      \"theme\": \"Operational Disruptions\",\n      \"items\": [\n        \"High A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.\"\n      ]\n    }\n  ]\n}\n```"
+        },
+        "baseline_summary": {},
+        "similar_audit_episodes": [
+          {
+            "timestamp": "2025-12-18T18:56:03.626515",
+            "project_id": "project_001",
+            "phase": "Define",
+            "status": "started",
+            "meta": {
+              "project_name": "project_001",
+              "industry": "Manufacturing",
+              "process_area": "Supply Chain",
+              "pain_theme": "Cost",
+              "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+              "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+              "voc_list": [],
+              "key_issue": "A/R Overdue"
+            }
+          },
+          {
+            "timestamp": "2025-12-18T18:56:02.083880",
+            "project_id": "project_001",
+            "phase": "Define",
+            "status": "started",
+            "meta": {
+              "project_name": "project_001",
+              "industry": "Manufacturing",
+              "process_area": "Supply Chain",
+              "pain_theme": "Cost",
+              "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+              "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+              "voc_list": [],
+              "key_issue": "A/R Overdue"
+            }
+          },
+          {
+            "timestamp": "2025-12-18T18:55:57.091420",
+            "project_id": "project_001",
+            "phase": "Define",
+            "status": "started",
+            "meta": {
+              "project_name": "project_001",
+              "industry": "Manufacturing",
+              "process_area": "Supply Chain",
+              "pain_theme": "Cost",
+              "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+              "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+              "voc_list": [],
+              "key_issue": "A/R Overdue"
+            }
+          }
+        ],
+        "similar_memory_episodes": [
+          {
+            "schema_version": "1.0",
+            "phase": "define",
+            "status": "final",
+            "created_at": "2025-12-17T08:39:41.777019+00:00",
+            "updated_at": "2025-12-17T08:53:35.992715+00:00",
+            "project_id": "Increase_Throughput_Line_1",
+            "inputs": {
+              "project_name": "Increase Throughput Line 1",
+              "industry": "Manufacturing",
+              "process_area": "Production",
+              "pain_theme": "Cost",
+              "problem_text": "throughput line 1 was cutrrently 5 ton/hour in jan - auguts 2025, while target is 7 ton/h with installed capacity 10 ton/h, this create cost pe rton product higher due to lower output",
+              "goal_text": "increase throughput from 5 ton/hour into 7 ton/hour",
+              "voc_list": [
+                "low cost per ton"
+              ],
+              "key_issue": ""
+            },
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Cost",
+              "process_area": "Production"
+            },
+            "outputs": {
+              "schema_version": "1.0",
+              "project_id": "Increase_Throughput_Line_1",
+              "project_name": "Increase Throughput Line 1",
+              "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+              "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+              "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+              "project_scope": {
+                "in_scope": [
+                  "Throughput line operations",
+                  "Training programs for operators",
+                  "Monitoring and maintenance of production equipment"
+                ],
+                "out_of_scope": [
+                  "Other production lines not related to throughput line 1",
+                  "Non-production related issues",
+                  "Supplier management outside of material quality"
+                ]
+              },
+              "ctq_list": [
+                {
+                  "name": "Throughput Rate",
+                  "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 ton/hour.",
+                  "metric": "Tons per hour",
+                  "unit": "ton/h"
+                },
+                {
+                  "name": "Cost per Ton",
+                  "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+                  "metric": "Cost per ton",
+                  "unit": "currency/ton"
+                },
+                {
+                  "name": "Installed Capacity Utilization",
+                  "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+                  "metric": "Utilization Rate",
+                  "unit": "%"
+                }
+              ],
+              "y_variable": "Throughput Rate",
+              "x_categories": {
+                "Man": [
+                  "Operator training on production processes",
+                  "Staffing levels on throughput line"
+                ],
+                "Machine": [
+                  "Condition and maintenance of production equipment",
+                  "Calibration of machinery for optimal performance"
+                ],
+                "Method": [
+                  "Production process standard operating procedures",
+                  "Efficiency of workflow and task allocation"
+                ],
+                "Material": [
+                  "Quality of raw materials used in production",
+                  "Supplier consistency and reliability"
+                ],
+                "Measurement": [
+                  "Monitoring throughput rates regularly",
+                  "Data collection methods for production output"
+                ],
+                "Environment": [
+                  "Production area layout and ergonomics",
+                  "Temperature and humidity control in the production area"
+                ]
+              },
+              "sipoc": {
+                "Suppliers": [
+                  "Raw material suppliers",
+                  "Equipment manufacturers"
+                ],
+                "Inputs": [
+                  "Raw materials",
+                  "Production equipment",
+                  "Operator training"
+                ],
+                "Process": [
+                  "Production process",
+                  "Quality control checks"
+                ],
+                "Outputs": [
+                  "Finished products"
+                ],
+                "Customers": [
+                  "End customers",
+                  "Distributors"
+                ]
+              },
+              "early_measure_plan": {
+                "measures": [
+                  "Monitor throughput rates weekly",
+                  "Track cost per ton bi-weekly",
+                  "Conduct regular maintenance checks on production equipment"
+                ],
+                "responsible": "Production Management Team"
+              },
+              "risk_level": "Medium",
+              "project_type": "Process Improvement"
+            },
+            "insight_md": "",
+            "summary_md": "## DEFINE PHASE SUMMARY — Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 tons/hour to 7 tons/hour.\n\n### Business Case\nAchieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.\n\n### Scope\n- In Scope: Throughput line operations, Training programs for operators, Monitoring and maintenance of production equipment\n- Out of Scope: Other production lines not related to throughput line 1, Non-production related issues, Supplier management outside of material quality\n\n### CTQs\n- Throughput Rate: The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.\n- Cost per Ton: The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.\n- Installed Capacity Utilization: The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+            "project_name": "Increase Throughput Line 1",
+            "problem_statement": "Throughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.",
+            "goal_statement": "Increase throughput from 5 tons/hour to 7 tons/hour.",
+            "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+            "project_scope": {
+              "in_scope": [
+                "Throughput line operations",
+                "Training programs for operators",
+                "Monitoring and maintenance of production equipment"
+              ],
+              "out_of_scope": [
+                "Other production lines not related to throughput line 1",
+                "Non-production related issues",
+                "Supplier management outside of material quality"
+              ]
+            },
+            "ctq_list": [
+              {
+                "name": "Throughput Rate",
+                "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.",
+                "metric": "Tons per hour",
+                "unit": "tons/hour"
+              },
+              {
+                "name": "Cost per Ton",
+                "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+                "metric": "Cost per ton",
+                "unit": "currency/ton"
+              },
+              {
+                "name": "Installed Capacity Utilization",
+                "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+                "metric": "Utilization Rate",
+                "unit": "%"
+              }
+            ],
+            "y_variable": "Throughput Rate",
+            "x_categories": {
+              "Man": [
+                "Operator training on production processes",
+                "Staffing levels on throughput line"
+              ],
+              "Machine": [
+                "Condition and maintenance of production equipment",
+                "Calibration of machinery for optimal performance"
+              ],
+              "Method": [
+                "Production process standard operating procedures",
+                "Efficiency of workflow and task allocation"
+              ],
+              "Material": [
+                "Quality of raw materials used in production",
+                "Supplier consistency and reliability"
+              ],
+              "Measurement": [
+                "Monitoring throughput rates regularly",
+                "Data collection methods for production output"
+              ],
+              "Environment": [
+                "Production area layout and ergonomics",
+                "Temperature and humidity control in the production area"
+              ]
+            },
+            "sipoc": {
+              "Suppliers": [
+                "Raw material suppliers",
+                "Equipment manufacturers"
+              ],
+              "Inputs": [
+                "Raw materials",
+                "Production equipment",
+                "Operator training"
+              ],
+              "Process": [
+                "Production process",
+                "Quality control checks"
+              ],
+              "Outputs": [
+                "Finished products"
+              ],
+              "Customers": [
+                "End customers",
+                "Distributors"
+              ]
+            },
+            "early_measure_plan": {
+              "measures": [
+                "Monitor throughput rates weekly",
+                "Track cost per ton bi-weekly",
+                "Conduct regular maintenance checks on production equipment"
+              ],
+              "responsible": "Production Management Team"
+            },
+            "risk_level": "Medium",
+            "project_type": "Process Improvement"
+          },
+          {
+            "schema_version": "v1.0",
+            "phase": "define",
+            "status": "final",
+            "created_at": "2025-12-17T15:44:48.577644+00:00",
+            "updated_at": "2025-12-17T15:45:41.922799+00:00",
+            "project_id": "project_002",
+            "inputs": {
+              "project_name": "Increase Throughput Line 1",
+              "industry": "Manufacturing",
+              "process_area": "Production",
+              "pain_theme": "Cost",
+              "problem_text": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+              "goal_text": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+              "voc_list": [
+                "low cost per ton"
+              ],
+              "key_issue": "Insufficient throughput leading to increased production costs."
+            },
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Cost",
+              "process_area": "Production"
+            },
+            "outputs": {
+              "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+              "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+              "business_case": "Increasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.",
+              "project_scope": {
+                "in_scope": [
+                  "Line 1 production operations",
+                  "Operator training programs",
+                  "Maintenance and calibration of production equipment",
+                  "Quality control measures during production"
+                ],
+                "out_of_scope": [
+                  "Other production lines",
+                  "Non-production related issues",
+                  "Supplier management outside of raw material quality"
+                ]
+              },
+              "ctq_list": [
+                {
+                  "name": "Throughput Rate",
+                  "description": "The rate at which the production line processes material, aiming for a target of 7 ton/hour.",
+                  "metric": "Tons per hour",
+                  "unit": "ton/h"
+                },
+                {
+                  "name": "Cost per Ton",
+                  "description": "The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.",
+                  "metric": "Cost",
+                  "unit": "currency/ton"
+                },
+                {
+                  "name": "Installed Capacity Utilization",
+                  "description": "The percentage of the installed capacity that is being used for production, aiming for optimal utilization.",
+                  "metric": "Utilization Rate",
+                  "unit": "%"
+                }
+              ],
+              "y_variable": "Throughput Rate",
+              "x_categories": {
+                "Man": [
+                  "Operator training on production processes",
+                  "Staffing levels on line 1"
+                ],
+                "Machine": [
+                  "Condition of production equipment",
+                  "Maintenance schedules for machinery",
+                  "Calibration of production equipment"
+                ],
+                "Method": [
+                  "Production process standard operating procedures",
+                  "Quality control measures during production"
+                ],
+                "Material": [
+                  "Quality of raw materials used in production",
+                  "Supplier consistency and reliability"
+                ],
+                "Measurement": [
+                  "Monitoring throughput rates regularly",
+                  "Tracking production efficiency metrics"
+                ],
+                "Environment": [
+                  "Production area layout and workflow",
+                  "Temperature and humidity control in production area"
+                ]
+              },
+              "sipoc": {
+                "Suppliers": [
+                  "Raw material suppliers",
+                  "Equipment manufacturers"
+                ],
+                "Inputs": [
+                  "Raw materials",
+                  "Production equipment",
+                  "Operator training"
+                ],
+                "Process": [
+                  "Production process",
+                  "Quality control checks"
+                ],
+                "Outputs": [
+                  "Finished products"
+                ],
+                "Customers": [
+                  "End customers",
+                  "Distributors"
+                ]
+              },
+              "early_measure_plan": {
+                "measures": [
+                  "Monitor throughput rates weekly with a target of 7 ton/hour",
+                  "Track cost per ton bi-weekly with a target reduction of 10%",
+                  "Conduct regular inspections of production equipment"
+                ],
+                "responsible": "Production Management Team"
+              },
+              "risk_level": "Medium",
+              "project_type": "Process Improvement using Lean methodologies"
+            },
+            "insight_md": "",
+            "summary_md": "## DEFINE PHASE SUMMARY — Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 ton/hour to 7 ton/hour.\n\n### Business Case\nIncreasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.\n\n### Scope\n- In Scope: Line 1 production operations, Operator training programs, Maintenance and calibration of production equipment, Quality control measures during production\n- Out of Scope: Other production lines, Non-production related issues, Supplier management outside of raw material quality\n\n### CTQs\n- **Throughput Rate**(Tons per hour ton/h) — The rate at which the production line processes material, aiming for a target of 7 ton/hour.\n- **Cost per Ton**(Cost currency/ton) — The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.\n- **Installed Capacity Utilization**(Utilization Rate %) — The percentage of the installed capacity that is being used for production, aiming for optimal utilization.\n"
+          },
+          {
+            "schema_version": "v1.0",
+            "phase": "define",
+            "status": "final",
+            "created_at": "2025-12-17T12:13:44.238408+00:00",
+            "updated_at": "2025-12-17T12:14:47.686445+00:00",
+            "project_id": "proj_003",
+            "inputs": {
+              "project_name": "proj_003_ Late_delivery",
+              "industry": "Manufacturing",
+              "process_area": "Supply Chain",
+              "pain_theme": "Delivery",
+              "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+              "goal_text": "no more late delivery",
+              "voc_list": [
+                "on time delivery"
+              ],
+              "key_issue": ""
+            },
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Delivery",
+              "process_area": "Supply Chain"
+            },
+            "outputs": {
+              "problem_statement": "It's been more than 3 times that shipments to customer AAJ in Jakarta are consistently late, averaging 5-6 days beyond the scheduled delivery date.",
+              "goal_statement": "Achieve 100% on-time delivery with no late shipments.",
+              "business_case": "Improving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to higher profitability.",
+              "project_scope": {
+                "in_scope": [
+                  "Supply chain operations",
+                  "Logistics and delivery processes",
+                  "Scheduling and tracking improvements",
+                  "Training for staff involved in delivery",
+                  "Production processes related to delivery schedules"
+                ],
+                "out_of_scope": [
+                  "Supplier management outside of delivery impact",
+                  "Non-logistics related customer service issues"
+                ]
+              },
+              "ctq_list": [
+                {
+                  "name": "On-Time Delivery Rate",
+                  "description": "The percentage of shipments delivered to the customer on or before the scheduled delivery date.",
+                  "metric": "Number of on-time deliveries",
+                  "unit": "%"
+                },
+                {
+                  "name": "Average Delay Duration",
+                  "description": "The average number of days that shipments are delayed beyond the scheduled delivery date.",
+                  "metric": "Average delay in days",
+                  "unit": "days"
+                },
+                {
+                  "name": "Customer Satisfaction Score",
+                  "description": "A measure of customer satisfaction regarding the timeliness of delivery.",
+                  "metric": "Customer satisfaction rating",
+                  "unit": "scale (1-10)"
+                }
+              ],
+              "y_variable": "On-Time Delivery Rate",
+              "x_categories": {
+                "Man": [
+                  "Training for logistics and delivery personnel",
+                  "Staffing levels in the supply chain department"
+                ],
+                "Machine": [
+                  "Condition of delivery vehicles",
+                  "Tracking systems for shipments"
+                ],
+                "Method": [
+                  "Scheduling and routing procedures",
+                  "Standard operating procedures for order processing"
+                ],
+                "Material": [
+                  "Quality and reliability of packaging materials",
+                  "Availability of inventory for timely shipments"
+                ],
+                "Measurement": [
+                  "Tracking of delivery times and delays",
+                  "Customer feedback mechanisms"
+                ],
+                "Environment": [
+                  "Traffic conditions in Jakarta",
+                  "Weather-related disruptions"
+                ]
+              },
+              "sipoc": {
+                "Suppliers": [
+                  "Raw material suppliers",
+                  "Logistics partners"
+                ],
+                "Inputs": [
+                  "Orders from customers",
+                  "Inventory",
+                  "Delivery schedules"
+                ],
+                "Process": [
+                  "Order processing",
+                  "Logistics planning",
+                  "Delivery execution"
+                ],
+                "Outputs": [
+                  "Delivered products to customers"
+                ],
+                "Customers": [
+                  "End customers",
+                  "Retailers"
+                ]
+              },
+              "early_measure_plan": {
+                "measures": [
+                  "Monitor on-time delivery rates weekly",
+                  "Track average delay durations bi-weekly",
+                  "Conduct customer satisfaction surveys monthly"
+                ],
+                "responsible": "Supply Chain Management Team"
+              },
+              "risk_level": "Medium",
+              "project_type": "Process Improvement"
+            },
+            "insight_md": "",
+            "summary_md": "## DEFINE PHASE SUMMARY — proj_003_ Late_delivery\n\n### Problem Statement\nIt's been more than 3 times that shipments to customer AAJ in Jakarta are consistently late, averaging 5-6 days beyond the scheduled delivery date.\n\n### Goal Statement\nAchieve 100% on-time delivery with no late shipments.\n\n### Business Case\nImproving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to higher profitability.\n\n### Scope\n- In Scope: Supply chain operations, Logistics and delivery processes, Scheduling and tracking improvements, Training for staff involved in delivery, Production processes related to delivery schedules\n- Out of Scope: Supplier management outside of delivery impact, Non-logistics related customer service issues\n\n### CTQs\n- **On-Time Delivery Rate**(Number of on-time deliveries %) — The percentage of shipments delivered to the customer on or before the scheduled delivery date.\n- **Average Delay Duration**(Average delay in days days) — The average number of days that shipments are delayed beyond the scheduled delivery date.\n- **Customer Satisfaction Score**(Customer satisfaction rating scale (1-10)) — A measure of customer satisfaction regarding the timeliness of delivery.\n",
+            "problem_text": "Shipments to customer AAJ in Jakarta have been consistently late, averaging 5-6 days beyond the scheduled delivery date, occurring more than three times.",
+            "goal_statement": "Achieve 100% on-time delivery with no late shipments by the end of Q2 2026.",
+            "business_case": "Improving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to an estimated 15% increase in profitability.",
+            "project_scope": {
+              "in_scope": [
+                "Supply chain operations",
+                "Logistics and delivery processes",
+                "Scheduling and tracking improvements",
+                "Training for staff involved in delivery",
+                "Production processes related to delivery schedules"
+              ],
+              "out_of_scope": [
+                "Supplier management outside of delivery impact, specifically contract negotiations and supplier selection",
+                "Non-logistics related customer service issues such as product quality complaints"
+              ]
+            },
+            "ctq_list": [
+              {
+                "name": "On-Time Delivery Rate",
+                "description": "The percentage of shipments delivered to the customer on or before the scheduled delivery date.",
+                "metric": "Number of on-time deliveries",
+                "unit": "%",
+                "baseline": "Current rate is 70%"
+              },
+              {
+                "name": "Average Delay Duration",
+                "description": "The average number of days that shipments are delayed beyond the scheduled delivery date.",
+                "metric": "Average delay in days",
+                "unit": "days",
+                "baseline": "Current average delay is 5 days"
+              },
+              {
+                "name": "Customer Satisfaction Score",
+                "description": "A measure of customer satisfaction regarding the timeliness of delivery.",
+                "metric": "Customer satisfaction rating",
+                "unit": "scale (1-10)",
+                "baseline": "Current score is 6"
+              }
+            ],
+            "early_measure_plan": {
+              "measures": [
+                "Monitor on-time delivery rates weekly with a target of 85% by the end of Q1 2026",
+                "Track average delay durations bi-weekly aiming to reduce to 3 days by Q2 2026",
+                "Conduct customer satisfaction surveys monthly with a goal to increase the score to 8 by Q2 2026"
+              ],
+              "responsible": "Supply Chain Management Team"
+            },
+            "risk_level": "Medium - Risks include potential disruptions from traffic conditions and weather-related issues in Jakarta, as well as internal process inefficiencies."
+          }
+        ]
+      },
+      "decision_trace": {
+        "primary_ctq": "A/R Overdue Percentage",
+        "secondary_ctqs": [
+          "Days Sales Outstanding (DSO)",
+          "Blocked Orders Due to Overdue A/R"
+        ],
+        "y_variable": "A/R Overdue Percentage",
+        "x_categories": {
+          "Man": [
+            "Training for accounts receivable team on collection strategies",
+            "Staffing levels in the finance department"
+          ],
+          "Machine": [
+            "Accounts receivable management software",
+            "Automated reminders for overdue payments"
+          ],
+          "Method": [
+            "Credit policies and terms for PT Smart",
+            "Collection process standard operating procedures"
+          ],
+          "Material": [
+            "Quality of customer credit evaluations",
+            "Documentation for credit terms and agreements"
+          ],
+          "Measurement": [
+            "Regular monitoring of A/R overdue percentages",
+            "Tracking of DSO and blocked orders"
+          ],
+          "Environment": [
+            "Economic conditions affecting customer payments",
+            "Market trends impacting cash flow"
+          ]
+        },
+        "project_scope": {
+          "in_scope": [
+            "Accounts receivable processes",
+            "Credit policy review and adjustments",
+            "Training and development for finance team",
+            "DN and GI process by logistics team"
+          ],
+          "out_of_scope": [
+            "Non-financial customer service issues",
+            "Supplier management outside of A/R impact"
+          ]
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      }
+    },
+    {
+      "schema_version": "v1.0",
+      "phase": "define",
+      "status": "final",
+      "created_at": "2025-12-18T12:34:05.839214+00:00",
+      "updated_at": "2025-12-18T12:34:20.352114+00:00",
+      "project_id": "project_001",
+      "inputs": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      },
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Cost",
+        "process_area": "Supply Chain"
+      },
+      "outputs": {
+        "problem_statement": "A/R is part of cashflow performance. In 2016, 36.20% of total A/R overdue in ID03 was triggered by PT Smart, so we will focus on this customer for this project. High A/R overdue shows that a company is selling its product to customers on credit and taking longer to collect money. It means the company has less readily available cash to finance operations. In addition, high A/R overdue will block orders, and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_statement": "Reduce monthly overdue A/R for PT Smart to 11% by the end of Nov 2017.",
+        "business_case": "Reducing the overdue A/R percentage for PT Smart will improve cash flow, reduce blocked orders, and enhance operational efficiency, ultimately reducing costs and improving financial performance.",
+        "project_scope": {
+          "in_scope": [
+            "Accounts receivable processes",
+            "Credit policy review and adjustments",
+            "Training and development for the finance team",
+            "DN and GI process by the logistics team"
+          ],
+          "out_of_scope": [
+            "Non-financial customer service issues",
+            "Supplier management outside of A/R impact"
+          ]
+        },
+        "ctq_list": [
+          {
+            "name": "A/R Overdue Percentage",
+            "description": "The percentage of total accounts receivable that is overdue for PT Smart.",
+            "metric": "Percentage",
+            "unit": "%"
+          },
+          {
+            "name": "Days Sales Outstanding (DSO)",
+            "description": "The average number of days it takes PT Smart to pay its invoices.",
+            "metric": "Days",
+            "unit": "days"
+          },
+          {
+            "name": "Blocked Orders Due to Overdue A/R",
+            "description": "The number of orders blocked because PT Smart has overdue accounts receivable.",
+            "metric": "Count",
+            "unit": "orders"
+          }
+        ],
+        "y_variable": "A/R Overdue Percentage",
+        "x_categories": {
+          "Man": [
+            "Training for accounts receivable team on collection strategies",
+            "Staffing levels in the finance department"
+          ],
+          "Machine": [
+            "Accounts receivable management software",
+            "Automated reminders for overdue payments"
+          ],
+          "Method": [
+            "Credit policies and terms for PT Smart",
+            "Collection process standard operating procedures"
+          ],
+          "Material": [
+            "Quality of customer credit evaluations",
+            "Documentation for credit terms and agreements"
+          ],
+          "Measurement": [
+            "Regular monitoring of A/R overdue percentages",
+            "Tracking of DSO and blocked orders"
+          ],
+          "Environment": [
+            "Economic conditions affecting customer payments",
+            "Market trends impacting cash flow"
+          ]
+        },
+        "sipoc": {
+          "Suppliers": [
+            "Customer credit evaluation agencies",
+            "Financial software providers"
+          ],
+          "Inputs": [
+            "Customer credit evaluations",
+            "Accounts receivable data",
+            "Credit policies"
+          ],
+          "Process": [
+            "Credit approval process",
+            "Invoice generation and tracking",
+            "Payment collection"
+          ],
+          "Outputs": [
+            "Reduced A/R overdue percentage",
+            "Improved cash flow"
+          ],
+          "Customers": [
+            "Finance department",
+            "Operations team"
+          ]
+        },
+        "early_measure_plan": {
+          "measures": [
+            "Monitor A/R overdue percentage monthly",
+            "Track DSO and blocked orders bi-weekly",
+            "Review credit policies quarterly"
+          ],
+          "responsible": "Finance Management Team"
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      },
+      "insight_md": "- The primary CTQ, \"A/R Overdue Percentage,\" is selected due to its direct impact on cash flow and operational efficiency, aligning with the project's goal to reduce overdue A/R for PT Smart.\n- The scope is focused on accounts receivable processes and credit policy adjustments, ensuring a targeted approach to address the high A/R overdue issue.\n- Key risks include potential resistance to process changes and economic conditions affecting customer payments; assumptions include the availability of accurate A/R data and effective training for the finance team.\n- Past successful audits in similar contexts highlight the importance of robust credit evaluation and consistent monitoring of overdue percentages.\n- Leverage automated reminders and management software to streamline the collection process, as evidenced by previous projects.\n- Next steps for Measure: \n  1. Collect and analyze baseline data on A/R overdue percentages and DSO for PT Smart.\n  2. Develop a detailed data collection plan ensuring accuracy and consistency in tracking overdue payments and blocked orders.\n  3. Engage with the finance team to validate data sources and ensure alignment on measurement criteria.\n",
+      "summary_md": null,
+      "perception_trace": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue",
+        "ctq_voc_info": {
+          "candidate_ctqs": [],
+          "voc_clusters": [],
+          "raw_llm_output": "```json\n{\n  \"candidate_ctqs\": [\n    {\n      \"name\": \"A/R Overdue Percentage\",\n      \"description\": \"The percentage of total accounts receivable that is overdue for PT Smart.\",\n      \"metric\": \"Percentage\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Collection Time\",\n      \"description\": \"The average time taken to collect overdue payments from PT Smart.\",\n      \"metric\": \"Time\",\n      \"unit\": \"Days\"\n    },\n    {\n      \"name\": \"Blocked Orders\",\n      \"description\": \"The number of orders blocked due to overdue payments from PT Smart.\",\n      \"metric\": \"Count\",\n      \"unit\": \"Orders\"\n    }\n  ],\n  \"voc_clusters\": [\n    {\n      \"theme\": \"Cash Flow Impact\",\n      \"items\": [\n        \"High A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money.\",\n        \"It means company has less readily available cash to finance our operation.\"\n      ]\n    },\n    {\n      \"theme\": \"Operational Disruption\",\n      \"items\": [\n        \"High A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.\"\n      ]\n    }\n  ]\n}\n```"
+        },
+        "baseline_summary": {},
+        "similar_audit_episodes": [
+          {
+            "timestamp": "2025-12-18T18:57:34.600557",
+            "project_id": "project_001",
+            "phase": "Define",
+            "status": "success",
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Cost",
+              "process_area": "Supply Chain",
+              "project_type": null
+            }
+          },
+          {
+            "timestamp": "2025-12-18T19:33:33.369199",
+            "project_id": "project_001",
+            "phase": "Define",
+            "status": "started",
+            "meta": {
+              "project_name": "project_001",
+              "industry": "Manufacturing",
+              "process_area": "Supply Chain",
+              "pain_theme": "Cost",
+              "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+              "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+              "voc_list": [],
+              "key_issue": "A/R Overdue"
+            }
+          },
+          {
+            "timestamp": "2025-12-18T18:56:03.626515",
+            "project_id": "project_001",
+            "phase": "Define",
+            "status": "started",
+            "meta": {
+              "project_name": "project_001",
+              "industry": "Manufacturing",
+              "process_area": "Supply Chain",
+              "pain_theme": "Cost",
+              "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+              "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+              "voc_list": [],
+              "key_issue": "A/R Overdue"
+            }
+          }
+        ],
+        "similar_memory_episodes": [
+          {
+            "schema_version": "1.0",
+            "phase": "define",
+            "status": "final",
+            "created_at": "2025-12-17T08:39:41.777019+00:00",
+            "updated_at": "2025-12-17T08:53:35.992715+00:00",
+            "project_id": "Increase_Throughput_Line_1",
+            "inputs": {
+              "project_name": "Increase Throughput Line 1",
+              "industry": "Manufacturing",
+              "process_area": "Production",
+              "pain_theme": "Cost",
+              "problem_text": "throughput line 1 was cutrrently 5 ton/hour in jan - auguts 2025, while target is 7 ton/h with installed capacity 10 ton/h, this create cost pe rton product higher due to lower output",
+              "goal_text": "increase throughput from 5 ton/hour into 7 ton/hour",
+              "voc_list": [
+                "low cost per ton"
+              ],
+              "key_issue": ""
+            },
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Cost",
+              "process_area": "Production"
+            },
+            "outputs": {
+              "schema_version": "1.0",
+              "project_id": "Increase_Throughput_Line_1",
+              "project_name": "Increase Throughput Line 1",
+              "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+              "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+              "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+              "project_scope": {
+                "in_scope": [
+                  "Throughput line operations",
+                  "Training programs for operators",
+                  "Monitoring and maintenance of production equipment"
+                ],
+                "out_of_scope": [
+                  "Other production lines not related to throughput line 1",
+                  "Non-production related issues",
+                  "Supplier management outside of material quality"
+                ]
+              },
+              "ctq_list": [
+                {
+                  "name": "Throughput Rate",
+                  "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 ton/hour.",
+                  "metric": "Tons per hour",
+                  "unit": "ton/h"
+                },
+                {
+                  "name": "Cost per Ton",
+                  "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+                  "metric": "Cost per ton",
+                  "unit": "currency/ton"
+                },
+                {
+                  "name": "Installed Capacity Utilization",
+                  "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+                  "metric": "Utilization Rate",
+                  "unit": "%"
+                }
+              ],
+              "y_variable": "Throughput Rate",
+              "x_categories": {
+                "Man": [
+                  "Operator training on production processes",
+                  "Staffing levels on throughput line"
+                ],
+                "Machine": [
+                  "Condition and maintenance of production equipment",
+                  "Calibration of machinery for optimal performance"
+                ],
+                "Method": [
+                  "Production process standard operating procedures",
+                  "Efficiency of workflow and task allocation"
+                ],
+                "Material": [
+                  "Quality of raw materials used in production",
+                  "Supplier consistency and reliability"
+                ],
+                "Measurement": [
+                  "Monitoring throughput rates regularly",
+                  "Data collection methods for production output"
+                ],
+                "Environment": [
+                  "Production area layout and ergonomics",
+                  "Temperature and humidity control in the production area"
+                ]
+              },
+              "sipoc": {
+                "Suppliers": [
+                  "Raw material suppliers",
+                  "Equipment manufacturers"
+                ],
+                "Inputs": [
+                  "Raw materials",
+                  "Production equipment",
+                  "Operator training"
+                ],
+                "Process": [
+                  "Production process",
+                  "Quality control checks"
+                ],
+                "Outputs": [
+                  "Finished products"
+                ],
+                "Customers": [
+                  "End customers",
+                  "Distributors"
+                ]
+              },
+              "early_measure_plan": {
+                "measures": [
+                  "Monitor throughput rates weekly",
+                  "Track cost per ton bi-weekly",
+                  "Conduct regular maintenance checks on production equipment"
+                ],
+                "responsible": "Production Management Team"
+              },
+              "risk_level": "Medium",
+              "project_type": "Process Improvement"
+            },
+            "insight_md": "",
+            "summary_md": "## DEFINE PHASE SUMMARY — Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 tons/hour to 7 tons/hour.\n\n### Business Case\nAchieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.\n\n### Scope\n- In Scope: Throughput line operations, Training programs for operators, Monitoring and maintenance of production equipment\n- Out of Scope: Other production lines not related to throughput line 1, Non-production related issues, Supplier management outside of material quality\n\n### CTQs\n- Throughput Rate: The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.\n- Cost per Ton: The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.\n- Installed Capacity Utilization: The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+            "project_name": "Increase Throughput Line 1",
+            "problem_statement": "Throughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.",
+            "goal_statement": "Increase throughput from 5 tons/hour to 7 tons/hour.",
+            "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+            "project_scope": {
+              "in_scope": [
+                "Throughput line operations",
+                "Training programs for operators",
+                "Monitoring and maintenance of production equipment"
+              ],
+              "out_of_scope": [
+                "Other production lines not related to throughput line 1",
+                "Non-production related issues",
+                "Supplier management outside of material quality"
+              ]
+            },
+            "ctq_list": [
+              {
+                "name": "Throughput Rate",
+                "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.",
+                "metric": "Tons per hour",
+                "unit": "tons/hour"
+              },
+              {
+                "name": "Cost per Ton",
+                "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+                "metric": "Cost per ton",
+                "unit": "currency/ton"
+              },
+              {
+                "name": "Installed Capacity Utilization",
+                "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+                "metric": "Utilization Rate",
+                "unit": "%"
+              }
+            ],
+            "y_variable": "Throughput Rate",
+            "x_categories": {
+              "Man": [
+                "Operator training on production processes",
+                "Staffing levels on throughput line"
+              ],
+              "Machine": [
+                "Condition and maintenance of production equipment",
+                "Calibration of machinery for optimal performance"
+              ],
+              "Method": [
+                "Production process standard operating procedures",
+                "Efficiency of workflow and task allocation"
+              ],
+              "Material": [
+                "Quality of raw materials used in production",
+                "Supplier consistency and reliability"
+              ],
+              "Measurement": [
+                "Monitoring throughput rates regularly",
+                "Data collection methods for production output"
+              ],
+              "Environment": [
+                "Production area layout and ergonomics",
+                "Temperature and humidity control in the production area"
+              ]
+            },
+            "sipoc": {
+              "Suppliers": [
+                "Raw material suppliers",
+                "Equipment manufacturers"
+              ],
+              "Inputs": [
+                "Raw materials",
+                "Production equipment",
+                "Operator training"
+              ],
+              "Process": [
+                "Production process",
+                "Quality control checks"
+              ],
+              "Outputs": [
+                "Finished products"
+              ],
+              "Customers": [
+                "End customers",
+                "Distributors"
+              ]
+            },
+            "early_measure_plan": {
+              "measures": [
+                "Monitor throughput rates weekly",
+                "Track cost per ton bi-weekly",
+                "Conduct regular maintenance checks on production equipment"
+              ],
+              "responsible": "Production Management Team"
+            },
+            "risk_level": "Medium",
+            "project_type": "Process Improvement"
+          },
+          {
+            "schema_version": "v1.0",
+            "phase": "define",
+            "status": "final",
+            "created_at": "2025-12-17T15:44:48.577644+00:00",
+            "updated_at": "2025-12-17T15:45:41.922799+00:00",
+            "project_id": "project_002",
+            "inputs": {
+              "project_name": "Increase Throughput Line 1",
+              "industry": "Manufacturing",
+              "process_area": "Production",
+              "pain_theme": "Cost",
+              "problem_text": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+              "goal_text": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+              "voc_list": [
+                "low cost per ton"
+              ],
+              "key_issue": "Insufficient throughput leading to increased production costs."
+            },
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Cost",
+              "process_area": "Production"
+            },
+            "outputs": {
+              "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+              "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+              "business_case": "Increasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.",
+              "project_scope": {
+                "in_scope": [
+                  "Line 1 production operations",
+                  "Operator training programs",
+                  "Maintenance and calibration of production equipment",
+                  "Quality control measures during production"
+                ],
+                "out_of_scope": [
+                  "Other production lines",
+                  "Non-production related issues",
+                  "Supplier management outside of raw material quality"
+                ]
+              },
+              "ctq_list": [
+                {
+                  "name": "Throughput Rate",
+                  "description": "The rate at which the production line processes material, aiming for a target of 7 ton/hour.",
+                  "metric": "Tons per hour",
+                  "unit": "ton/h"
+                },
+                {
+                  "name": "Cost per Ton",
+                  "description": "The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.",
+                  "metric": "Cost",
+                  "unit": "currency/ton"
+                },
+                {
+                  "name": "Installed Capacity Utilization",
+                  "description": "The percentage of the installed capacity that is being used for production, aiming for optimal utilization.",
+                  "metric": "Utilization Rate",
+                  "unit": "%"
+                }
+              ],
+              "y_variable": "Throughput Rate",
+              "x_categories": {
+                "Man": [
+                  "Operator training on production processes",
+                  "Staffing levels on line 1"
+                ],
+                "Machine": [
+                  "Condition of production equipment",
+                  "Maintenance schedules for machinery",
+                  "Calibration of production equipment"
+                ],
+                "Method": [
+                  "Production process standard operating procedures",
+                  "Quality control measures during production"
+                ],
+                "Material": [
+                  "Quality of raw materials used in production",
+                  "Supplier consistency and reliability"
+                ],
+                "Measurement": [
+                  "Monitoring throughput rates regularly",
+                  "Tracking production efficiency metrics"
+                ],
+                "Environment": [
+                  "Production area layout and workflow",
+                  "Temperature and humidity control in production area"
+                ]
+              },
+              "sipoc": {
+                "Suppliers": [
+                  "Raw material suppliers",
+                  "Equipment manufacturers"
+                ],
+                "Inputs": [
+                  "Raw materials",
+                  "Production equipment",
+                  "Operator training"
+                ],
+                "Process": [
+                  "Production process",
+                  "Quality control checks"
+                ],
+                "Outputs": [
+                  "Finished products"
+                ],
+                "Customers": [
+                  "End customers",
+                  "Distributors"
+                ]
+              },
+              "early_measure_plan": {
+                "measures": [
+                  "Monitor throughput rates weekly with a target of 7 ton/hour",
+                  "Track cost per ton bi-weekly with a target reduction of 10%",
+                  "Conduct regular inspections of production equipment"
+                ],
+                "responsible": "Production Management Team"
+              },
+              "risk_level": "Medium",
+              "project_type": "Process Improvement using Lean methodologies"
+            },
+            "insight_md": "",
+            "summary_md": "## DEFINE PHASE SUMMARY — Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 ton/hour to 7 ton/hour.\n\n### Business Case\nIncreasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.\n\n### Scope\n- In Scope: Line 1 production operations, Operator training programs, Maintenance and calibration of production equipment, Quality control measures during production\n- Out of Scope: Other production lines, Non-production related issues, Supplier management outside of raw material quality\n\n### CTQs\n- **Throughput Rate**(Tons per hour ton/h) — The rate at which the production line processes material, aiming for a target of 7 ton/hour.\n- **Cost per Ton**(Cost currency/ton) — The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.\n- **Installed Capacity Utilization**(Utilization Rate %) — The percentage of the installed capacity that is being used for production, aiming for optimal utilization.\n"
+          },
+          {
+            "schema_version": "v1.0",
+            "phase": "define",
+            "status": "final",
+            "created_at": "2025-12-18T11:56:37.730089+00:00",
+            "updated_at": "2025-12-18T11:57:34.587414+00:00",
+            "project_id": "project_001",
+            "inputs": {
+              "project_name": "project_001",
+              "industry": "Manufacturing",
+              "process_area": "Supply Chain",
+              "pain_theme": "Cost",
+              "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+              "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+              "voc_list": [],
+              "key_issue": "A/R Overdue"
+            },
+            "meta": {
+              "industry": "Manufacturing",
+              "pain_theme": "Cost",
+              "process_area": "Supply Chain"
+            },
+            "outputs": {
+              "llm_raw": null
+            },
+            "insight_md": "- **Justification for CTQ/Y/Scope:**\n  - The primary CTQ, \"A/R Overdue Percentage,\" directly impacts cash flow and operational efficiency, making it crucial for project focus.\n  - Focusing on PT Smart, which accounts for 36.20% of overdue A/R, aligns with the goal to improve cash flow performance significantly.\n  - The project scope includes critical areas like accounts receivable processes and credit policy reviews, ensuring comprehensive coverage of factors affecting A/R overdue.\n\n- **Key Risks/Assumptions:**\n  - Assumes that changes in credit policies and collection strategies will significantly reduce overdue A/R.\n  - Economic conditions could impact customer payment behavior, posing a risk to achieving the desired A/R overdue reduction.\n  - Assumes that the finance team will effectively implement new training and strategies to improve collection rates.\n\n- **Learning from Similar Past Episodes/Audit:**\n  - Previous projects highlighted the importance of targeted training for the finance team in reducing A/R overdue percentages.\n  - Past audits indicated that automated reminders and improved credit evaluations can significantly impact overdue reduction.\n\n- **Actionable Next Steps for Measure:**\n  - Collect and analyze historical data on A/R overdue percentages and DSO for PT Smart to establish a baseline.\n  - Implement tracking mechanisms for blocked orders due to overdue A/R to identify patterns and root causes.\n  - Engage with the finance team to review and refine data collection methods, ensuring accuracy and consistency in measurement.\n",
+            "summary_md": null,
+            "perception_trace": {
+              "project_name": "project_001",
+              "industry": "Manufacturing",
+              "process_area": "Supply Chain",
+              "pain_theme": "Cost",
+              "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+              "voc_list": [],
+              "key_issue": "A/R Overdue",
+              "ctq_voc_info": {
+                "candidate_ctqs": [],
+                "voc_clusters": [],
+                "raw_llm_output": "```json\n{\n  \"candidate_ctqs\": [\n    {\n      \"name\": \"A/R Overdue Percentage\",\n      \"description\": \"The percentage of accounts receivable that are overdue for PT Smart.\",\n      \"metric\": \"Percentage\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Days Sales Outstanding (DSO)\",\n      \"description\": \"The average number of days it takes PT Smart to pay its invoices.\",\n      \"metric\": \"Days\",\n      \"unit\": \"days\"\n    },\n    {\n      \"name\": \"Blocked Orders Due to Overdue A/R\",\n      \"description\": \"The number of orders blocked because PT Smart has overdue accounts receivable.\",\n      \"metric\": \"Count\",\n      \"unit\": \"orders\"\n    }\n  ],\n  \"voc_clusters\": [\n    {\n      \"theme\": \"Cash Flow Impact\",\n      \"items\": [\n        \"High A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money.\",\n        \"It means company has less readily available cash to finance our operation.\"\n      ]\n    },\n    {\n      \"theme\": \"Operational Disruptions\",\n      \"items\": [\n        \"High A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.\"\n      ]\n    }\n  ]\n}\n```"
+              },
+              "baseline_summary": {},
+              "similar_audit_episodes": [
+                {
+                  "timestamp": "2025-12-18T18:56:03.626515",
+                  "project_id": "project_001",
+                  "phase": "Define",
+                  "status": "started",
+                  "meta": {
+                    "project_name": "project_001",
+                    "industry": "Manufacturing",
+                    "process_area": "Supply Chain",
+                    "pain_theme": "Cost",
+                    "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+                    "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+                    "voc_list": [],
+                    "key_issue": "A/R Overdue"
+                  }
+                },
+                {
+                  "timestamp": "2025-12-18T18:56:02.083880",
+                  "project_id": "project_001",
+                  "phase": "Define",
+                  "status": "started",
+                  "meta": {
+                    "project_name": "project_001",
+                    "industry": "Manufacturing",
+                    "process_area": "Supply Chain",
+                    "pain_theme": "Cost",
+                    "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+                    "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+                    "voc_list": [],
+                    "key_issue": "A/R Overdue"
+                  }
+                },
+                {
+                  "timestamp": "2025-12-18T18:55:57.091420",
+                  "project_id": "project_001",
+                  "phase": "Define",
+                  "status": "started",
+                  "meta": {
+                    "project_name": "project_001",
+                    "industry": "Manufacturing",
+                    "process_area": "Supply Chain",
+                    "pain_theme": "Cost",
+                    "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+                    "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+                    "voc_list": [],
+                    "key_issue": "A/R Overdue"
+                  }
+                }
+              ],
+              "similar_memory_episodes": [
+                {
+                  "schema_version": "1.0",
+                  "phase": "define",
+                  "status": "final",
+                  "created_at": "2025-12-17T08:39:41.777019+00:00",
+                  "updated_at": "2025-12-17T08:53:35.992715+00:00",
+                  "project_id": "Increase_Throughput_Line_1",
+                  "inputs": {
+                    "project_name": "Increase Throughput Line 1",
+                    "industry": "Manufacturing",
+                    "process_area": "Production",
+                    "pain_theme": "Cost",
+                    "problem_text": "throughput line 1 was cutrrently 5 ton/hour in jan - auguts 2025, while target is 7 ton/h with installed capacity 10 ton/h, this create cost pe rton product higher due to lower output",
+                    "goal_text": "increase throughput from 5 ton/hour into 7 ton/hour",
+                    "voc_list": [
+                      "low cost per ton"
+                    ],
+                    "key_issue": ""
+                  },
+                  "meta": {
+                    "industry": "Manufacturing",
+                    "pain_theme": "Cost",
+                    "process_area": "Production"
+                  },
+                  "outputs": {
+                    "schema_version": "1.0",
+                    "project_id": "Increase_Throughput_Line_1",
+                    "project_name": "Increase Throughput Line 1",
+                    "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+                    "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+                    "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+                    "project_scope": {
+                      "in_scope": [
+                        "Throughput line operations",
+                        "Training programs for operators",
+                        "Monitoring and maintenance of production equipment"
+                      ],
+                      "out_of_scope": [
+                        "Other production lines not related to throughput line 1",
+                        "Non-production related issues",
+                        "Supplier management outside of material quality"
+                      ]
+                    },
+                    "ctq_list": [
+                      {
+                        "name": "Throughput Rate",
+                        "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 ton/hour.",
+                        "metric": "Tons per hour",
+                        "unit": "ton/h"
+                      },
+                      {
+                        "name": "Cost per Ton",
+                        "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+                        "metric": "Cost per ton",
+                        "unit": "currency/ton"
+                      },
+                      {
+                        "name": "Installed Capacity Utilization",
+                        "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+                        "metric": "Utilization Rate",
+                        "unit": "%"
+                      }
+                    ],
+                    "y_variable": "Throughput Rate",
+                    "x_categories": {
+                      "Man": [
+                        "Operator training on production processes",
+                        "Staffing levels on throughput line"
+                      ],
+                      "Machine": [
+                        "Condition and maintenance of production equipment",
+                        "Calibration of machinery for optimal performance"
+                      ],
+                      "Method": [
+                        "Production process standard operating procedures",
+                        "Efficiency of workflow and task allocation"
+                      ],
+                      "Material": [
+                        "Quality of raw materials used in production",
+                        "Supplier consistency and reliability"
+                      ],
+                      "Measurement": [
+                        "Monitoring throughput rates regularly",
+                        "Data collection methods for production output"
+                      ],
+                      "Environment": [
+                        "Production area layout and ergonomics",
+                        "Temperature and humidity control in the production area"
+                      ]
+                    },
+                    "sipoc": {
+                      "Suppliers": [
+                        "Raw material suppliers",
+                        "Equipment manufacturers"
+                      ],
+                      "Inputs": [
+                        "Raw materials",
+                        "Production equipment",
+                        "Operator training"
+                      ],
+                      "Process": [
+                        "Production process",
+                        "Quality control checks"
+                      ],
+                      "Outputs": [
+                        "Finished products"
+                      ],
+                      "Customers": [
+                        "End customers",
+                        "Distributors"
+                      ]
+                    },
+                    "early_measure_plan": {
+                      "measures": [
+                        "Monitor throughput rates weekly",
+                        "Track cost per ton bi-weekly",
+                        "Conduct regular maintenance checks on production equipment"
+                      ],
+                      "responsible": "Production Management Team"
+                    },
+                    "risk_level": "Medium",
+                    "project_type": "Process Improvement"
+                  },
+                  "insight_md": "",
+                  "summary_md": "## DEFINE PHASE SUMMARY — Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 tons/hour to 7 tons/hour.\n\n### Business Case\nAchieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.\n\n### Scope\n- In Scope: Throughput line operations, Training programs for operators, Monitoring and maintenance of production equipment\n- Out of Scope: Other production lines not related to throughput line 1, Non-production related issues, Supplier management outside of material quality\n\n### CTQs\n- Throughput Rate: The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.\n- Cost per Ton: The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.\n- Installed Capacity Utilization: The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+                  "project_name": "Increase Throughput Line 1",
+                  "problem_statement": "Throughput line 1 was currently 5 tons/hour from January to August 2025, while the target is 7 tons/hour with an installed capacity of 10 tons/hour. This creates a higher cost per ton of product due to lower output.",
+                  "goal_statement": "Increase throughput from 5 tons/hour to 7 tons/hour.",
+                  "business_case": "Achieving the target throughput will reduce the cost per ton of product, enhancing profitability and operational efficiency.",
+                  "project_scope": {
+                    "in_scope": [
+                      "Throughput line operations",
+                      "Training programs for operators",
+                      "Monitoring and maintenance of production equipment"
+                    ],
+                    "out_of_scope": [
+                      "Other production lines not related to throughput line 1",
+                      "Non-production related issues",
+                      "Supplier management outside of material quality"
+                    ]
+                  },
+                  "ctq_list": [
+                    {
+                      "name": "Throughput Rate",
+                      "description": "The amount of product produced per hour on the throughput line, aiming for a target of 7 tons/hour.",
+                      "metric": "Tons per hour",
+                      "unit": "tons/hour"
+                    },
+                    {
+                      "name": "Cost per Ton",
+                      "description": "The total cost incurred to produce one ton of product, aiming to reduce costs through increased throughput.",
+                      "metric": "Cost per ton",
+                      "unit": "currency/ton"
+                    },
+                    {
+                      "name": "Installed Capacity Utilization",
+                      "description": "The percentage of the installed capacity that is being utilized for production, aiming for optimal utilization.",
+                      "metric": "Utilization Rate",
+                      "unit": "%"
+                    }
+                  ],
+                  "y_variable": "Throughput Rate",
+                  "x_categories": {
+                    "Man": [
+                      "Operator training on production processes",
+                      "Staffing levels on throughput line"
+                    ],
+                    "Machine": [
+                      "Condition and maintenance of production equipment",
+                      "Calibration of machinery for optimal performance"
+                    ],
+                    "Method": [
+                      "Production process standard operating procedures",
+                      "Efficiency of workflow and task allocation"
+                    ],
+                    "Material": [
+                      "Quality of raw materials used in production",
+                      "Supplier consistency and reliability"
+                    ],
+                    "Measurement": [
+                      "Monitoring throughput rates regularly",
+                      "Data collection methods for production output"
+                    ],
+                    "Environment": [
+                      "Production area layout and ergonomics",
+                      "Temperature and humidity control in the production area"
+                    ]
+                  },
+                  "sipoc": {
+                    "Suppliers": [
+                      "Raw material suppliers",
+                      "Equipment manufacturers"
+                    ],
+                    "Inputs": [
+                      "Raw materials",
+                      "Production equipment",
+                      "Operator training"
+                    ],
+                    "Process": [
+                      "Production process",
+                      "Quality control checks"
+                    ],
+                    "Outputs": [
+                      "Finished products"
+                    ],
+                    "Customers": [
+                      "End customers",
+                      "Distributors"
+                    ]
+                  },
+                  "early_measure_plan": {
+                    "measures": [
+                      "Monitor throughput rates weekly",
+                      "Track cost per ton bi-weekly",
+                      "Conduct regular maintenance checks on production equipment"
+                    ],
+                    "responsible": "Production Management Team"
+                  },
+                  "risk_level": "Medium",
+                  "project_type": "Process Improvement"
+                },
+                {
+                  "schema_version": "v1.0",
+                  "phase": "define",
+                  "status": "final",
+                  "created_at": "2025-12-17T15:44:48.577644+00:00",
+                  "updated_at": "2025-12-17T15:45:41.922799+00:00",
+                  "project_id": "project_002",
+                  "inputs": {
+                    "project_name": "Increase Throughput Line 1",
+                    "industry": "Manufacturing",
+                    "process_area": "Production",
+                    "pain_theme": "Cost",
+                    "problem_text": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+                    "goal_text": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+                    "voc_list": [
+                      "low cost per ton"
+                    ],
+                    "key_issue": "Insufficient throughput leading to increased production costs."
+                  },
+                  "meta": {
+                    "industry": "Manufacturing",
+                    "pain_theme": "Cost",
+                    "process_area": "Production"
+                  },
+                  "outputs": {
+                    "problem_statement": "Throughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.",
+                    "goal_statement": "Increase throughput from 5 ton/hour to 7 ton/hour.",
+                    "business_case": "Increasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.",
+                    "project_scope": {
+                      "in_scope": [
+                        "Line 1 production operations",
+                        "Operator training programs",
+                        "Maintenance and calibration of production equipment",
+                        "Quality control measures during production"
+                      ],
+                      "out_of_scope": [
+                        "Other production lines",
+                        "Non-production related issues",
+                        "Supplier management outside of raw material quality"
+                      ]
+                    },
+                    "ctq_list": [
+                      {
+                        "name": "Throughput Rate",
+                        "description": "The rate at which the production line processes material, aiming for a target of 7 ton/hour.",
+                        "metric": "Tons per hour",
+                        "unit": "ton/h"
+                      },
+                      {
+                        "name": "Cost per Ton",
+                        "description": "The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.",
+                        "metric": "Cost",
+                        "unit": "currency/ton"
+                      },
+                      {
+                        "name": "Installed Capacity Utilization",
+                        "description": "The percentage of the installed capacity that is being used for production, aiming for optimal utilization.",
+                        "metric": "Utilization Rate",
+                        "unit": "%"
+                      }
+                    ],
+                    "y_variable": "Throughput Rate",
+                    "x_categories": {
+                      "Man": [
+                        "Operator training on production processes",
+                        "Staffing levels on line 1"
+                      ],
+                      "Machine": [
+                        "Condition of production equipment",
+                        "Maintenance schedules for machinery",
+                        "Calibration of production equipment"
+                      ],
+                      "Method": [
+                        "Production process standard operating procedures",
+                        "Quality control measures during production"
+                      ],
+                      "Material": [
+                        "Quality of raw materials used in production",
+                        "Supplier consistency and reliability"
+                      ],
+                      "Measurement": [
+                        "Monitoring throughput rates regularly",
+                        "Tracking production efficiency metrics"
+                      ],
+                      "Environment": [
+                        "Production area layout and workflow",
+                        "Temperature and humidity control in production area"
+                      ]
+                    },
+                    "sipoc": {
+                      "Suppliers": [
+                        "Raw material suppliers",
+                        "Equipment manufacturers"
+                      ],
+                      "Inputs": [
+                        "Raw materials",
+                        "Production equipment",
+                        "Operator training"
+                      ],
+                      "Process": [
+                        "Production process",
+                        "Quality control checks"
+                      ],
+                      "Outputs": [
+                        "Finished products"
+                      ],
+                      "Customers": [
+                        "End customers",
+                        "Distributors"
+                      ]
+                    },
+                    "early_measure_plan": {
+                      "measures": [
+                        "Monitor throughput rates weekly with a target of 7 ton/hour",
+                        "Track cost per ton bi-weekly with a target reduction of 10%",
+                        "Conduct regular inspections of production equipment"
+                      ],
+                      "responsible": "Production Management Team"
+                    },
+                    "risk_level": "Medium",
+                    "project_type": "Process Improvement using Lean methodologies"
+                  },
+                  "insight_md": "",
+                  "summary_md": "## DEFINE PHASE SUMMARY — Increase Throughput Line 1\n\n### Problem Statement\nThroughput line 1 was currently 5 ton/hour from January to August 2025, while the target is 7 ton/hour with an installed capacity of 10 ton/hour. This creates a higher cost per ton of product due to lower output.\n\n### Goal Statement\nIncrease throughput from 5 ton/hour to 7 ton/hour.\n\n### Business Case\nIncreasing throughput will lower the cost per ton of product, improving overall cost efficiency and profitability.\n\n### Scope\n- In Scope: Line 1 production operations, Operator training programs, Maintenance and calibration of production equipment, Quality control measures during production\n- Out of Scope: Other production lines, Non-production related issues, Supplier management outside of raw material quality\n\n### CTQs\n- **Throughput Rate**(Tons per hour ton/h) — The rate at which the production line processes material, aiming for a target of 7 ton/hour.\n- **Cost per Ton**(Cost currency/ton) — The total cost incurred to produce one ton of product, aiming to reduce this cost through increased throughput.\n- **Installed Capacity Utilization**(Utilization Rate %) — The percentage of the installed capacity that is being used for production, aiming for optimal utilization.\n"
+                },
+                {
+                  "schema_version": "v1.0",
+                  "phase": "define",
+                  "status": "final",
+                  "created_at": "2025-12-17T12:13:44.238408+00:00",
+                  "updated_at": "2025-12-17T12:14:47.686445+00:00",
+                  "project_id": "proj_003",
+                  "inputs": {
+                    "project_name": "proj_003_ Late_delivery",
+                    "industry": "Manufacturing",
+                    "process_area": "Supply Chain",
+                    "pain_theme": "Delivery",
+                    "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+                    "goal_text": "no more late delivery",
+                    "voc_list": [
+                      "on time delivery"
+                    ],
+                    "key_issue": ""
+                  },
+                  "meta": {
+                    "industry": "Manufacturing",
+                    "pain_theme": "Delivery",
+                    "process_area": "Supply Chain"
+                  },
+                  "outputs": {
+                    "problem_statement": "It's been more than 3 times that shipments to customer AAJ in Jakarta are consistently late, averaging 5-6 days beyond the scheduled delivery date.",
+                    "goal_statement": "Achieve 100% on-time delivery with no late shipments.",
+                    "business_case": "Improving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to higher profitability.",
+                    "project_scope": {
+                      "in_scope": [
+                        "Supply chain operations",
+                        "Logistics and delivery processes",
+                        "Scheduling and tracking improvements",
+                        "Training for staff involved in delivery",
+                        "Production processes related to delivery schedules"
+                      ],
+                      "out_of_scope": [
+                        "Supplier management outside of delivery impact",
+                        "Non-logistics related customer service issues"
+                      ]
+                    },
+                    "ctq_list": [
+                      {
+                        "name": "On-Time Delivery Rate",
+                        "description": "The percentage of shipments delivered to the customer on or before the scheduled delivery date.",
+                        "metric": "Number of on-time deliveries",
+                        "unit": "%"
+                      },
+                      {
+                        "name": "Average Delay Duration",
+                        "description": "The average number of days that shipments are delayed beyond the scheduled delivery date.",
+                        "metric": "Average delay in days",
+                        "unit": "days"
+                      },
+                      {
+                        "name": "Customer Satisfaction Score",
+                        "description": "A measure of customer satisfaction regarding the timeliness of delivery.",
+                        "metric": "Customer satisfaction rating",
+                        "unit": "scale (1-10)"
+                      }
+                    ],
+                    "y_variable": "On-Time Delivery Rate",
+                    "x_categories": {
+                      "Man": [
+                        "Training for logistics and delivery personnel",
+                        "Staffing levels in the supply chain department"
+                      ],
+                      "Machine": [
+                        "Condition of delivery vehicles",
+                        "Tracking systems for shipments"
+                      ],
+                      "Method": [
+                        "Scheduling and routing procedures",
+                        "Standard operating procedures for order processing"
+                      ],
+                      "Material": [
+                        "Quality and reliability of packaging materials",
+                        "Availability of inventory for timely shipments"
+                      ],
+                      "Measurement": [
+                        "Tracking of delivery times and delays",
+                        "Customer feedback mechanisms"
+                      ],
+                      "Environment": [
+                        "Traffic conditions in Jakarta",
+                        "Weather-related disruptions"
+                      ]
+                    },
+                    "sipoc": {
+                      "Suppliers": [
+                        "Raw material suppliers",
+                        "Logistics partners"
+                      ],
+                      "Inputs": [
+                        "Orders from customers",
+                        "Inventory",
+                        "Delivery schedules"
+                      ],
+                      "Process": [
+                        "Order processing",
+                        "Logistics planning",
+                        "Delivery execution"
+                      ],
+                      "Outputs": [
+                        "Delivered products to customers"
+                      ],
+                      "Customers": [
+                        "End customers",
+                        "Retailers"
+                      ]
+                    },
+                    "early_measure_plan": {
+                      "measures": [
+                        "Monitor on-time delivery rates weekly",
+                        "Track average delay durations bi-weekly",
+                        "Conduct customer satisfaction surveys monthly"
+                      ],
+                      "responsible": "Supply Chain Management Team"
+                    },
+                    "risk_level": "Medium",
+                    "project_type": "Process Improvement"
+                  },
+                  "insight_md": "",
+                  "summary_md": "## DEFINE PHASE SUMMARY — proj_003_ Late_delivery\n\n### Problem Statement\nIt's been more than 3 times that shipments to customer AAJ in Jakarta are consistently late, averaging 5-6 days beyond the scheduled delivery date.\n\n### Goal Statement\nAchieve 100% on-time delivery with no late shipments.\n\n### Business Case\nImproving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to higher profitability.\n\n### Scope\n- In Scope: Supply chain operations, Logistics and delivery processes, Scheduling and tracking improvements, Training for staff involved in delivery, Production processes related to delivery schedules\n- Out of Scope: Supplier management outside of delivery impact, Non-logistics related customer service issues\n\n### CTQs\n- **On-Time Delivery Rate**(Number of on-time deliveries %) — The percentage of shipments delivered to the customer on or before the scheduled delivery date.\n- **Average Delay Duration**(Average delay in days days) — The average number of days that shipments are delayed beyond the scheduled delivery date.\n- **Customer Satisfaction Score**(Customer satisfaction rating scale (1-10)) — A measure of customer satisfaction regarding the timeliness of delivery.\n",
+                  "problem_text": "Shipments to customer AAJ in Jakarta have been consistently late, averaging 5-6 days beyond the scheduled delivery date, occurring more than three times.",
+                  "goal_statement": "Achieve 100% on-time delivery with no late shipments by the end of Q2 2026.",
+                  "business_case": "Improving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to an estimated 15% increase in profitability.",
+                  "project_scope": {
+                    "in_scope": [
+                      "Supply chain operations",
+                      "Logistics and delivery processes",
+                      "Scheduling and tracking improvements",
+                      "Training for staff involved in delivery",
+                      "Production processes related to delivery schedules"
+                    ],
+                    "out_of_scope": [
+                      "Supplier management outside of delivery impact, specifically contract negotiations and supplier selection",
+                      "Non-logistics related customer service issues such as product quality complaints"
+                    ]
+                  },
+                  "ctq_list": [
+                    {
+                      "name": "On-Time Delivery Rate",
+                      "description": "The percentage of shipments delivered to the customer on or before the scheduled delivery date.",
+                      "metric": "Number of on-time deliveries",
+                      "unit": "%",
+                      "baseline": "Current rate is 70%"
+                    },
+                    {
+                      "name": "Average Delay Duration",
+                      "description": "The average number of days that shipments are delayed beyond the scheduled delivery date.",
+                      "metric": "Average delay in days",
+                      "unit": "days",
+                      "baseline": "Current average delay is 5 days"
+                    },
+                    {
+                      "name": "Customer Satisfaction Score",
+                      "description": "A measure of customer satisfaction regarding the timeliness of delivery.",
+                      "metric": "Customer satisfaction rating",
+                      "unit": "scale (1-10)",
+                      "baseline": "Current score is 6"
+                    }
+                  ],
+                  "early_measure_plan": {
+                    "measures": [
+                      "Monitor on-time delivery rates weekly with a target of 85% by the end of Q1 2026",
+                      "Track average delay durations bi-weekly aiming to reduce to 3 days by Q2 2026",
+                      "Conduct customer satisfaction surveys monthly with a goal to increase the score to 8 by Q2 2026"
+                    ],
+                    "responsible": "Supply Chain Management Team"
+                  },
+                  "risk_level": "Medium - Risks include potential disruptions from traffic conditions and weather-related issues in Jakarta, as well as internal process inefficiencies."
+                }
+              ]
+            },
+            "decision_trace": {
+              "primary_ctq": "A/R Overdue Percentage",
+              "secondary_ctqs": [
+                "Days Sales Outstanding (DSO)",
+                "Blocked Orders Due to Overdue A/R"
+              ],
+              "y_variable": "A/R Overdue Percentage",
+              "x_categories": {
+                "Man": [
+                  "Training for accounts receivable team on collection strategies",
+                  "Staffing levels in the finance department"
+                ],
+                "Machine": [
+                  "Accounts receivable management software",
+                  "Automated reminders for overdue payments"
+                ],
+                "Method": [
+                  "Credit policies and terms for PT Smart",
+                  "Collection process standard operating procedures"
+                ],
+                "Material": [
+                  "Quality of customer credit evaluations",
+                  "Documentation for credit terms and agreements"
+                ],
+                "Measurement": [
+                  "Regular monitoring of A/R overdue percentages",
+                  "Tracking of DSO and blocked orders"
+                ],
+                "Environment": [
+                  "Economic conditions affecting customer payments",
+                  "Market trends impacting cash flow"
+                ]
+              },
+              "project_scope": {
+                "in_scope": [
+                  "Accounts receivable processes",
+                  "Credit policy review and adjustments",
+                  "Training and development for finance team",
+                  "DN and GI process by logistics team"
+                ],
+                "out_of_scope": [
+                  "Non-financial customer service issues",
+                  "Supplier management outside of A/R impact"
+                ]
+              },
+              "risk_level": "Medium",
+              "project_type": "Process Improvement"
+            }
+          }
+        ]
+      },
+      "decision_trace": {
+        "primary_ctq": "A/R Overdue Percentage",
+        "secondary_ctqs": [
+          "Days Sales Outstanding (DSO)",
+          "Blocked Orders Due to Overdue A/R"
+        ],
+        "y_variable": "A/R Overdue Percentage",
+        "x_categories": {
+          "Man": [
+            "Training for accounts receivable team on collection strategies",
+            "Staffing levels in the finance department"
+          ],
+          "Machine": [
+            "Accounts receivable management software",
+            "Automated reminders for overdue payments"
+          ],
+          "Method": [
+            "Credit policies and terms for PT Smart",
+            "Collection process standard operating procedures"
+          ],
+          "Material": [
+            "Quality of customer credit evaluations",
+            "Documentation for credit terms and agreements"
+          ],
+          "Measurement": [
+            "Regular monitoring of A/R overdue percentages",
+            "Tracking of DSO and blocked orders"
+          ],
+          "Environment": [
+            "Economic conditions affecting customer payments",
+            "Market trends impacting cash flow"
+          ]
+        },
+        "project_scope": {
+          "in_scope": [
+            "Accounts receivable processes",
+            "Credit policy review and adjustments",
+            "Training and development for finance team",
+            "DN and GI process by logistics team"
+          ],
+          "out_of_scope": [
+            "Non-financial customer service issues",
+            "Supplier management outside of A/R impact"
+          ]
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      }
+    },
+    {
+      "schema_version": "v1.0",
+      "phase": "define",
+      "status": "final",
+      "created_at": "2025-12-22T01:56:23.115398+00:00",
+      "updated_at": "2025-12-22T01:57:38.202218+00:00",
+      "project_id": "project_003",
+      "inputs": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% starting November 2019.",
+        "voc_list": [],
+        "key_issue": ""
+      },
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Delivery",
+        "process_area": "Supply Chain"
+      },
+      "outputs": {
+        "problem_statement": "From August 2018 to March 2019, there were discrepancies in 52% of cases between physical and SAP data for incoming Granule 238 (BGZ). This issue hampers the TECO production process and causes inefficiencies in the planning process due to the need for daily physical stock checks.",
+        "goal_statement": "Reduce the percentage of data discrepancies for incoming Granule 238 (BGZ) between physical and SAP records to 10% by November 2019.",
+        "business_case": "Improving data accuracy between physical and SAP records will enhance the efficiency of the TECO production process, reduce waste in planning, and minimize the need for daily physical stock checks, leading to better resource allocation and cost savings.",
+        "project_scope": {
+          "in_scope": [
+            "Improving data accuracy between physical and SAP records",
+            "Enhancing TECO process efficiency",
+            "Reducing waste in the planning process"
+          ],
+          "out_of_scope": [
+            "Supplier management outside of intercompany supplier coordination",
+            "Non-SAP related data management issues"
+          ],
+          "focus_areas": [
+            "Good receipt by admin warehouse",
+            "TECO process",
+            "Good issue process",
+            "Create DN from intercompany supplier"
+          ],
+          "stakeholders": [
+            "Warehouse admin",
+            "Intercompany supplier",
+            "Production planning team"
+          ]
+        },
+        "ctq_list": [
+          {
+            "name": "Data Accuracy",
+            "description": "Percentage of cases where incoming Granule 238 (BGZ) data matches between physical and SAP records.",
+            "metric": "Percentage of matching cases",
+            "unit": "%"
+          },
+          {
+            "name": "TECO Process Efficiency",
+            "description": "Time taken to complete the TECO production process without delays caused by data discrepancies.",
+            "metric": "Time to complete TECO process",
+            "unit": "hours"
+          },
+          {
+            "name": "Planning Process Waste",
+            "description": "Frequency of additional checks required for actual physical stock due to data discrepancies.",
+            "metric": "Number of additional checks",
+            "unit": "checks/day"
+          }
+        ],
+        "y_variable": "Data Accuracy",
+        "x_categories": {
+          "Man": [
+            "Training of warehouse admin",
+            "Intercompany supplier coordination"
+          ],
+          "Machine": [
+            "SAP system configuration",
+            "Warehouse scanning equipment"
+          ],
+          "Method": [
+            "Good receipt process",
+            "TECO process",
+            "Good issue process",
+            "Create DN process"
+          ],
+          "Material": [
+            "Granule 238 (BGZ) handling"
+          ],
+          "Measurement": [
+            "Accuracy of data entry",
+            "Frequency of stock checks"
+          ],
+          "Environment": [
+            "Warehouse conditions",
+            "Intercompany supplier logistics"
+          ]
+        },
+        "sipoc": {
+          "Suppliers": [
+            "Intercompany supplier"
+          ],
+          "Inputs": [
+            "Granule 238 (BGZ)",
+            "SAP data entry",
+            "Warehouse scanning equipment"
+          ],
+          "Process": [
+            "Good receipt by admin warehouse",
+            "TECO process",
+            "Good issue process",
+            "Create DN from intercompany supplier"
+          ],
+          "Outputs": [
+            "Accurate SAP records",
+            "Efficient TECO process",
+            "Reduced planning process waste"
+          ],
+          "Customers": [
+            "Production planning team",
+            "Warehouse operations"
+          ]
+        },
+        "early_measure_plan": {
+          "measures": [
+            "Monitor data accuracy weekly",
+            "Track TECO process efficiency bi-weekly",
+            "Record frequency of additional checks daily"
+          ],
+          "responsible": "Warehouse Management Team"
+        },
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      },
+      "insight_md": "- The primary CTQ, \"Data Accuracy,\" is crucial as discrepancies in SAP data directly impact the TECO production process and planning efficiency, leading to significant operational delays.\n- A 52% discrepancy rate in data accuracy highlights a critical need for improvement to achieve the goal of reducing discrepancies to 10% by November 2019.\n- Key risks include potential resistance to process changes from stakeholders and technological limitations in the current SAP system configuration.\n- Assumptions include the availability of accurate historical data for baseline measurement and the capability of existing systems to support process improvements.\n- Previous audits in the manufacturing supply chain have shown that improving data accuracy can significantly enhance on-time delivery rates and reduce operational waste.\n- Learning from past process improvement projects indicates that focusing on training and system configuration can lead to substantial improvements in data accuracy.\n- Next steps for Measure: Conduct a detailed data collection plan to establish a baseline for current data accuracy levels.\n- Implement a pilot study to test potential improvements in the good receipt and data entry processes.\n- Engage with stakeholders to ensure alignment and gather insights on potential barriers to accurate data entry and process efficiency.\n",
+      "summary_md": null,
+      "perception_trace": {
+        "industry": "Manufacturing",
+        "pain_theme": "Delivery",
+        "process_area": "Supply Chain"
+      },
+      "decision_trace": {
+        "primary_ctq": {
+          "name": "Data Accuracy",
+          "description": "Percentage of cases where incoming Granule 238 (BGZ) data matches between physical and SAP records.",
+          "metric": "Percentage of matching cases",
+          "unit": "%"
+        },
+        "y_variable": "Data Accuracy",
+        "risk_level": "Medium",
+        "project_type": "Process Improvement"
+      }
+    }
+  ]
+}

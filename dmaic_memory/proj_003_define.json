@@ -1,0 +1,478 @@
+{
+  "episodes": [
+    {
+      "define_state": {
+        "schema_version": "v1.0",
+        "phase": "define",
+        "status": "final",
+        "created_at": "2025-12-17T12:13:44.238408+00:00",
+        "updated_at": "2025-12-17T12:14:47.686445+00:00",
+        "project_id": "proj_003",
+        "inputs": {
+          "project_name": "proj_003_ Late_delivery",
+          "industry": "Manufacturing",
+          "process_area": "Supply Chain",
+          "pain_theme": "Delivery",
+          "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+          "goal_text": "no more late delivery",
+          "voc_list": [
+            "on time delivery"
+          ],
+          "key_issue": ""
+        },
+        "meta": {
+          "industry": "Manufacturing",
+          "pain_theme": "Delivery",
+          "process_area": "Supply Chain"
+        },
+        "outputs": {
+          "problem_statement": "It's been more than 3 times that shipments to customer AAJ in Jakarta are consistently late, averaging 5-6 days beyond the scheduled delivery date.",
+          "goal_statement": "Achieve 100% on-time delivery with no late shipments.",
+          "business_case": "Improving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to higher profitability.",
+          "project_scope": {
+            "in_scope": [
+              "Supply chain operations",
+              "Logistics and delivery processes",
+              "Scheduling and tracking improvements",
+              "Training for staff involved in delivery",
+              "Production processes related to delivery schedules"
+            ],
+            "out_of_scope": [
+              "Supplier management outside of delivery impact",
+              "Non-logistics related customer service issues"
+            ]
+          },
+          "ctq_list": [
+            {
+              "name": "On-Time Delivery Rate",
+              "description": "The percentage of shipments delivered to the customer on or before the scheduled delivery date.",
+              "metric": "Number of on-time deliveries",
+              "unit": "%"
+            },
+            {
+              "name": "Average Delay Duration",
+              "description": "The average number of days that shipments are delayed beyond the scheduled delivery date.",
+              "metric": "Average delay in days",
+              "unit": "days"
+            },
+            {
+              "name": "Customer Satisfaction Score",
+              "description": "A measure of customer satisfaction regarding the timeliness of delivery.",
+              "metric": "Customer satisfaction rating",
+              "unit": "scale (1-10)"
+            }
+          ],
+          "y_variable": "On-Time Delivery Rate",
+          "x_categories": {
+            "Man": [
+              "Training for logistics and delivery personnel",
+              "Staffing levels in the supply chain department"
+            ],
+            "Machine": [
+              "Condition of delivery vehicles",
+              "Tracking systems for shipments"
+            ],
+            "Method": [
+              "Scheduling and routing procedures",
+              "Standard operating procedures for order processing"
+            ],
+            "Material": [
+              "Quality and reliability of packaging materials",
+              "Availability of inventory for timely shipments"
+            ],
+            "Measurement": [
+              "Tracking of delivery times and delays",
+              "Customer feedback mechanisms"
+            ],
+            "Environment": [
+              "Traffic conditions in Jakarta",
+              "Weather-related disruptions"
+            ]
+          },
+          "sipoc": {
+            "Suppliers": [
+              "Raw material suppliers",
+              "Logistics partners"
+            ],
+            "Inputs": [
+              "Orders from customers",
+              "Inventory",
+              "Delivery schedules"
+            ],
+            "Process": [
+              "Order processing",
+              "Logistics planning",
+              "Delivery execution"
+            ],
+            "Outputs": [
+              "Delivered products to customers"
+            ],
+            "Customers": [
+              "End customers",
+              "Retailers"
+            ]
+          },
+          "early_measure_plan": {
+            "measures": [
+              "Monitor on-time delivery rates weekly",
+              "Track average delay durations bi-weekly",
+              "Conduct customer satisfaction surveys monthly"
+            ],
+            "responsible": "Supply Chain Management Team"
+          },
+          "risk_level": "Medium",
+          "project_type": "Process Improvement"
+        },
+        "insight_md": "",
+        "summary_md": "## DEFINE PHASE SUMMARY \u2014 proj_003_ Late_delivery\n\n### Problem Statement\nIt's been more than 3 times that shipments to customer AAJ in Jakarta are consistently late, averaging 5-6 days beyond the scheduled delivery date.\n\n### Goal Statement\nAchieve 100% on-time delivery with no late shipments.\n\n### Business Case\nImproving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to higher profitability.\n\n### Scope\n- In Scope: Supply chain operations, Logistics and delivery processes, Scheduling and tracking improvements, Training for staff involved in delivery, Production processes related to delivery schedules\n- Out of Scope: Supplier management outside of delivery impact, Non-logistics related customer service issues\n\n### CTQs\n- **On-Time Delivery Rate**(Number of on-time deliveries %) \u2014 The percentage of shipments delivered to the customer on or before the scheduled delivery date.\n- **Average Delay Duration**(Average delay in days days) \u2014 The average number of days that shipments are delayed beyond the scheduled delivery date.\n- **Customer Satisfaction Score**(Customer satisfaction rating scale (1-10)) \u2014 A measure of customer satisfaction regarding the timeliness of delivery.\n",
+        "problem_text": "Shipments to customer AAJ in Jakarta have been consistently late, averaging 5-6 days beyond the scheduled delivery date, occurring more than three times.",
+        "goal_statement": "Achieve 100% on-time delivery with no late shipments by the end of Q2 2026.",
+        "business_case": "Improving delivery timeliness will enhance customer satisfaction, reduce complaints, and potentially increase repeat business, leading to an estimated 15% increase in profitability.",
+        "project_scope": {
+          "in_scope": [
+            "Supply chain operations",
+            "Logistics and delivery processes",
+            "Scheduling and tracking improvements",
+            "Training for staff involved in delivery",
+            "Production processes related to delivery schedules"
+          ],
+          "out_of_scope": [
+            "Supplier management outside of delivery impact, specifically contract negotiations and supplier selection",
+            "Non-logistics related customer service issues such as product quality complaints"
+          ]
+        },
+        "ctq_list": [
+          {
+            "name": "On-Time Delivery Rate",
+            "description": "The percentage of shipments delivered to the customer on or before the scheduled delivery date.",
+            "metric": "Number of on-time deliveries",
+            "unit": "%",
+            "baseline": "Current rate is 70%"
+          },
+          {
+            "name": "Average Delay Duration",
+            "description": "The average number of days that shipments are delayed beyond the scheduled delivery date.",
+            "metric": "Average delay in days",
+            "unit": "days",
+            "baseline": "Current average delay is 5 days"
+          },
+          {
+            "name": "Customer Satisfaction Score",
+            "description": "A measure of customer satisfaction regarding the timeliness of delivery.",
+            "metric": "Customer satisfaction rating",
+            "unit": "scale (1-10)",
+            "baseline": "Current score is 6"
+          }
+        ],
+        "early_measure_plan": {
+          "measures": [
+            "Monitor on-time delivery rates weekly with a target of 85% by the end of Q1 2026",
+            "Track average delay durations bi-weekly aiming to reduce to 3 days by Q2 2026",
+            "Conduct customer satisfaction surveys monthly with a goal to increase the score to 8 by Q2 2026"
+          ],
+          "responsible": "Supply Chain Management Team"
+        },
+        "risk_level": "Medium - Risks include potential disruptions from traffic conditions and weather-related issues in Jakarta, as well as internal process inefficiencies."
+      },
+      "feedback": {
+        "user_feedback": "include in scope production process\n"
+      }
+    },
+    {
+      "define_state": {
+        "schema_version": "v1.0",
+        "phase": "define",
+        "status": "final",
+        "created_at": "2025-12-18T04:16:55.235704+00:00",
+        "updated_at": "2025-12-18T04:18:10.256141+00:00",
+        "project_id": "proj_003",
+        "inputs": {
+          "project_name": "proj_003_ Late_delivery",
+          "industry": "Manufacturing",
+          "process_area": "Supply Chain",
+          "pain_theme": "Delivery",
+          "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+          "goal_text": "no more late delivery",
+          "voc_list": [
+            "on time delivery"
+          ],
+          "key_issue": ""
+        },
+        "meta": {
+          "industry": "Manufacturing",
+          "pain_theme": "Delivery",
+          "process_area": "Supply Chain"
+        },
+        "outputs": {
+          "problem_statement": "Shipments to customers in Jakarta have been consistently late, averaging 5-6 days beyond the scheduled delivery date, affecting customer satisfaction.",
+          "goal_statement": "Achieve 100% on-time delivery for all shipments within the next 6 months.",
+          "business_case": "Improving on-time delivery will enhance customer satisfaction, reduce complaints, and strengthen the company's reputation in the market, ultimately leading to increased sales and customer loyalty.",
+          "project_scope": {
+            "in_scope": [
+              "Logistics operations related to shipment processing",
+              "Communication with customers regarding delivery timelines",
+              "Training programs for logistics staff"
+            ],
+            "out_of_scope": [
+              "Supplier management and procurement processes",
+              "Production scheduling unrelated to delivery"
+            ]
+          },
+          "ctq_list": [
+            {
+              "name": "On-Time Delivery Rate",
+              "description": "The percentage of shipments delivered on or before the scheduled delivery date.",
+              "metric": "Percentage of on-time deliveries",
+              "unit": "%"
+            },
+            {
+              "name": "Average Delay Duration",
+              "description": "The average number of days shipments are delayed beyond the scheduled delivery date.",
+              "metric": "Average days late",
+              "unit": "days"
+            },
+            {
+              "name": "Customer Satisfaction Score",
+              "description": "The level of customer satisfaction regarding delivery timeliness, measured through surveys.",
+              "metric": "Customer satisfaction rating",
+              "unit": "scale (1-10)"
+            }
+          ],
+          "y_variable": "On-Time Delivery Rate",
+          "x_categories": {
+            "Man": [
+              "Training for logistics personnel on delivery schedules",
+              "Staffing levels in logistics and transportation"
+            ],
+            "Machine": [
+              "Condition of transportation vehicles",
+              "Routing software efficiency"
+            ],
+            "Method": [
+              "Standard operating procedures for shipment processing",
+              "Communication protocols for delays"
+            ],
+            "Material": [
+              "Quality of packaging materials affecting delivery speed",
+              "Availability of inventory for timely shipments"
+            ],
+            "Measurement": [
+              "Tracking system for shipment status",
+              "Monitoring delivery performance metrics"
+            ],
+            "Environment": [
+              "Traffic conditions in Jakarta",
+              "Weather impact on transportation"
+            ]
+          },
+          "sipoc": {
+            "Outputs": [
+              "On-time deliveries",
+              "Delayed shipment reports",
+              "Customer satisfaction feedback"
+            ]
+          },
+          "early_measure_plan": {
+            "measures": [
+              "Monitor on-time delivery rates weekly",
+              "Track average delay duration bi-weekly",
+              "Conduct customer satisfaction surveys quarterly"
+            ],
+            "responsible": "Logistics and Customer Service Teams",
+            "frequency": "Weekly and Bi-weekly",
+            "data_source": "Logistics tracking system and customer feedback surveys"
+          },
+          "risk_level": "Medium",
+          "project_type": "Process Improvement"
+        },
+        "insight_md": "### Agent Insight for proj_003_Late_delivery\n\n- **Justification of CTQ/Y/Scope**: The primary CTQ, \"On-Time Delivery Rate,\" directly addresses the critical customer expectation of timely shipments, which is crucial for customer satisfaction and retention. The scope focuses on logistics operations and communication, ensuring that all factors influencing delivery are considered.\n\n- **Key Risks/Assumptions**: \n  - Assumes that training logistics personnel will significantly improve delivery timelines.\n  - Risks include potential disruptions from external factors like traffic and weather, which may not be controllable.\n  - Dependence on the efficiency of routing software and vehicle conditions could impact delivery performance.\n\n- **Learning from Past Episodes**: Similar projects have successfully improved delivery performance by enhancing training programs and standard operating procedures. Past audits indicate that effective communication with customers regarding delays significantly boosts satisfaction.\n\n- **Actionable Next Steps for Measure**:\n  1. Establish a baseline by monitoring the current on-time delivery rates and average delay durations over the next month.\n  2. Implement a tracking system for real-time shipment status updates to identify bottlenecks in the delivery process.\n  3. Conduct a survey to gauge customer satisfaction regarding delivery timelines and communication, to inform improvement strategies.\n",
+        "summary_md": null,
+        "perception_trace": {
+          "project_name": "proj_003_ Late_delivery",
+          "industry": "Manufacturing",
+          "process_area": "Supply Chain",
+          "pain_theme": "Delivery",
+          "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+          "voc_list": [
+            "on time delivery"
+          ],
+          "key_issue": "",
+          "ctq_voc_info": {
+            "candidate_ctqs": [],
+            "voc_clusters": [],
+            "raw_llm_output": "```json\n{\n  \"candidate_ctqs\": [\n    {\n      \"name\": \"On-Time Delivery Rate\",\n      \"description\": \"The percentage of shipments delivered on or before the scheduled delivery date.\",\n      \"metric\": \"Percentage of on-time deliveries\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Average Delay Duration\",\n      \"description\": \"The average number of days shipments are delayed beyond the scheduled delivery date.\",\n      \"metric\": \"Average days late\",\n      \"unit\": \"days\"\n    },\n    {\n      \"name\": \"Customer Satisfaction Score\",\n      \"description\": \"The level of customer satisfaction regarding delivery timeliness, measured through surveys.\",\n      \"metric\": \"Customer satisfaction rating\",\n      \"unit\": \"scale (1-10)\"\n    }\n  ],\n  \"voc_clusters\": [\n    {\n      \"theme\": \"Delivery Performance\",\n      \"items\": [\n        \"Shipments consistently late\",\n        \"Need for improved delivery timelines\",\n        \"Expectations for on-time delivery\"\n      ]\n    },\n    {\n      \"theme\": \"Customer Experience\",\n      \"items\": [\n        \"Impact of late deliveries on customer satisfaction\",\n        \"Feedback on communication regarding delays\",\n        \"Desire for better updates on shipment status\"\n      ]\n    }\n  ]\n}\n```"
+          },
+          "baseline_summary": {},
+          "similar_audit_episodes": [
+            {
+              "timestamp": "2025-12-17T12:14:47.691845",
+              "project_id": "proj_003",
+              "phase": "Define",
+              "status": "success",
+              "meta": {
+                "industry": "Manufacturing",
+                "pain_theme": "Delivery",
+                "process_area": "Supply Chain",
+                "project_type": "Process Improvement"
+              }
+            },
+            {
+              "timestamp": "2025-12-17T08:53:36.040746",
+              "project_id": "project_002",
+              "phase": "Define",
+              "status": "success",
+              "meta": {
+                "industry": "Manufacturing",
+                "pain_theme": "Cost",
+                "process_area": "Production",
+                "project_type": "Process Improvement"
+              }
+            },
+            {
+              "timestamp": "2025-12-17T15:45:41.961798",
+              "project_id": "project_002",
+              "phase": "Define",
+              "status": "success",
+              "meta": {
+                "industry": "Manufacturing",
+                "pain_theme": "Cost",
+                "process_area": "Production",
+                "project_type": "Process Improvement using Lean methodologies"
+              }
+            }
+          ],
+          "similar_memory_episodes": [
+            {
+              "llm_raw": "```json\n{\n  \"schema_version\": \"1.0\",\n  \"project_id\": \"Reduce_Packaging_Defects_001\",\n  \"project_name\": \"Reduce Packaging Defects\",\n  \"industry\": \"Manufacturing\",\n  \"process_area\": \"Production\",\n  \"pain_theme\": \"Quality\",\n  \"problem_statement\": \"Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir, terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\",\n  \"goal_statement\": \"Reduce defect\",\n  \"business_case\": \"Meningkatkan kualitas produk dan mengurangi biaya rework serta scrap akan meningkatkan kepuasan pelanggan dan profitabilitas perusahaan.\",\n  \"project_scope\": {\n    \"in_scope\": [\n      \"Sealing line operations\",\n      \"Inner packaging processes\",\n      \"Training and quality control measures\"\n    ],\n    \"out_of_scope\": [\n      \"Outer packaging processes\",\n      \"Non-production related issues\",\n      \"Supplier management\"\n    ]\n  },\n  \"ctq_list\": [\n    {\n      \"name\": \"Inner Packaging Defect Rate\",\n      \"description\": \"The percentage of inner packaging that fails to meet quality standards due to defects.\",\n      \"metric\": \"Defect Rate\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Rework Rate on Sealing Line\",\n      \"description\": \"The percentage of products that require rework due to defects in the sealing process.\",\n      \"metric\": \"Rework Rate\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Scrap Cost\",\n      \"description\": \"The total cost incurred due to scrap resulting from defective inner packaging.\",\n      \"metric\": \"Total Cost\",\n      \"unit\": \"Currency\"\n    }\n  ],\n  \"y_variable\": \"Inner Packaging Defect Rate\",\n  \"x_categories\": {\n    \"Man\": [\n      \"Operator training on sealing process\",\n      \"Staffing levels on sealing line\"\n    ],\n    \"Machine\": [\n      \"Condition of sealing jaws\",\n      \"Calibration of sealing equipment\",\n      \"Heat stability of sealing jaws\"\n    ],\n    \"Method\": [\n      \"Sealing process standard operating procedures\",\n      \"Quality control checks during sealing\"\n    ],\n    \"Material\": [\n      \"Quality of packaging materials\",\n      \"Supplier consistency\"\n    ],\n    \"Measurement\": [\n      \"Defect tracking system\",\n      \"Inspection frequency\"\n    ],\n    \"Environment\": [\n      \"Temperature and humidity in production area\",\n      \"Maintenance schedules\"\n    ]\n  },\n  \"sipoc\": {\n    \"Suppliers\": [\"Packaging material suppliers\", \"Equipment manufacturers\"],\n    \"Inputs\": [\"Packaging materials\", \"Sealing equipment\", \"Operator training\"],\n    \"Process\": [\"Sealing process\", \"Quality control checks\"],\n    \"Outputs\": [\"Inner packaged products\"],\n    \"Customers\": [\"End customers\", \"Retailers\"]\n  },\n  \"early_measure_plan\": {\n    \"measures\": [\n      \"Monitor defect rates weekly\",\n      \"Track rework and scrap costs bi-weekly\",\n      \"Conduct regular inspections of sealing equipment\"\n    ],\n    \"responsible\": \"Quality Assurance Team\"\n  },\n  \"risk_level\": \"Medium\",\n  \"project_type\": \"Quality Improvement\"\n}\n```",
+              "schema_version": "v1.0",
+              "project_id": "proj_001",
+              "project_name": "Reduce Packaging Defects"
+            },
+            {
+              "goal_statement": "Reduce the inner packaging defect rate from 6% to 2% within the next 6 months.",
+              "ctq_list": [
+                {
+                  "name": "Inner Packaging Defect Rate",
+                  "description": "The percentage of inner packaging that fails to meet quality standards due to defects, aiming for a target of 2%.",
+                  "metric": "Defect Rate",
+                  "unit": "%"
+                },
+                {
+                  "name": "Rework Rate on Sealing Line",
+                  "description": "The percentage of products that require rework due to defects in the sealing process, aiming for a reduction to 5%.",
+                  "metric": "Rework Rate",
+                  "unit": "%"
+                },
+                {
+                  "name": "Scrap Cost",
+                  "description": "The total cost incurred due to scrap resulting from defective inner packaging, aiming to reduce costs by 30%.",
+                  "metric": "Total Cost",
+                  "unit": "Currency"
+                }
+              ],
+              "early_measure_plan": {
+                "measures": [
+                  "Monitor defect rates weekly with detailed reporting",
+                  "Track rework and scrap costs bi-weekly with variance analysis",
+                  "Conduct regular inspections of sealing equipment with documented findings and action items"
+                ],
+                "responsible": "Quality Assurance Team, with weekly updates to project stakeholders"
+              }
+            },
+            {
+              "goal_statement": "Reduce moisture content from 16% to 15% within the next 3 months, ensuring compliance with specification limits.",
+              "project_scope": {
+                "in_scope": [
+                  "Moisture measurement processes",
+                  "Quality control measures related to moisture content",
+                  "Training for operators on moisture management with a defined curriculum and schedule"
+                ],
+                "out_of_scope": [
+                  "Other quality metrics not related to moisture content",
+                  "Supplier management outside of moisture-related issues"
+                ]
+              },
+              "ctq_list": [
+                {
+                  "name": "Moisture Content",
+                  "description": "The amount of moisture present in the product, aiming for a maximum of 15%.",
+                  "metric": "Percentage",
+                  "unit": "%"
+                },
+                {
+                  "name": "Product Consistency",
+                  "description": "The uniformity of moisture content across different batches.",
+                  "metric": "Standard Deviation of Moisture Content",
+                  "unit": "%"
+                },
+                {
+                  "name": "Product Quality Rating",
+                  "description": "Overall quality assessment based on moisture content and other factors, defined by specific criteria.",
+                  "metric": "Quality Score",
+                  "unit": "Score (1-10)"
+                }
+              ],
+              "early_measure_plan": {
+                "measures": [
+                  "Monitor moisture content weekly with baseline measurements established",
+                  "Track product quality ratings bi-weekly with defined criteria",
+                  "Conduct regular training sessions for operators based on a detailed curriculum"
+                ],
+                "responsible": "Quality Assurance Team"
+              },
+              "risk_level": "Medium with a detailed risk assessment and mitigation plan to be developed."
+            }
+          ]
+        },
+        "decision_trace": {
+          "primary_ctq": "On-Time Delivery Rate",
+          "secondary_ctqs": [
+            "Average Delay Duration",
+            "Customer Satisfaction Score"
+          ],
+          "y_variable": "On-Time Delivery Rate",
+          "x_categories": {
+            "Man": [
+              "Training for logistics personnel on delivery schedules",
+              "Staffing levels in logistics and transportation"
+            ],
+            "Machine": [
+              "Condition of transportation vehicles",
+              "Routing software efficiency"
+            ],
+            "Method": [
+              "Standard operating procedures for shipment processing",
+              "Communication protocols for delays"
+            ],
+            "Material": [
+              "Quality of packaging materials affecting delivery speed",
+              "Availability of inventory for timely shipments"
+            ],
+            "Measurement": [
+              "Tracking system for shipment status",
+              "Monitoring delivery performance metrics"
+            ],
+            "Environment": [
+              "Traffic conditions in Jakarta",
+              "Weather impact on transportation"
+            ]
+          },
+          "project_scope": {
+            "in_scope": [
+              "Logistics operations related to shipment processing",
+              "Communication with customers regarding delivery timelines",
+              "Training programs for logistics staff"
+            ],
+            "out_of_scope": [
+              "Supplier management and procurement processes",
+              "Production scheduling unrelated to delivery"
+            ]
+          },
+          "risk_level": "Medium",
+          "project_type": "Process Improvement"
+        }
+      },
+      "feedback": {}
+    }
+  ]
+}

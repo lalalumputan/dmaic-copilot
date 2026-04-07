@@ -1,0 +1,51 @@
+{
+  "episodes": [
+    {
+      "define_state": {
+        "llm_raw": "```json\n{\n  \"schema_version\": \"1.0\",\n  \"project_id\": \"Reduce_Packaging_Defects_001\",\n  \"project_name\": \"Reduce Packaging Defects\",\n  \"industry\": \"Manufacturing\",\n  \"process_area\": \"Production\",\n  \"pain_theme\": \"Quality\",\n  \"problem_statement\": \"Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir, terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\",\n  \"goal_statement\": \"Reduce defect\",\n  \"business_case\": \"Meningkatkan kualitas produk dan mengurangi biaya rework serta scrap akan meningkatkan kepuasan pelanggan dan profitabilitas perusahaan.\",\n  \"project_scope\": {\n    \"in_scope\": [\n      \"Sealing line operations\",\n      \"Inner packaging processes\",\n      \"Training and quality control measures\"\n    ],\n    \"out_of_scope\": [\n      \"Outer packaging processes\",\n      \"Non-production related issues\",\n      \"Supplier management\"\n    ]\n  },\n  \"ctq_list\": [\n    {\n      \"name\": \"Inner Packaging Defect Rate\",\n      \"description\": \"The percentage of inner packaging that fails to meet quality standards due to defects.\",\n      \"metric\": \"Defect Rate\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Rework Rate on Sealing Line\",\n      \"description\": \"The percentage of products that require rework due to defects in the sealing process.\",\n      \"metric\": \"Rework Rate\",\n      \"unit\": \"%\"\n    },\n    {\n      \"name\": \"Scrap Cost\",\n      \"description\": \"The total cost incurred due to scrap resulting from defective inner packaging.\",\n      \"metric\": \"Total Cost\",\n      \"unit\": \"Currency\"\n    }\n  ],\n  \"y_variable\": \"Inner Packaging Defect Rate\",\n  \"x_categories\": {\n    \"Man\": [\n      \"Operator training on sealing process\",\n      \"Staffing levels on sealing line\"\n    ],\n    \"Machine\": [\n      \"Condition of sealing jaws\",\n      \"Calibration of sealing equipment\",\n      \"Heat stability of sealing jaws\"\n    ],\n    \"Method\": [\n      \"Sealing process standard operating procedures\",\n      \"Quality control checks during sealing\"\n    ],\n    \"Material\": [\n      \"Quality of packaging materials\",\n      \"Supplier consistency\"\n    ],\n    \"Measurement\": [\n      \"Defect tracking system\",\n      \"Inspection frequency\"\n    ],\n    \"Environment\": [\n      \"Temperature and humidity in production area\",\n      \"Maintenance schedules\"\n    ]\n  },\n  \"sipoc\": {\n    \"Suppliers\": [\"Packaging material suppliers\", \"Equipment manufacturers\"],\n    \"Inputs\": [\"Packaging materials\", \"Sealing equipment\", \"Operator training\"],\n    \"Process\": [\"Sealing process\", \"Quality control checks\"],\n    \"Outputs\": [\"Inner packaged products\"],\n    \"Customers\": [\"End customers\", \"Retailers\"]\n  },\n  \"early_measure_plan\": {\n    \"measures\": [\n      \"Monitor defect rates weekly\",\n      \"Track rework and scrap costs bi-weekly\",\n      \"Conduct regular inspections of sealing equipment\"\n    ],\n    \"responsible\": \"Quality Assurance Team\"\n  },\n  \"risk_level\": \"Medium\",\n  \"project_type\": \"Quality Improvement\"\n}\n```",
+        "schema_version": "v1.0",
+        "project_id": "proj_001",
+        "project_name": "Reduce Packaging Defects"
+      },
+      "feedback": {
+        "reason": "Looks good"
+      }
+    },
+    {
+      "define_state": {
+        "goal_statement": "Reduce the inner packaging defect rate from 6% to 2% within the next 6 months.",
+        "ctq_list": [
+          {
+            "name": "Inner Packaging Defect Rate",
+            "description": "The percentage of inner packaging that fails to meet quality standards due to defects, aiming for a target of 2%.",
+            "metric": "Defect Rate",
+            "unit": "%"
+          },
+          {
+            "name": "Rework Rate on Sealing Line",
+            "description": "The percentage of products that require rework due to defects in the sealing process, aiming for a reduction to 5%.",
+            "metric": "Rework Rate",
+            "unit": "%"
+          },
+          {
+            "name": "Scrap Cost",
+            "description": "The total cost incurred due to scrap resulting from defective inner packaging, aiming to reduce costs by 30%.",
+            "metric": "Total Cost",
+            "unit": "Currency"
+          }
+        ],
+        "early_measure_plan": {
+          "measures": [
+            "Monitor defect rates weekly with detailed reporting",
+            "Track rework and scrap costs bi-weekly with variance analysis",
+            "Conduct regular inspections of sealing equipment with documented findings and action items"
+          ],
+          "responsible": "Quality Assurance Team, with weekly updates to project stakeholders"
+        }
+      },
+      "feedback": {
+        "reason": "Looks good"
+      }
+    }
+  ]
+}

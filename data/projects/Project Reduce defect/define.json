@@ -1,0 +1,45 @@
+{
+    "CTQ": [
+        "delivery"
+    ],
+    "SIPOC": {
+        "Supplier": [
+            "Produksi",
+            "QA",
+            "Pembelian"
+        ],
+        "Input": [
+            "Bahan baku",
+            "Parameter proses",
+            "VOC Pelanggan"
+        ],
+        "Process": [
+            "Mixing",
+            "Filling",
+            "Packing"
+        ],
+        "Output": [
+            "Produk sesuai spesifikasi"
+        ],
+        "Customer": [
+            "End user",
+            "Distributor"
+        ]
+    },
+    "Charter": {
+        "Problem": "Variasi kualitas produk terlihat oleh pelanggan (berdasarkan VOC).",
+        "Goal": "Menurunkan variasi CTQ kunci hingga memenuhi target spesifikasi dalam 3 bulan.",
+        "Scope": "Line A (batch reguler); tidak termasuk produk trial.",
+        "Benefit": "Penurunan reject dan komplain pelanggan; stabilitas proses meningkat."
+    },
+    "keyword_hits": {
+        "kualitas_warna": 0,
+        "viskositas": 0,
+        "dimensi": 0,
+        "cacat_permukaan": 0,
+        "yield_reject": 0,
+        "delivery": 1
+    },
+    "timestamp": "2025-12-04T03:07:47.741569",
+    "agent": "define_charter"
+}

@@ -1,0 +1,185 @@
+{
+  "project_id": "project_004",
+  "status": "draft",
+  "define_state": {
+    "project_id": "project_004",
+    "phase": "define",
+    "status": "draft",
+    "schema_version": "DEFINE_SCHEMA_V3_STAGEGATE",
+    "created_at": "2025-12-24T03:10:56.658542+00:00",
+    "updated_at": "2025-12-24T03:10:56.659540+00:00",
+    "inputs": {
+      "project_name": "project_004_Payment_Overdue",
+      "industry": "Manufacturing",
+      "process_area": "Supply Chain",
+      "pain_theme": "Other",
+      "problem_text": "n 2016,  27.54% of total A/R overdue all customer in ID03 with 51.8 DSO, so we will focus on this for this project. \nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by customer",
+      "goal_text": "Improve the cashflow with reduce monthly overdue A/R customer to 12.8 % and monthly DSO to 50 days by end of Nov 2017.",
+      "voc_list": "Head of Sales : \"Reduce A/R overdue & DSO all customers in ID03, target overdue A/R 12,8% and 50 DSO for SEAP\"\nSales & SCM : To many blocked SO caused by A/R overdue. They cannot fullfill customer request to deliver the goods.",
+      "key_issue": "A/R Overdue",
+      "charter_confirmed": false,
+      "documentation_agreed": false,
+      "similar_project_exists": false,
+      "similar_project_note": "",
+      "parallel_projects_risk": "",
+      "benefit_estimate": ""
+    },
+    "outputs": {
+      "problem_statement": "In 2016, 27.54% of total A/R was overdue for all customers in ID03 with a DSO of 51.8 days. This indicates that the company is taking longer to collect payments, resulting in less readily available cash to finance operations. High A/R overdue also leads to blocked orders, preventing CSD from sending products until payments are made.",
+      "goal_statement": "Improve cash flow by reducing monthly overdue A/R to 12.8% and monthly DSO to 50 days by the end of November 2017.",
+      "business_case": "Reducing A/R overdue will improve cash flow, allowing the company to finance operations more effectively. This will also reduce blocked orders, enabling better customer service and potentially increasing sales.",
+      "project_scope": {
+        "in_scope": [
+          "Entire A/R process within the Supply Chain",
+          "Invoicing",
+          "Payment collection"
+        ],
+        "out_of_scope": [
+          "Unrelated financial operations",
+          "Non-A/R related billing processes"
+        ]
+      },
+      "sipoc": {
+        "Suppliers": [
+          "Sales Department",
+          "Billing Team"
+        ],
+        "Inputs": [
+          "Customer Orders",
+          "Invoices"
+        ],
+        "Process": [
+          "Invoice Generation",
+          "Payment Follow-up",
+          "Collections"
+        ],
+        "Outputs": [
+          "Payments Received",
+          "A/R Reports"
+        ],
+        "Customers": [
+          "Finance Department",
+          "Management"
+        ]
+      },
+      "ctq_list": [
+        {
+          "name": "A/R Overdue Percentage",
+          "metric": "Percentage",
+          "unit": "%",
+          "description": "The percentage of accounts receivable that are overdue beyond 30 days.",
+          "customer": "Finance Department"
+        },
+        {
+          "name": "Days Sales Outstanding (DSO)",
+          "metric": "Days",
+          "unit": "days",
+          "description": "The average number of days it takes to collect payment after a sale has been made.",
+          "customer": "Management"
+        }
+      ],
+      "y_variable": "Percentage of A/R overdue beyond 30 days",
+      "x_categories": {
+        "Man": [
+          "Training for billing and collections staff",
+          "Staffing levels in the A/R department"
+        ],
+        "Machine": [
+          "A/R management software",
+          "Payment processing systems"
+        ],
+        "Method": [
+          "Payment collection procedures",
+          "Invoicing processes"
+        ],
+        "Material": [
+          "Quality of invoice documentation",
+          "Accuracy of customer order information"
+        ],
+        "Measurement": [
+          "A/R overdue tracking",
+          "DSO calculation methods"
+        ],
+        "Environment": [
+          "Economic conditions affecting customer payment behavior",
+          "Regulatory changes impacting credit terms"
+        ]
+      },
+      "early_measure_plan": {
+        "candidate_data_sources": [
+          "A/R aging reports",
+          "Payment records"
+        ],
+        "frequency": "Monthly",
+        "owner": "Finance Department"
+      },
+      "risk_level": "High",
+      "project_type": "Financial Process Improvement"
+    },
+    "gate_evidence": {
+      "charter_confirmed": false,
+      "similar_project_exists": false,
+      "similar_project_note": "",
+      "parallel_projects_risk": "",
+      "benefit_estimate": "",
+      "documentation_agreed": false
+    },
+    "gate_result": {
+      "status": "FAILED",
+      "failed_rules": [
+        "A1_charter_not_confirmed",
+        "A1_problem_not_smart_enough",
+        "A1_goal_not_smart_enough"
+      ],
+      "conditional_rules": [
+        "B3_benefit_estimate_missing"
+      ],
+      "agent_summary": "DEFINE gate FAILED. Fix critical items (A-rules) before proceeding."
+    },
+    "ctq_contract": null,
+    "coaching_md": "### DEFINE Gate Status: **FAILED**\n- DEFINE gate FAILED. Fix critical items (A-rules) before proceeding.\n\n### Strengths\n- Problem statement is documented.\n- Goal statement is documented.\n- SIPOC is provided.\n- CTQ/CTB list is provided.\n\n### Gaps\n- Project charter is not confirmed (missing user confirmation).\n- Problem statement is not SMART enough (measurable/time-bound missing).\n- Goal statement is not SMART enough (measurable/time-bound missing).\n- High-level benefit estimate is missing.\n\n### What to fix next (ordered)\n1. Confirm project charter setup (checkbox) before finalize.\n2. Rewrite problem statement with measurable indicator and timeframe.\n3. Rewrite goal statement with numeric target and deadline.\n4. Add benefit estimate (type + order of magnitude).\n\n### Risks if proceed\n- Proceeding without fixing critical gate items will invalidate later phases.",
+    "quick_wins": [],
+    "perception_trace": {
+      "industry": "Manufacturing",
+      "pain_theme": "Other",
+      "process_area": "Supply Chain"
+    },
+    "decision_trace": {
+      "focus_ctq_strategy": "Identify critical-to-quality (CTQ) factors related to the Accounts Receivable (A/R) process, focusing on reducing overdue payments and improving cash flow.",
+      "y_variable_candidate": "Percentage of A/R overdue beyond 30 days",
+      "scope_boundary": "The scope should include the entire A/R process within the Supply Chain, from invoicing to payment collection, while excluding unrelated financial operations.",
+      "sipoc_focus": {
+        "Suppliers": [
+          "Sales Department",
+          "Billing Team"
+        ],
+        "Inputs": [
+          "Customer Orders",
+          "Invoices"
+        ],
+        "Process": [
+          "Invoice Generation",
+          "Payment Follow-up",
+          "Collections"
+        ],
+        "Outputs": [
+          "Payments Received",
+          "A/R Reports"
+        ],
+        "Customers": [
+          "Finance Department",
+          "Management"
+        ]
+      },
+      "risks": [
+        "Potential resistance to process changes from the billing team",
+        "Data accuracy issues in current A/R records",
+        "Possible impact on customer relationships due to stricter payment terms"
+      ],
+      "notes_for_action": "Conduct stakeholder analysis to understand the impact of overdue A/R on different departments. Engage with the billing and sales teams early to gather insights and foster collaboration. Ensure data integrity by auditing current A/R records and establishing clear metrics for overdue payments."
+    },
+    "user_feedback": {},
+    "summary_md": "## DEFINE — project_004\n**Gate Status:** FAILED\n\n### Problem\nIn 2016, 27.54% of total A/R was overdue for all customers in ID03 with a DSO of 51.8 days. This indicates that the company is taking longer to collect payments, resulting in less readily available cash to finance operations. High A/R overdue also leads to blocked orders, preventing CSD from sending products until payments are made.\n\n### Goal\nImprove cash flow by reducing monthly overdue A/R to 12.8% and monthly DSO to 50 days by the end of November 2017.\n\n---\n\n### DEFINE Gate Status: **FAILED**\n- DEFINE gate FAILED. Fix critical items (A-rules) before proceeding.\n\n### Strengths\n- Problem statement is documented.\n- Goal statement is documented.\n- SIPOC is provided.\n- CTQ/CTB list is provided.\n\n### Gaps\n- Project charter is not confirmed (missing user confirmation).\n- Problem statement is not SMART enough (measurable/time-bound missing).\n- Goal statement is not SMART enough (measurable/time-bound missing).\n- High-level benefit estimate is missing.\n\n### What to fix next (ordered)\n1. Confirm project charter setup (checkbox) before finalize.\n2. Rewrite problem statement with measurable indicator and timeframe.\n3. Rewrite goal statement with numeric target and deadline.\n4. Add benefit estimate (type + order of magnitude).\n\n### Risks if proceed\n- Proceeding without fixing critical gate items will invalidate later phases."
+  },
+  "updated_at": null
+}

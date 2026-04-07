@@ -1,0 +1,301 @@
+========================================================
+DMAIC COPILOT — PROJECT CONTEXT FILE
+=========================================================
+📌 1. Project Overview
+
+DMAIC Copilot adalah aplikasi agentic AI berbasis Python + LLM + Streamlit yang berfungsi sebagai digital Continuous Improvement engineer (Lean Sis Siga Master Black Belt) untuk menjalankan proyek Lean Six Sigma DMAIC (Define, Measure, Analyze, Improve, Control).
+
+Sistem ini memiliki:
+
+Modular multi-phase agents (Define → Control)
+
+LLM reasoning for interpretation & decision-making
+
+Analytics engine for OEE, defect rate, Pareto, CTQ, DOE, RCA
+
+Persistent memory per project
+
+Audit logging
+
+Phase reports + full DMAIC report generator
+
+(Upcoming) Agent Memory Layer & Feedback-based Adaptation
+
+2. Goals of the System
+Primary Goals
+
+Membantu user mengeksekusi proyek DMAIC secara sistematis dan terstruktur
+
+Menghasilkan insight berbasis data dari file CSV maupun text input
+
+Memberikan rekomendasi berbasis LLM untuk setiap fase.
+
+Menghasilkan laporan standar DMAIC secara otomatis.
+
+Mengelola multi-project dengan state persistence.
+
+Menyiapkan arsitektur untuk agentic AI adaptation.
+
+🎯 Secondary Goals
+
+Mudah di-maintain dan scalable.
+
+Modular, sehingga setiap fase dapat dikembangkan terpisah.
+
+Dapat di-upgrade menjadi true agentic AI dengan memory & feedback loop.
+
+3. System Architecture Summary
+🔹 A. Data Processing Layer
+
+Melakukan perhitungan dan analitik DMAIC:
+
+CTQ extraction
+
+VOC clustering (opsional)
+
+Defect rate summary
+
+OEE
+
+Stratifikasi
+
+Pareto analysis
+
+RCA pattern extraction
+
+DOE planner (factor-level matrix generation)
+
+🔹 B. AI Agent Layer
+
+Setiap fase memiliki agent:
+
+Phase	Agent Name	Function
+Define	define_agent()	Charter, SIPOC, CTQ, problem statement refinement
+Measure	measure_msa_oee()	OEE, defect summary, measurement analysis
+Analyze	analyze_rootcause()	Pareto insight, RCA, hypothesis generation
+Improve	improve_doe() / improve_kaizen()	DOE matrix or Kaizen plan
+Control	control_plan()	Control plan, monitoring strategy
+
+Semua agent:
+
+menerima input data dan context
+
+menghasilkan structured output + AI Insight
+
+disimpan ke project memory
+
+🔹 C. UI Layer (Streamlit)
+
+Project creator & selector
+
+Phase runner
+
+CSV uploader
+
+AI Insight display
+
+Phase summary viewer
+
+Download report buttons
+
+Audit log viewer
+
+📌 4. Directory & File Structure
+/app
+   app.py                # Main Streamlit application
+   /agents
+       define_agent.py
+       measure_agent.py
+       analyze_agent.py
+       improve_agent.py
+       control_agent.py
+   /utils
+       llm_engine.py     # OpenAI/HF integration
+       data_processing.py
+       reporting.py
+       audit.py
+       memory.py         # (will host future adaptation logic)
+   /data
+       /projects
+           <project_name>/
+              define.json
+              measure.json
+              analyze.json
+              improve.json
+              control.json
+              audit_log.json
+
+📌 5. Core Logic Flow (High-level)
+
+User memilih project
+
+User memilih fase DMAIC
+
+User upload data (jika diperlukan)
+
+Python memanggil agent sesuai fase
+
+Agent melakukan:
+
+Data processing
+
+Prompt building
+
+LLM reasoning
+
+Synthesize output
+
+Output disimpan ke folder project
+
+Audit log diperbarui
+
+UI menampilkan & menyediakan download
+
+📌 6. Current Features Completed
+
+Modular multi-phase DMAIC agents
+
+Persistent project folder system
+
+JSON state saving per fase
+
+Full DMAIC report generation
+
+Phase report generation
+
+Audit trail functional
+
+OEE, defect rate, Pareto, CTQ, DOE analytics
+
+Kaizen Action Plan generator (Improve phase)
+
+LLM insight generator (Define → Control)
+
+Streamlit UI end-to-end flow
+
+Error handling & guardrails
+
+📌 7. Limitations / Work-in-progress
+
+Adaptation Layer belum ada (sesuai agentic AI reference)
+
+Belum ada episodic memory integration
+
+Belum ada user feedback loop (thumbs up/down)
+
+Belum ada LLM self-critique
+
+JSON consistency masih rentan (perlu schema validation)
+
+UI masih minimal (perlu perapihan minor)
+
+📌 8. Next Priority Tasks
+🚀 Priority 1 — Agent Memory Layer
+
+Create episodic memory store per phase
+
+Inject historical memory into prompts
+
+Build memory retrieval function
+
+🚀 Priority 2 — Feedback Loop
+
+Add UI: thumbs up/down + text feedback
+
+Save feedback to JSON
+
+Use feedback to modify next-phase prompt
+
+🚀 Priority 3 — Prompt Engineering Upgrade
+
+Add project-level structured context
+
+Improve prompt templates per fase
+
+Add self-reflection agent (LLM critique)
+
+🚀 Priority 4 — UI Improvements
+
+Better display of per-phase reports
+
+Notification for "phase completed"
+
+More robust error display
+
+📌 9. Prompt Style Guidelines (important!)
+All prompts must:
+
+Use DMAIC logic
+
+Use lean/practical manufacturing language
+
+Provide actionable insight
+
+Avoid generic coaching language
+
+Use structured output (tables, bullet, steps)
+
+Each phase must include:
+
+Define → Charter, CTQ, SIPOC
+Measure → OEE, MSA, defect analysis
+Analyze → Hypothesis, RCA, prioritization
+Improve → DOE/Kaizen plan + expected impact
+Control → Control plan + monitoring KPIs
+
+📌 10. Rules for Future Coding Sessions
+
+To ensure consistency:
+
+Do not rewrite entire files unless requested.
+
+Use diff mode for code updates.
+
+Maintain folder structure exactly.
+
+All new features must integrate with project memory system.
+
+Keep code modular — functions per phase, no giant blocks.
+
+For new features → update this context file.
+
+Always validate JSON before saving to project folder.
+
+📌 11. Glossary (for ChatGPT parsing)
+
+Agent = function/module that runs one DMAIC phase with LLM reasoning.
+
+Project memory = folder containing JSON per phase.
+
+Episode = one execution of an agent (future adaptation).
+
+AI Insight = LLM interpretation of analytics.
+
+Audit log = chronological list of agent actions.
+
+📌 12. Expected Output Quality Standards
+
+Clear, structured, actionable
+
+DMAIC terminology consistent
+
+Insight must tie to data uploaded
+
+No hallucination of columns/data
+
+No vague management-speak
+
+USER
+ ↓
+[ 1_DEFINE.py ]      ← UI / orchestrator
+ ↓
+[ define_agent.py ]  ← otak / agentic reasoning
+ ↓
+[ define_state.json ]
+ ↓
+[ reporting.py ]     ← formatter / exporter
+
+
+=========================================================
+END OF FILE
+=========================================================

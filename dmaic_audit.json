@@ -1,0 +1,625 @@
+{
+  "events": [
+    {
+      "timestamp": "2025-12-06T16:56:36.717246",
+      "project_id": "proj_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Reduce Packaging Defects",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "\n        Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir,\n        terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\n    ",
+        "goal_text": "Reduce defect",
+        "voc_list": [
+          "Customer complain product leak",
+          "High scrap cost",
+          "Frequent rework on sealing line"
+        ],
+        "key_issue": "Possible heat instability in sealing jaws"
+      }
+    },
+    {
+      "timestamp": "2025-12-06T16:57:03.778311",
+      "project_id": "proj_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Reduce Packaging Defects",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "\n        Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir,\n        terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\n    ",
+        "goal_text": "Reduce defect",
+        "voc_list": [
+          "Customer complain product leak",
+          "High scrap cost",
+          "Frequent rework on sealing line"
+        ],
+        "key_issue": "Possible heat instability in sealing jaws"
+      }
+    },
+    {
+      "timestamp": "2025-12-06T16:57:47.296722",
+      "project_id": "proj_001",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": null,
+        "pain_theme": null,
+        "project_type": null
+      }
+    },
+    {
+      "timestamp": "2025-12-06T17:02:51.863571",
+      "project_id": "proj_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Reduce Packaging Defects",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "\n        Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir,\n        terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\n    ",
+        "goal_text": "Reduce defect",
+        "voc_list": [
+          "Customer complain product leak",
+          "High scrap cost",
+          "Frequent rework on sealing line"
+        ],
+        "key_issue": "Possible heat instability in sealing jaws"
+      }
+    },
+    {
+      "timestamp": "2025-12-06T17:03:20.329414",
+      "project_id": "proj_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Reduce Packaging Defects",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "\n        Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir,\n        terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\n    ",
+        "goal_text": "Reduce defect",
+        "voc_list": [
+          "Customer complain product leak",
+          "High scrap cost",
+          "Frequent rework on sealing line"
+        ],
+        "key_issue": "Possible heat instability in sealing jaws"
+      }
+    },
+    {
+      "timestamp": "2025-12-06T17:03:59.654339",
+      "project_id": "proj_001",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": null,
+        "pain_theme": null,
+        "project_type": null
+      }
+    },
+    {
+      "timestamp": "2025-12-06T17:07:08.958339",
+      "project_id": "proj_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Reduce Packaging Defects",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "\n        Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir,\n        terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\n    ",
+        "goal_text": "Reduce defect",
+        "voc_list": [
+          "Customer complain product leak",
+          "High scrap cost",
+          "Frequent rework on sealing line"
+        ],
+        "key_issue": "Possible heat instability in sealing jaws"
+      }
+    },
+    {
+      "timestamp": "2025-12-06T17:07:34.782265",
+      "project_id": "proj_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Reduce Packaging Defects",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "\n        Defect pada inner packaging meningkat dari 2.5% menjadi 6% dalam 3 bulan terakhir,\n        terutama pada sealing line. Hal ini menyebabkan rework dan scrap meningkat signifikan.\n    ",
+        "goal_text": "Reduce defect",
+        "voc_list": [
+          "Customer complain product leak",
+          "High scrap cost",
+          "Frequent rework on sealing line"
+        ],
+        "key_issue": "Possible heat instability in sealing jaws"
+      }
+    },
+    {
+      "timestamp": "2025-12-07T02:07:51.720231",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Improve Quality Performance",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T02:09:01.349038",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Improve Quality Performance",
+        "industry": "Chemical",
+        "process_area": "Quality",
+        "pain_theme": "Quality",
+        "problem_text": "Moisture content is above specification 16% while spec is max 15%",
+        "goal_text": "",
+        "voc_list": [
+          "product as specification"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T02:11:48.398905",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Improve Quality Performance",
+        "industry": "Chemical",
+        "process_area": "Quality",
+        "pain_theme": "Quality",
+        "problem_text": "Moisture content is above specification 16% while spec is max 15%",
+        "goal_text": "",
+        "voc_list": [
+          "product as specification"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T02:12:33.124871",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Improve Quality Performance",
+        "industry": "Chemical",
+        "process_area": "Quality",
+        "pain_theme": "Quality",
+        "problem_text": "Moisture content is above specification 16% while spec is max 15%",
+        "goal_text": "",
+        "voc_list": [
+          "product as specification"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T02:13:35.253097",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Improve Quality Performance",
+        "industry": "Chemical",
+        "process_area": "Quality",
+        "pain_theme": "Quality",
+        "problem_text": "Moisture content is above specification 16% while spec is max 15%",
+        "goal_text": "",
+        "voc_list": [
+          "product as specification"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T02:14:06.825744",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": null,
+        "pain_theme": null,
+        "project_type": null
+      }
+    },
+    {
+      "timestamp": "2025-12-07T02:18:59.989695",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Improve Quality Performance",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T02:19:07.425547",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Improve Quality Performance",
+        "industry": "Chemical",
+        "process_area": "Quality",
+        "pain_theme": "Quality",
+        "problem_text": "Moisture content is above specification 16% while spec is max 15%",
+        "goal_text": "",
+        "voc_list": [
+          "product as specification"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T19:13:16.295676",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Improve Quality Performance",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T19:15:18.463666",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "increase throughput in filter press",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Cost",
+        "problem_text": "low throughtput 5 ton/hour while installed capacity is 7 ton/hour give higher cost per ton",
+        "goal_text": "increase throughput",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T19:25:21.577244",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "increase throughput in filter press",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Cost",
+        "problem_text": "low throughtput 5 ton/hour while installed capacity is 7 ton/hour give higher cost per ton",
+        "goal_text": "increase throughput",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T19:42:18.979462",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Improve Quality Performance",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T19:45:15.009383",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Menaikkan throughput",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Cost",
+        "problem_text": "throughput proses filter press saat ini 5 ton/jam sedangkan kapasitas terpasang adalah 8 ton per jam sehingga cost per ton menjadi tinggi dengan rendahnya troughput ini.",
+        "goal_text": "meningkatkan throughput",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T19:46:35.418160",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Menaikkan throughput",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Cost",
+        "problem_text": "throughput proses filter press saat ini 5 ton/jam sedangkan kapasitas terpasang adalah 8 ton per jam sehingga cost per ton menjadi tinggi dengan rendahnya troughput ini.",
+        "goal_text": "meningkatkan throughput",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-07T19:47:40.317648",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": null,
+        "pain_theme": null,
+        "project_type": null
+      }
+    },
+    {
+      "timestamp": "2025-12-17T06:18:13.887439",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-17T06:54:59.642000",
+      "project_id": "proj_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Reduce product quality defect",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-17T08:36:34.205471",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-17T08:39:13.771777",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Increase Throughput Line 1",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Cost",
+        "problem_text": "throughput line 1 was cutrrently 5 ton/hour in jan - auguts 2025, while target is 7 ton/h with installed capacity 10 ton/h, this create cost pe rton product higher due to lower output",
+        "goal_text": "increase throughput from 5 ton/hour into 7 ton/hour",
+        "voc_list": [
+          "low cost per ton"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-17T08:53:36.040746",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Cost",
+        "process_area": "Production",
+        "project_type": "Process Improvement"
+      }
+    },
+    {
+      "timestamp": "2025-12-17T09:55:37.525049",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "proj_001",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-17T12:09:40.471828",
+      "project_id": "proj_003",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "proj_003_ Late_delivery",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+        "goal_text": "no more late delivery",
+        "voc_list": [
+          "on time delivery"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-17T12:13:17.518387",
+      "project_id": "proj_003",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "proj_003_ Late_delivery",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+        "goal_text": "no more late delivery",
+        "voc_list": [
+          "on time delivery"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-17T12:14:47.691845",
+      "project_id": "proj_003",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Delivery",
+        "process_area": "Supply Chain",
+        "project_type": "Process Improvement"
+      }
+    },
+    {
+      "timestamp": "2025-12-17T15:44:16.069340",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "Increase Throughput Line 1",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Cost",
+        "problem_text": "throughput line 1 was cutrrently 5 ton/hour in jan - auguts 2025, while target is 7 ton/h with installed capacity 10 ton/h, this create cost pe rton product higher due to lower output",
+        "goal_text": "increase throughput from 5 ton/hour into 7 ton/hour",
+        "voc_list": [
+          "low cost per ton"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-17T15:45:41.961798",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Cost",
+        "process_area": "Production",
+        "project_type": "Process Improvement using Lean methodologies"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T03:04:30.828995",
+      "project_id": "proj_003",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "proj_003_ Late_delivery",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+        "goal_text": "no more late delivery",
+        "voc_list": [
+          "on time delivery"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-18T04:16:26.952642",
+      "project_id": "proj_003",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "proj_003_ Late_delivery",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "its been more than 3 times, shipment to customer aaj in jakarta always late than schedule, in average 5-6 days late.",
+        "goal_text": "no more late delivery",
+        "voc_list": [
+          "on time delivery"
+        ],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-18T04:18:10.264503",
+      "project_id": "proj_003",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Delivery",
+        "process_area": "Supply Chain",
+        "project_type": "Process Improvement"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T07:41:15.712310",
+      "project_id": "proj_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "proj_002",
+        "industry": "Manufacturing",
+        "process_area": "Quality",
+        "pain_theme": "Quality",
+        "problem_text": "Kadar air produk B selama November sampai desember 2026 naik menjadi rata2 16% padahal spesifikasi adalah maksimal 15%. offspek kadar air naik, output good quality menurun, delivery delay",
+        "goal_text": "",
+        "voc_list": [
+          "kadar air in spek",
+          "on time dleivery"
+        ],
+        "key_issue": ""
+      }
+    }
+  ]
+}

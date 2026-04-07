@@ -1,0 +1,732 @@
+{
+  "events": [
+    {
+      "timestamp": "2025-12-18T17:27:52.627790",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Compliance",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.  ",
+        "goal_text": "Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T17:59:20.764023",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart. ",
+        "goal_text": "Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T18:29:52.998002",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T18:34:41.857406",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T18:54:02.648537",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-18T18:54:33.809421",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T18:55:57.091420",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T18:56:02.083880",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T18:56:03.626515",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T18:57:34.600557",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Cost",
+        "process_area": "Supply Chain",
+        "project_type": null
+      }
+    },
+    {
+      "timestamp": "2025-12-18T19:33:33.369199",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": [],
+        "key_issue": "A/R Overdue"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T19:34:20.387524",
+      "project_id": "project_001",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Cost",
+        "process_area": "Supply Chain",
+        "project_type": "Process Improvement"
+      }
+    },
+    {
+      "timestamp": "2025-12-18T21:56:40.537582",
+      "project_id": "project_002",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_002",
+        "industry": "Manufacturing",
+        "process_area": "Production",
+        "pain_theme": "Quality",
+        "problem_text": "From January to April 2017, monthly average % non FPQ of filtration process by batch (per discharge) was 18 % \nNote: % non FPQ  filtration process  means number of  %  batch offspec acidity  in filter cake out put per month ",
+        "goal_text": "Reduce  % non FPQ  on Filtration  Process by batch to 8% (tbc) by end of December 2017. ",
+        "voc_list": [
+          "filter cake output maintain the acidity contain per product specification"
+        ],
+        "key_issue": "Acidity Filter Cake [%]"
+      }
+    },
+    {
+      "timestamp": "2025-12-19T14:31:39.017345",
+      "project_id": "proj_smoke_001",
+      "phase": "Measure",
+      "status": "started",
+      "meta": {
+        "project_id": "proj_smoke_001",
+        "project_name": "Smoke Test Project",
+        "industry": "manufacturing",
+        "pain_theme": "quality",
+        "process_area": "packaging",
+        "y_variable": "Defect Rate (%)",
+        "y_operational_definition_notes": "Defect Rate = (defect units / total units) * 100, per shift"
+      }
+    },
+    {
+      "timestamp": "2025-12-19T14:31:42.100619",
+      "project_id": "proj_smoke_001",
+      "phase": "Measure",
+      "status": "started",
+      "meta": {
+        "project_id": "proj_smoke_001",
+        "project_name": "Smoke Test Project",
+        "industry": "manufacturing",
+        "pain_theme": "quality",
+        "process_area": "packaging",
+        "y_variable": "Defect Rate (%)",
+        "y_operational_definition_notes": "Defect Rate = (defect units / total units) * 100, per shift"
+      }
+    },
+    {
+      "timestamp": "2025-12-19T14:35:55.397011",
+      "project_id": "proj_smoke_001",
+      "phase": "Measure",
+      "status": "started",
+      "meta": {
+        "project_id": "proj_smoke_001",
+        "project_name": "Smoke Test Project",
+        "industry": "manufacturing",
+        "pain_theme": "quality",
+        "process_area": "packaging",
+        "y_variable": "Defect Rate (%)",
+        "y_operational_definition_notes": "Defect Rate = (defect units / total units) * 100, per shift"
+      }
+    },
+    {
+      "timestamp": "2025-12-19T14:36:20.479587",
+      "project_id": "proj_smoke_001",
+      "phase": "Measure",
+      "status": "success",
+      "meta": {
+        "industry": "manufacturing",
+        "pain_theme": "quality",
+        "process_area": "packaging",
+        "y_variable_confirmed": "Defect Rate in Packaging"
+      }
+    },
+    {
+      "timestamp": "2025-12-19T15:17:49.165133",
+      "project_id": "proj_smoke_001",
+      "phase": "Measure",
+      "status": "started",
+      "meta": {
+        "project_id": "proj_smoke_001",
+        "project_name": "Smoke Test Project",
+        "industry": "manufacturing",
+        "pain_theme": "quality",
+        "process_area": "packaging",
+        "y_variable": "Defect Rate (%)",
+        "y_operational_definition_notes": "Defect Rate = (defect units / total units) * 100, per shift"
+      }
+    },
+    {
+      "timestamp": "2025-12-19T15:18:15.789003",
+      "project_id": "proj_smoke_001",
+      "phase": "Measure",
+      "status": "success",
+      "meta": {
+        "industry": "manufacturing",
+        "pain_theme": "quality",
+        "process_area": "packaging",
+        "y_variable_confirmed": "Defect Rate in Packaging"
+      }
+    },
+    {
+      "timestamp": "2025-12-22T08:49:38.231121",
+      "project_id": "project_003",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% starting November 2019.",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-22T08:49:47.883231",
+      "project_id": "project_003",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% starting November 2019.",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-22T08:56:08.366980",
+      "project_id": "project_003",
+      "phase": "Define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% starting November 2019.",
+        "voc_list": [],
+        "key_issue": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-22T08:57:38.216688",
+      "project_id": "project_003",
+      "phase": "Define",
+      "status": "success",
+      "meta": {
+        "industry": "Manufacturing",
+        "pain_theme": "Delivery",
+        "process_area": "Supply Chain",
+        "project_type": "Process Improvement"
+      }
+    },
+    {
+      "timestamp": "2025-12-22T12:01:25.480940",
+      "project_id": "project_003",
+      "phase": "Measure",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "y_variable": "Percentage of difference between physical and SAP",
+        "y_operational_definition_notes": "What? Percentage of difference between physical and SAP\nHow?\n1. Calculate the amount of BGZ receipts every day based on Delivery Noted\n2. Download the data on the amount of BGZ receipts every day from SAP\n3. Compare the physical acceptance of BGZ with acceptance in SAP\n4. Percentage of different of physical and SAP calculated from = number of No : (number of No + Yes) x 100%\n\nDecition Criteria:\nIf the quantity is different = No, if the quantity is the same = Yes",
+        "operational_definitions": [
+          {
+            "metric_name": "Data Accuracy",
+            "what_measured": "Primary outcome metric (from DEFINE)",
+            "instrument_system": "ERP / MES / LIMS / Source system",
+            "method_formula": "Define formula here (numerator/denominator clear)",
+            "unit": "%",
+            "frequency": "Monthly",
+            "decision_criteria": "Target/spec from DEFINE (if known); otherwise set with owner"
+          },
+          {
+            "metric_name": "Supporting Metric 1",
+            "what_measured": "A key driver/companion measure that affects Y",
+            "instrument_system": "Source system / log",
+            "method_formula": "Define formula here",
+            "unit": "Count",
+            "frequency": "Weekly",
+            "decision_criteria": "Lower/Upper is better; set threshold later"
+          }
+        ],
+        "scaffolding_level": "challenge",
+        "y_column_name": "",
+        "date_column": null,
+        "segment_columns": [],
+        "confirm_primary_metric": false,
+        "chosen_primary_metric": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-23T22:08:11.065507",
+      "project_id": "proj_smoke_001",
+      "phase": "Measure",
+      "status": "started",
+      "meta": {
+        "project_id": "proj_smoke_001",
+        "project_name": "Smoke Test Project",
+        "industry": "manufacturing",
+        "pain_theme": "quality",
+        "user_inputs": {
+          "operational_definitions": []
+        },
+        "process_area": "packaging",
+        "y_variable": "Defect Rate (%)",
+        "y_operational_definition_notes": "Defect Rate = (defect units / total units) * 100, per shift"
+      }
+    },
+    {
+      "timestamp": "2025-12-24T09:05:21.030533",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "",
+        "goal_text": "",
+        "voc_list": "",
+        "key_issue": "",
+        "charter_confirmed": true,
+        "documentation_agreed": true,
+        "similar_project_exists": false,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-24T09:05:39.921333",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "FAILED"
+      }
+    },
+    {
+      "timestamp": "2025-12-24T10:10:39.932909",
+      "project_id": "project_004",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_004_Payment_Overdue",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Other",
+        "problem_text": "n 2016,  27.54% of total A/R overdue all customer in ID03 with 51.8 DSO, so we will focus on this for this project. \nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by customer",
+        "goal_text": "Improve the cashflow with reduce monthly overdue A/R customer to 12.8 % and monthly DSO to 50 days by end of Nov 2017.",
+        "voc_list": "Head of Sales : \"Reduce A/R overdue & DSO all customers in ID03, target overdue A/R 12,8% and 50 DSO for SEAP\"\nSales & SCM : To many blocked SO caused by A/R overdue. They cannot fullfill customer request to deliver the goods.",
+        "key_issue": "A/R Overdue",
+        "charter_confirmed": false,
+        "documentation_agreed": false,
+        "similar_project_exists": false,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-24T10:10:56.661540",
+      "project_id": "project_004",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "FAILED"
+      }
+    },
+    {
+      "timestamp": "2025-12-28T18:08:26.555676",
+      "project_id": "project_001",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_001_Reduce_Overdue",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Cost",
+        "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+        "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+        "voc_list": "",
+        "key_issue": "A/R Overdue",
+        "charter_confirmed": false,
+        "documentation_agreed": false,
+        "similar_project_exists": false,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-28T18:08:41.626169",
+      "project_id": "project_001",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "FAILED"
+      }
+    },
+    {
+      "timestamp": "2025-12-30T23:32:21.496450",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% starting November 2019.",
+        "voc_list": "Physical Stock with SAP is different",
+        "key_issue": "",
+        "charter_confirmed": false,
+        "documentation_agreed": false,
+        "similar_project_exists": false,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-30T23:32:41.778607",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "FAILED"
+      }
+    },
+    {
+      "timestamp": "2025-12-30T23:38:24.195030",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2024 - March 2025 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% starting November 2026.",
+        "voc_list": "Physical Stock with SAP is different",
+        "key_issue": "",
+        "charter_confirmed": false,
+        "documentation_agreed": false,
+        "similar_project_exists": false,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-30T23:38:44.650563",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "FAILED"
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:34:49.953808",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% starting November 2019.",
+        "voc_list": "",
+        "key_issue": "",
+        "charter_confirmed": false,
+        "documentation_agreed": false,
+        "similar_project_exists": false,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:35:10.525011",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "FAILED"
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:35:58.609331",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% ",
+        "voc_list": "",
+        "key_issue": "",
+        "charter_confirmed": false,
+        "documentation_agreed": false,
+        "similar_project_exists": false,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:36:17.338581",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "FAILED"
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:36:55.258759",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% by November 2026",
+        "voc_list": "",
+        "key_issue": "",
+        "charter_confirmed": false,
+        "documentation_agreed": false,
+        "similar_project_exists": false,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:37:17.738177",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "FAILED"
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:37:42.869760",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% by November 2026",
+        "voc_list": "Physical Stock with SAP is different",
+        "key_issue": "",
+        "charter_confirmed": false,
+        "documentation_agreed": false,
+        "similar_project_exists": false,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:37:57.238659",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "FAILED"
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:39:33.696858",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "started",
+      "meta": {
+        "project_name": "project_003_SAP reliability",
+        "industry": "Manufacturing",
+        "process_area": "Supply Chain",
+        "pain_theme": "Delivery",
+        "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+        "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% by November 2026",
+        "voc_list": "Physical Stock with SAP is different",
+        "key_issue": "",
+        "charter_confirmed": true,
+        "documentation_agreed": true,
+        "similar_project_exists": true,
+        "similar_project_note": "",
+        "parallel_projects_risk": "",
+        "benefit_estimate": ""
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:39:49.937797",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "draft_generated",
+      "meta": {
+        "gate_status": "CONDITIONAL"
+      }
+    },
+    {
+      "timestamp": "2025-12-31T01:40:11.639805",
+      "project_id": "project_003",
+      "phase": "define",
+      "status": "finalized",
+      "meta": {
+        "gate_status": "CONDITIONAL",
+        "failed_rules": [],
+        "conditional_rules": [
+          "B1_similar_project_exists_no_review_note",
+          "B3_benefit_estimate_missing"
+        ]
+      }
+    }
+  ]
+}

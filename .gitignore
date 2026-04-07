@@ -1,0 +1,24 @@
+# Secrets — NEVER commit
+.streamlit/secrets.toml
+
+# SQLite DB — ephemeral on cloud, local dev artifact
+dmaic_memory.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+.venv/
+dmaic_memory.db

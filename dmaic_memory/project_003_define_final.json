@@ -1,0 +1,186 @@
+{
+  "project_id": "project_003",
+  "status": "final",
+  "define_state": {
+    "project_id": "project_003",
+    "phase": "define",
+    "status": "final",
+    "schema_version": "DEFINE_SCHEMA_V3_STAGEGATE",
+    "created_at": "2025-12-30T18:39:49.934775+00:00",
+    "updated_at": "2025-12-30T18:40:11.635798+00:00",
+    "inputs": {
+      "project_name": "project_003_SAP reliability",
+      "industry": "Manufacturing",
+      "process_area": "Supply Chain",
+      "pain_theme": "Delivery",
+      "problem_text": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.\n",
+      "goal_text": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% by November 2026",
+      "voc_list": "Physical Stock with SAP is different",
+      "key_issue": "",
+      "charter_confirmed": true,
+      "documentation_agreed": true,
+      "similar_project_exists": true,
+      "similar_project_note": "",
+      "parallel_projects_risk": "",
+      "benefit_estimate": ""
+    },
+    "outputs": {
+      "problem_statement": "From August 2018 - March 2019, there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data, resulting in the TECO production process being hampered and waste in the planning process due to daily checks of actual physical stock.",
+      "goal_statement": "Decrease the percentage of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% by November 2026.",
+      "business_case": "Improving data accuracy between physical stock and SAP will streamline the TECO production process, reduce waste in planning, and enhance overall supply chain efficiency, leading to cost savings and improved operational performance.",
+      "project_scope": {
+        "in_scope": [
+          "Supply chain process from order receipt to delivery",
+          "Inventory management",
+          "Logistics",
+          "Transportation"
+        ],
+        "out_of_scope": [
+          "Supplier management outside of data accuracy impact",
+          "Non-logistics related customer service issues"
+        ]
+      },
+      "sipoc": {
+        "Suppliers": [
+          "Raw material suppliers",
+          "Logistics providers"
+        ],
+        "Inputs": [
+          "Order details",
+          "Inventory levels",
+          "Shipping schedules"
+        ],
+        "Process": [
+          "Order processing",
+          "Inventory management",
+          "Logistics coordination"
+        ],
+        "Outputs": [
+          "Shipped orders",
+          "Delivery schedules"
+        ],
+        "Customers": [
+          "End customers",
+          "Retailers"
+        ]
+      },
+      "ctq_list": [
+        {
+          "name": "Data Accuracy Rate",
+          "metric": "Percentage of accurate data entries",
+          "unit": "%",
+          "description": "The percentage of data entries for Granule 238 (BGZ) that match between physical stock and SAP records.",
+          "customer": "Internal stakeholders"
+        }
+      ],
+      "y_variable": "On-time delivery rate",
+      "risk_level": "Medium",
+      "project_type": "Process Improvement"
+    },
+    "gate_evidence": {
+      "charter_confirmed": true,
+      "similar_project_exists": true,
+      "similar_project_note": "",
+      "parallel_projects_risk": "",
+      "benefit_estimate": "",
+      "documentation_agreed": true
+    },
+    "gate_result": {
+      "status": "CONDITIONAL",
+      "failed_rules": [],
+      "conditional_rules": [
+        "B1_similar_project_exists_no_review_note",
+        "B3_benefit_estimate_missing"
+      ],
+      "agent_summary": "DEFINE gate CONDITIONAL. You may finalize, but resolve noted conditions to reduce risk.",
+      "debug_smart": {
+        "problem_checked": "From August 2018 - March 2019 there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data. which results in the TECO production process being hampered and the waste in the planning process because it has to check the actual physical stock in the field every day.",
+        "goal_checked": "Decreasing percent of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% by November 2026",
+        "problem_ok": true,
+        "goal_ok": true,
+        "problem_reasons": [],
+        "goal_reasons": [],
+        "user_inputs_keys": [
+          "benefit_estimate",
+          "charter_confirmed",
+          "documentation_agreed",
+          "goal_text",
+          "industry",
+          "key_issue",
+          "pain_theme",
+          "parallel_projects_risk",
+          "problem_text",
+          "process_area",
+          "project_name",
+          "similar_project_exists",
+          "similar_project_note",
+          "voc_list"
+        ],
+        "user_problem_text_present": true,
+        "user_goal_text_present": true
+      }
+    },
+    "ctq_contract": {
+      "status": "ACTIVE",
+      "approved_ctq_list": [
+        {
+          "ctq_id": "CTQ-01",
+          "ctq_name": "Data Accuracy Rate",
+          "description": "The percentage of data entries for Granule 238 (BGZ) that match between physical stock and SAP records.",
+          "customer": "Internal stakeholders",
+          "measurable_intent": "Percentage of accurate data entries",
+          "allowed_measurement_type": "",
+          "assumptions": "",
+          "metric": "Percentage of accurate data entries",
+          "unit": "%"
+        }
+      ],
+      "note": "CTQs are approved for next phase only within this contract."
+    },
+    "insight_md": "### DEFINE Gate Status: **CONDITIONAL**\n- DEFINE gate CONDITIONAL. You may finalize, but resolve noted conditions to reduce risk.\n\n### Strengths\n- Problem statement is documented.\n- Goal statement is documented.\n- SIPOC is provided.\n- CTQ/CTB list is provided.\n\n### Gaps\n- Similar project exists but not reviewed/documented.\n- High-level benefit estimate is missing.\n\n### What to fix next (ordered)\n1. Add note: what to reuse vs what differs from prior project.\n2. Add benefit estimate (type + order of magnitude).\n\n### Risks if proceed\n- Proceeding with conditions unresolved increases rework risk.",
+    "coaching_md": "### DEFINE Gate Status: **CONDITIONAL**\n- DEFINE gate CONDITIONAL. You may finalize, but resolve noted conditions to reduce risk.\n\n### Strengths\n- Problem statement is documented.\n- Goal statement is documented.\n- SIPOC is provided.\n- CTQ/CTB list is provided.\n\n### Gaps\n- Similar project exists but not reviewed/documented.\n- High-level benefit estimate is missing.\n\n### What to fix next (ordered)\n1. Add note: what to reuse vs what differs from prior project.\n2. Add benefit estimate (type + order of magnitude).\n\n### Risks if proceed\n- Proceeding with conditions unresolved increases rework risk.",
+    "quick_wins": [],
+    "perception_trace": {
+      "industry": "Manufacturing",
+      "pain_theme": "Delivery",
+      "process_area": "Supply Chain"
+    },
+    "decision_trace": {
+      "focus_ctq_strategy": "Improve on-time delivery performance by identifying and addressing key factors affecting delivery timelines.",
+      "y_variable_candidate": "On-time delivery rate",
+      "scope_boundary": "The project will focus on the supply chain process from order receipt to delivery, including inventory management, logistics, and transportation.",
+      "sipoc_focus": {
+        "Suppliers": [
+          "Raw material suppliers",
+          "Logistics providers"
+        ],
+        "Inputs": [
+          "Order details",
+          "Inventory levels",
+          "Shipping schedules"
+        ],
+        "Process": [
+          "Order processing",
+          "Inventory management",
+          "Logistics coordination"
+        ],
+        "Outputs": [
+          "Shipped orders",
+          "Delivery schedules"
+        ],
+        "Customers": [
+          "End customers",
+          "Retailers"
+        ]
+      },
+      "risks": [
+        "Potential resistance to process changes from supply chain partners",
+        "Data availability and accuracy issues",
+        "External factors such as weather or geopolitical events affecting delivery"
+      ],
+      "notes_for_action": "Engage with key stakeholders in the supply chain to gather insights on current delivery challenges. Conduct a data collection plan to ensure accurate measurement of on-time delivery rates. Consider external factors that may impact delivery and develop contingency plans."
+    },
+    "user_feedback": {},
+    "summary_md": "## DEFINE — project_003\n**Gate Status:** CONDITIONAL\n\n### Problem\nFrom August 2018 - March 2019, there were 52% of cases of differences in incoming Granule 238 (BGZ) data between physical and SAP data, resulting in the TECO production process being hampered and waste in the planning process due to daily checks of actual physical stock.\n\n### Goal\nDecrease the percentage of cases of differences in data on incoming Granule 238 (BGZ) between physical and SAP to 10% by November 2026."
+  }
+}

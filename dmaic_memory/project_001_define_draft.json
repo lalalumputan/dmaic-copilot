@@ -1,0 +1,188 @@
+{
+  "project_id": "project_001",
+  "status": "draft",
+  "define_state": {
+    "project_id": "project_001",
+    "phase": "define",
+    "status": "draft",
+    "schema_version": "DEFINE_SCHEMA_V3_STAGEGATE",
+    "created_at": "2025-12-28T11:08:41.621039+00:00",
+    "updated_at": "2025-12-28T11:08:41.622037+00:00",
+    "inputs": {
+      "project_name": "project_001_Reduce_Overdue",
+      "industry": "Manufacturing",
+      "process_area": "Supply Chain",
+      "pain_theme": "Cost",
+      "problem_text": "A/R is part of cashflow performance. In 2016,  36.20% of total A/R overdue in ID03 was trigger by PT Smart, so we will focus on this customer for this project.\nHigh A/R overdue shows that a company is selling its product to customer on credit and taking longer to collect money. It means company has less readily available cash to finance our operation. In addition, high A/R overdue will be blocked the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+      "goal_text": " Reduce  monthly overdue A/R PT Smart to 12.8 %  by end of Nov 2017.",
+      "voc_list": "",
+      "key_issue": "A/R Overdue",
+      "charter_confirmed": false,
+      "documentation_agreed": false,
+      "similar_project_exists": false,
+      "similar_project_note": "",
+      "parallel_projects_risk": "",
+      "benefit_estimate": ""
+    },
+    "outputs": {
+      "problem_statement": "A/R is part of cashflow performance. In 2016, 36.20% of total A/R overdue in ID03 was triggered by PT Smart, so we will focus on this customer for this project. High A/R overdue shows that a company is selling its product to customers on credit and taking longer to collect money. It means the company has less readily available cash to finance our operation. In addition, high A/R overdue will block the orders and CSD cannot send the product until the payment has been made by PT Smart.",
+      "goal_statement": "Reduce monthly overdue A/R PT Smart to 12.8% by the end of Nov 2017.",
+      "business_case": "Reducing overdue accounts receivable (A/R) will improve cash flow, reduce costs associated with delayed payments, and ensure smooth order processing without interruptions due to payment issues.",
+      "project_scope": {
+        "in_scope": [
+          "Interactions between sales, finance, and logistics departments",
+          "Order fulfillment process",
+          "Invoicing and payment collection processes"
+        ],
+        "out_of_scope": [
+          "A/R processes for other customers",
+          "Non-financial related issues",
+          "Supply chain processes not related to order fulfillment and payment collection"
+        ]
+      },
+      "sipoc": {
+        "Suppliers": [
+          "Sales Department",
+          "Logistics Providers"
+        ],
+        "Inputs": [
+          "Customer Orders",
+          "Shipping Documentation",
+          "Invoices"
+        ],
+        "Process": [
+          "Order Fulfillment",
+          "Invoicing",
+          "Payment Collection"
+        ],
+        "Outputs": [
+          "Delivered Products",
+          "Issued Invoices",
+          "Collected Payments"
+        ],
+        "Customers": [
+          "Accounts Receivable Department",
+          "Finance Department"
+        ]
+      },
+      "ctq_list": [
+        {
+          "name": "A/R Overdue Percentage",
+          "metric": "Percentage",
+          "unit": "%",
+          "description": "The percentage of accounts receivable overdue beyond 30 days.",
+          "customer": "Finance Department"
+        }
+      ],
+      "y_variable": "Percentage of A/R overdue beyond 30 days.",
+      "x_categories": {
+        "Man": [
+          "Training of sales and finance staff on payment terms and collection strategies",
+          "Staffing levels in accounts receivable"
+        ],
+        "Machine": [
+          "Accounting software used for tracking A/R",
+          "Automation tools for sending payment reminders"
+        ],
+        "Method": [
+          "Payment collection procedures",
+          "Order processing and fulfillment protocols"
+        ],
+        "Material": [
+          "Quality of invoicing documentation",
+          "Accuracy of customer order details"
+        ],
+        "Measurement": [
+          "Data accuracy in A/R tracking",
+          "Frequency of overdue A/R reporting"
+        ],
+        "Environment": [
+          "Economic conditions affecting customer payment behavior",
+          "Internal company culture towards credit management"
+        ]
+      },
+      "early_measure_plan": {
+        "candidate_data_sources": [
+          "Accounting software reports",
+          "Sales and finance department records"
+        ],
+        "frequency": "Monthly",
+        "owner": "Finance Department"
+      },
+      "risk_level": "Medium",
+      "project_type": "Process Improvement"
+    },
+    "gate_evidence": {
+      "charter_confirmed": false,
+      "similar_project_exists": false,
+      "similar_project_note": "",
+      "parallel_projects_risk": "",
+      "benefit_estimate": "",
+      "documentation_agreed": false
+    },
+    "gate_result": {
+      "status": "FAILED",
+      "failed_rules": [
+        "A1_charter_not_confirmed",
+        "A1_problem_not_smart_enough",
+        "A1_goal_not_smart_enough"
+      ],
+      "conditional_rules": [
+        "B3_benefit_estimate_missing"
+      ],
+      "agent_summary": "DEFINE gate FAILED. Fix critical items (A-rules) before proceeding."
+    },
+    "ctq_contract": null,
+    "insight_md": "### DEFINE Gate Status: **FAILED**\n- DEFINE gate FAILED. Fix critical items (A-rules) before proceeding.\n\n### Strengths\n- Problem statement is documented.\n- Goal statement is documented.\n- SIPOC is provided.\n- CTQ/CTB list is provided.\n\n### Gaps\n- Project charter is not confirmed (missing user confirmation).\n- Problem statement is not SMART enough (measurable/time-bound missing).\n- Goal statement is not SMART enough (measurable/time-bound missing).\n- High-level benefit estimate is missing.\n\n### What to fix next (ordered)\n1. Confirm project charter setup (checkbox) before finalize.\n2. Rewrite problem statement with measurable indicator and timeframe.\n3. Rewrite goal statement with numeric target and deadline.\n4. Add benefit estimate (type + order of magnitude).\n\n### Risks if proceed\n- Proceeding without fixing critical gate items will invalidate later phases.",
+    "quick_wins": [],
+    "perception_trace": {
+      "industry": "Manufacturing",
+      "pain_theme": "Cost",
+      "process_area": "Supply Chain"
+    },
+    "decision_trace": {
+      "focus_ctq_strategy": "Reduce overdue accounts receivable (A/R) to improve cash flow and reduce costs associated with delayed payments.",
+      "y_variable_candidate": "Percentage of A/R overdue beyond 30 days.",
+      "scope_boundary": "The scope includes the entire supply chain process from order fulfillment to payment collection, focusing on the interactions between sales, finance, and logistics departments.",
+      "sipoc_focus": {
+        "Suppliers": [
+          "Sales Department",
+          "Logistics Providers"
+        ],
+        "Inputs": [
+          "Customer Orders",
+          "Shipping Documentation",
+          "Invoices"
+        ],
+        "Process": [
+          "Order Fulfillment",
+          "Invoicing",
+          "Payment Collection"
+        ],
+        "Outputs": [
+          "Delivered Products",
+          "Issued Invoices",
+          "Collected Payments"
+        ],
+        "Customers": [
+          "Accounts Receivable Department",
+          "Finance Department"
+        ]
+      },
+      "risks": [
+        "Potential resistance from departments due to process changes.",
+        "Data accuracy and availability issues in tracking overdue A/R.",
+        "Impact on customer relationships due to stricter payment terms."
+      ],
+      "notes_for_action": [
+        "Engage cross-functional teams early to ensure buy-in and collaboration.",
+        "Establish a baseline for current A/R overdue metrics to measure improvement.",
+        "Consider implementing automated reminders and follow-ups for overdue payments.",
+        "Assess current payment terms and explore options for incentivizing early payments."
+      ]
+    },
+    "user_feedback": {},
+    "summary_md": "## DEFINE — project_001\n**Gate Status:** FAILED\n\n### Problem\nA/R is part of cashflow performance. In 2016, 36.20% of total A/R overdue in ID03 was triggered by PT Smart, so we will focus on this customer for this project. High A/R overdue shows that a company is selling its product to customers on credit and taking longer to collect money. It means the company has less readily available cash to finance our operation. In addition, high A/R overdue will block the orders and CSD cannot send the product until the payment has been made by PT Smart.\n\n### Goal\nReduce monthly overdue A/R PT Smart to 12.8% by the end of Nov 2017."
+  },
+  "updated_at": null
+}
