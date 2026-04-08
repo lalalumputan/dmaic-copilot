@@ -317,3 +317,81 @@ def save_control_episode(project_id: str, state: Dict[str, Any], feedback=None) 
 
 def retrieve_similar_control_episodes(industry: Optional[str], pain_theme: Optional[str], k: int = 3) -> List[Dict[str, Any]]:
     return _retrieve_episodes("control", industry, pain_theme, k)
+
+# ======================================================
+# GOVERNANCE — APPROVAL TRACKING
+# ======================================================
+
+def save_approval(
+    project_id: str,
+    phase: str,
+    role: str,
+    action: str,          # 'approve' | 'reject'
+    note: str = "",
+) -> None:
+    """Simpan approval/rejection dari reviewer atau champion."""
+    with _db() as con:
+        con.execute(
+            """
+            INSERT INTO phase_states (project_id, phase, kind, payload, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(project_id, phase, kind) DO UPDATE SET
+                payload    = excluded.payload,
+                updated_at = excluded.updated_at
+            """,
+            (
+                project_id,
+                phase,
+                f"approval_{role}",
+                json.dumps({
+                    "role":       role,
+                    "action":     action,
+                    "note":       note,
+                    "timestamp":  _now(),
+                    "project_id": project_id,
+                    "phase":      phase,
+                }, ensure_ascii=False),
+                _now(),
+            ),
+        )
+
+
+def load_approval(project_id: str, phase: str, role: str) -> Optional[Dict[str, Any]]:
+    """Load approval untuk role tertentu di fase tertentu."""
+    return _load_state(project_id, phase, f"approval_{role}")
+
+
+def get_phase_approval_status(project_id: str, phase: str) -> Dict[str, Any]:
+    """
+    Return status approval lengkap untuk satu fase.
+    {
+        "reviewer":  {"action": "approve"|"reject"|None, "note": "...", "timestamp": "..."},
+        "champion":  {"action": "approve"|"reject"|None, "note": "...", "timestamp": "..."},
+        "can_advance": True|False
+    }
+    """
+    reviewer = load_approval(project_id, phase, "reviewer") or {}
+    champion = load_approval(project_id, phase, "champion") or {}
+
+    reviewer_approved = reviewer.get("action") == "approve"
+    champion_approved = champion.get("action") == "approve"
+
+    return {
+        "reviewer": {
+            "action":    reviewer.get("action"),
+            "note":      reviewer.get("note", ""),
+            "timestamp": reviewer.get("timestamp"),
+        },
+        "champion": {
+            "action":    champion.get("action"),
+            "note":      champion.get("note", ""),
+            "timestamp": champion.get("timestamp"),
+        },
+        "can_advance": reviewer_approved and champion_approved,
+    }
+
+
+def reset_approvals(project_id: str, phase: str) -> None:
+    """Reset semua approval di fase ini (misal kalau draft direvisi ulang)."""
+    for role in ("reviewer", "champion"):
+        _delete_state(project_id, phase, f"approval_{role}")

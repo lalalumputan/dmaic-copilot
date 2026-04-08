@@ -2,7 +2,7 @@ import streamlit as st
 import app.agents.define_agent as _da
 from app.agents.define_agent import run_define_agent, finalize_define_agent
 from app.utils import data_processing as dp, memory, audit, reporting, llm_engine
-
+from app.utils import auth
 
 # ============================================
 #helper for md
@@ -176,12 +176,15 @@ def _render_tables_from_outputs(outputs: dict) -> None:
 # ============================================
 
 st.set_page_config(page_title="DEFINE", layout="wide")
+auth.require_login()
+auth.render_user_badge()
 
 # ---------- Session defaults ----------
 st.session_state.setdefault("active_project_id", None)
 st.session_state.setdefault("mode", "create")  # create/open
 st.session_state.setdefault("define_draft", None)  # wrapper result
 st.session_state.setdefault("define_final", None)  # wrapper result
+
 
 # ---------- Form helpers ----------
 def reset_define_form(pid: str):
@@ -827,6 +830,79 @@ with c3:
             st.button("⬇️ Download Final Word Report", key="define_download_final_word_btn_disabled", disabled=True)
     else:
         st.button("⬇️ Download Final Word Report", key="define_download_final_word_btn_disabled2", disabled=True)
+
+
+# ============================================
+# GOVERNANCE PANEL
+# ============================================
+st.divider()
+st.subheader("🏛️ Governance — Stage Gate Approval")
+
+final_exists = memory.load_define_final(active_pid) if active_pid else None
+approval_status = memory.get_phase_approval_status(active_pid, "define") if active_pid else {}
+
+reviewer_action  = (approval_status.get("reviewer")  or {}).get("action")
+champion_action  = (approval_status.get("champion")   or {}).get("action")
+can_advance      = approval_status.get("can_advance", False)
+
+# Status display
+col_r, col_c, col_adv = st.columns(3)
+
+with col_r:
+    if reviewer_action == "approve":
+        st.success("✅ Reviewer: Approved")
+    elif reviewer_action == "reject":
+        st.error("❌ Reviewer: Rejected")
+    else:
+        st.warning("⏳ Reviewer: Pending")
+
+with col_c:
+    if champion_action == "approve":
+        st.success("✅ Champion: Approved")
+    elif champion_action == "reject":
+        st.error("❌ Champion: Rejected")
+    else:
+        st.warning("⏳ Champion: Pending")
+
+with col_adv:
+    if can_advance:
+        st.success("🚀 Gate: OPEN — Lanjut ke Measure")
+    else:
+        st.info("🔒 Gate: LOCKED")
+
+# Approval actions (hanya tampil kalau ada final dan role sesuai)
+if final_exists:
+    role = auth.get_current_role()
+
+    if role in ("reviewer", "champion"):
+        st.markdown(f"**Aksi kamu sebagai {role.title()}:**")
+        note = st.text_area(
+            "Catatan (opsional)",
+            key=f"gov_note_{role}_define",
+            height=80,
+        )
+        col_app, col_rej = st.columns(2)
+        with col_app:
+            if st.button("✅ Approve", key=f"gov_approve_{role}_define"):
+                memory.save_approval(active_pid, "define", role, "approve", note)
+                audit.log_phase_event(active_pid, "define", f"approved_by_{role}")
+                st.success("Approval disimpan.")
+                st.rerun()
+        with col_rej:
+            if st.button("❌ Reject", key=f"gov_reject_{role}_define"):
+                memory.save_approval(active_pid, "define", role, "reject", note)
+                audit.log_phase_event(active_pid, "define", f"rejected_by_{role}")
+                st.warning("Rejection disimpan.")
+                st.rerun()
+
+    elif role == "project_leader":
+        if can_advance:
+            st.success("✅ Semua approval lengkap. Kamu bisa lanjut ke fase Measure.")
+        else:
+            st.info("Menunggu approval dari Reviewer dan Champion.")
+else:
+    st.info("Finalize DEFINE dulu sebelum bisa di-approve.")
+
 
 st.divider()
 
