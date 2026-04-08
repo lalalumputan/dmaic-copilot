@@ -302,75 +302,12 @@ st.sidebar.title("Navigation")
 st.sidebar.caption("Agentic AI DMAIC Copilot")
 
 st.sidebar.divider()
-st.sidebar.subheader("Mode")
-
-mode_label = st.sidebar.radio(
-    "Pilih aktivitas",
-    options=["Create new project", "Open existing project"],
-    index=0 if st.session_state.get("mode", "create") == "create" else 1,
-    key="define_mode_radio",
-)
-st.session_state["mode"] = "create" if mode_label == "Create new project" else "open"
-
-st.sidebar.divider()
-st.sidebar.subheader("📁 Project")
-
-if st.session_state["mode"] == "create":
-    auto_pid = memory.next_define_project_id(prefix="project_", width=3)
-    st.sidebar.text_input(
-        "New Project ID (auto)",
-        value=auto_pid,
-        key="define_new_pid_auto",
-        disabled=True,
-    )
-
-    if st.sidebar.button("➕ Start New Project", key="define_start_new_btn"):
-        pid = auto_pid
-        if memory.define_project_exists(pid):
-            st.sidebar.error(f"Project ID '{pid}' sudah ada. Klik lagi untuk generate ID berikutnya.")
-        else:
-            st.session_state["active_project_id"] = pid
-            st.session_state["define_draft"] = None
-            st.session_state["define_final"] = None
-            reset_define_form(pid)
-            st.sidebar.success(f"Active project: {pid}")
-            st.rerun()
-
+active_pid = st.session_state.get("active_project_id")
+if active_pid:
+    st.sidebar.success(f"Active: **{active_pid}**")
 else:
-    existing_projects = memory.list_define_projects_final()
-    if not existing_projects:
-        st.sidebar.info("No existing DEFINE final projects.")
-    else:
-        active = st.session_state.get("active_project_id")
-        idx = existing_projects.index(active) if active in existing_projects else 0
-
-        open_pid = st.sidebar.selectbox(
-            "Select project to open",
-            options=existing_projects,
-            index=idx,
-            key="define_open_pid_select",
-        )
-
-        if st.sidebar.button("📂 Load Existing DEFINE (Final)", key="define_load_existing_btn"):
-            state = memory.load_define_final(open_pid)
-            if not state:
-                st.sidebar.error(f"Tidak ada DEFINE final tersimpan untuk: {open_pid}")
-            else:
-                st.session_state["active_project_id"] = open_pid
-                st.session_state["define_final"] = {
-                    "status": "finalized",
-                    "define_state": state,
-                    "critique": [],
-                    "summary": reporting.build_define_summary_md(state),
-                    "message": "Loaded from FINAL storage",
-                }
-                st.session_state["define_draft"] = None
-                prefill_define_form_from_state(open_pid, state)
-                st.sidebar.success(f"Loaded FINAL: {open_pid}")
-                st.rerun()
-
-st.sidebar.divider()
-st.sidebar.caption(f"Active Project ID: **{st.session_state.get('active_project_id','(none)')}**")
+    st.sidebar.warning("Belum ada project aktif.")
+    st.sidebar.caption("Kembali ke halaman **Main** untuk memilih project.")
 
 # ==========================
 # GATE: empty page until project chosen
@@ -378,31 +315,41 @@ st.sidebar.caption(f"Active Project ID: **{st.session_state.get('active_project_
 active_pid = st.session_state.get("active_project_id")
 
 if not active_pid:
-    st.title("DEFINE Phase")
-    st.info("Pilih **Create new project** lalu klik **Start New Project**, atau pilih **Open existing project** lalu klik **Load Existing DEFINE (Final)**.")
+    st.title("📋 DEFINE Phase")
+    st.info("Belum ada project aktif. Kembali ke halaman **Main** untuk memilih atau membuat project.")
     st.stop()
 
-# Auto-load draft/final from disk if session empty (ensures Finalize appears after restart)
-if not st.session_state.get("define_draft"):
+# Auto-load hanya jika project dipilih dari MAIN (bukan startup kosong)
+loaded_pid = st.session_state.get("_loaded_pid")
+if active_pid and loaded_pid != active_pid:
+    st.session_state["_loaded_pid"] = active_pid
+    st.session_state["define_draft"] = None
+    st.session_state["define_final"] = None
+
     draft_state_disk = memory.load_define_draft(active_pid)
+    final_state_disk = memory.load_define_final(active_pid)
+
     if draft_state_disk:
         st.session_state["define_draft"] = {
             "status": "draft",
             "define_state": draft_state_disk,
-            "summary": draft_state_disk.get("summary_md", "") if isinstance(draft_state_disk, dict) else "",
+            "summary": draft_state_disk.get("summary_md", ""),
             "message": "Auto-loaded DRAFT from disk",
         }
+        # Prefill form dari draft
+        prefill_define_form_from_state(active_pid, draft_state_disk)
 
-if not st.session_state.get("define_final"):
-    final_state_disk = memory.load_define_final(active_pid)
     if final_state_disk:
         st.session_state["define_final"] = {
             "status": "finalized",
             "define_state": final_state_disk,
             "critique": [],
-            "summary": final_state_disk.get("summary_md", "") if isinstance(final_state_disk, dict) else "",
+            "summary": final_state_disk.get("summary_md", ""),
             "message": "Auto-loaded FINAL from disk",
         }
+        # Prefill form dari final (read-only di UI)
+        if not draft_state_disk:
+            prefill_define_form_from_state(active_pid, final_state_disk)
 
 
 # ============================================
@@ -600,7 +547,12 @@ with left_col:
             height=90,
         )
 
-        submitted = st.form_submit_button("⚡ Generate / Update Draft", type="primary")
+        is_locked = bool(memory.load_define_final(active_pid))
+        submitted = st.form_submit_button(
+            "⚡ Generate / Update Draft" if not is_locked else "🔒 Locked — Cannot Generate Draft",
+            type="primary",
+            disabled=is_locked,
+        )
 
 
 # OUTSIDE the form, but still can be anywhere (I put it after cols)
@@ -916,38 +868,3 @@ if events:
 else:
     st.write("No audit events found.")
 
-
-# ============================================
-
-dbg = (latest.get("gate_result") or {}).get("debug_smart")
-
-gate = (latest.get("gate_result") or {})
-st.sidebar.markdown("### gate_result (debug)")
-st.sidebar.write("type:", type(gate))
-try:
-    import json
-    st.sidebar.code(json.dumps(gate, ensure_ascii=False, indent=2, default=str), language="json")
-except Exception as e:
-    st.sidebar.write("Could not dump gate_result:", e)
-    st.sidebar.write(gate)
-
-st.sidebar.write("gate_result keys:", list(gate.keys()) if isinstance(gate, dict) else "not a dict")
-
-
-if dbg is None:
-    st.sidebar.info("debug_smart is None")
-elif isinstance(dbg, str):
-    # If stored as JSON string, show raw then try parse
-    st.sidebar.code(dbg, language="json")
-    try:
-        import json
-        st.sidebar.json(json.loads(dbg))
-    except Exception as e:
-        st.sidebar.warning(f"debug_smart is a string but not valid JSON: {e}")
-elif isinstance(dbg, (dict, list)):
-    # safest
-    st.sidebar.code(__import__("json").dumps(dbg, ensure_ascii=False, indent=2), language="json")
-else:
-    # any non-JSON-serializable object
-    st.sidebar.write("debug_smart type:", type(dbg))
-    st.sidebar.write(dbg)

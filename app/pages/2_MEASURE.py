@@ -3,6 +3,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 import json
 import copy
 import streamlit as st
+from app.utils import auth
+auth.require_login()
 import pandas as pd
 
 from app.agents.measure_agent import run_measure_agent, finalize_measure_agent, self_critique
@@ -354,60 +356,28 @@ st.sidebar.title("Navigation")
 st.sidebar.caption("Agentic AI DMAIC Copilot")
 
 st.sidebar.divider()
-st.sidebar.subheader("📁 Project")
-
-final_projects = memory.list_define_projects_final()
-if not final_projects:
-    st.sidebar.info("No existing DEFINE final projects.")
-    st.title("MEASURE Phase")
-    st.info("Finalize DEFINE terlebih dahulu. MEASURE hanya bisa dibuka dari DEFINE yang sudah FINAL.")
-    st.stop()
-
-active = st.session_state.get("active_project_id")
-idx = final_projects.index(active) if active in final_projects else 0
-
-open_pid = st.sidebar.selectbox(
-    "Open DEFINE FINAL project",
-    options=final_projects,
-    index=idx,
-    key="measure_open_pid_select",
-)
-
-if st.sidebar.button("📂 Load DEFINE (Final) for MEASURE", key="measure_load_define_final_btn"):
-    define_state = memory.load_define_final(open_pid)
-    if not define_state:
-        st.sidebar.error(f"Tidak ada DEFINE final tersimpan untuk: {open_pid}")
-    else:
-        st.session_state["active_project_id"] = open_pid
-        st.session_state["define_final_state"] = define_state
-
-        # reset measure view when switching project
-        st.session_state["measure_draft"] = None
-        st.session_state["measure_final"] = None
-        st.session_state["measure_feedback_text"] = ""
-
-        st.session_state["measure_baseline_df"] = None
-        st.session_state["measure_uploaded_name"] = None
-
-        st.sidebar.success(f"Loaded DEFINE FINAL: {open_pid}")
-        st.rerun()
-
-st.sidebar.divider()
-st.sidebar.caption(f"Active Project ID: **{st.session_state.get('active_project_id','(none)')}**")
-
+active_pid = st.session_state.get("active_project_id")
+if active_pid:
+    st.sidebar.success(f"Active: **{active_pid}**")
+else:
+    st.sidebar.warning("Belum ada project aktif.")
+    st.sidebar.caption("Kembali ke halaman **Main** untuk memilih project.")
 
 # ============================================
 # Gate: empty page until project chosen
 # ============================================
 active_pid = st.session_state.get("active_project_id")
 if not active_pid:
-    st.title("MEASURE Phase")
-    st.info("Pilih project DEFINE FINAL di sidebar, lalu klik **Load DEFINE (Final) for MEASURE**.")
+    st.title("📏 MEASURE Phase")
+    st.info("Belum ada project aktif. Kembali ke halaman **Main** untuk memilih project.")
     st.stop()
 
-# Ensure define_final_state loaded even after refresh
-if not st.session_state.get("define_final_state") and active_pid:
-    st.session_state["define_final_state"] = memory.load_define_final(active_pid)
+# Load define_final_state hanya jika sesuai active_pid
+if active_pid and st.session_state.get("_loaded_pid") == active_pid:
+    if not st.session_state.get("define_final_state"):
+        st.session_state["define_final_state"] = memory.load_define_final(active_pid)
+else:
+    st.session_state["define_final_state"] = None
 
 define_final = st.session_state.get("define_final_state")
 if not define_final:
