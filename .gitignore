@@ -1,5 +1,5 @@
 # Secrets — NEVER commit
-.streamlit/secrets.toml
+mlit/secrets.toml
 
 # SQLite DB — ephemeral on cloud, local dev artifact
 dmaic_memory.db

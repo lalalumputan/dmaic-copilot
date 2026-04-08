@@ -12,7 +12,7 @@ Capstone project — Magister Inovasi Regional, Universitas Padjadjaran (2025).
 pip install -r requirements.txt
 
 # Copy and fill in your API key
-cp .streamlit/secrets.toml.template .streamlit/secrets.toml
+cp mlit/secrets.toml.template .streamlit/secrets.toml
 # Edit secrets.toml: OPENAI_API_KEY = "sk-..."
 
 streamlit run app.py
