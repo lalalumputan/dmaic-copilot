@@ -6,14 +6,14 @@ import pandas as pd
 import copy
 from app.utils import auth, memory, audit
 from app.agents.control_agent import run_control_agent, finalize_control_agent
+from app.utils.ui_helpers import render_sidebar_header
 
 st.set_page_config(page_title="CONTROL", layout="wide")
 auth.require_login()
 auth.render_user_badge()
 
 # ── Sidebar ──────────────────────────────────────────────
-st.sidebar.title("🎯 DMAIC Copilot")
-st.sidebar.caption("Agentic AI DMAIC Companion")
+render_sidebar_header()
 st.sidebar.divider()
 
 active_pid = st.session_state.get("active_project_id")

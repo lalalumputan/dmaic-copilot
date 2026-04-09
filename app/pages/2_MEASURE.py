@@ -9,6 +9,7 @@ import pandas as pd
 
 from app.agents.measure_agent import run_measure_agent, finalize_measure_agent, self_critique
 from app.utils import memory, reporting, audit
+from app.utils.ui_helpers import render_sidebar_header
 
 
 # ============================================
@@ -352,8 +353,7 @@ def _render_gate_card(measure_state: dict):
 # ============================================
 # Sidebar: Project picker (FINAL DEFINE only)
 # ============================================
-st.sidebar.title("Navigation")
-st.sidebar.caption("Agentic AI DMAIC Copilot")
+render_sidebar_header()
 
 st.sidebar.divider()
 active_pid = st.session_state.get("active_project_id")
@@ -423,13 +423,6 @@ with h2:
         unsafe_allow_html=True,
     )
 
-with h3:
-    st.markdown(
-        "<span style='padding:6px 12px;border-radius:20px;"
-        "background:#1f2937;color:#e5e7eb;font-weight:500;'>"
-        "MODE: OPEN</span>",
-        unsafe_allow_html=True,
-    )
 
 
 # ============================================

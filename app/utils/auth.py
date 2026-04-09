@@ -1,6 +1,11 @@
 """
 auth.py — Role-based authentication untuk DMAIC Copilot.
-Kredensial disimpan di Streamlit Secrets (bukan database).
+Mendukung multi-user per role.
+Format secrets.toml:
+    [users.username]
+    password = "..."
+    role = "project_leader|reviewer|champion"
+    display_name = "..."
 """
 from __future__ import annotations
 import streamlit as st
@@ -32,55 +37,73 @@ ROLES = {
 }
 
 
-def _get_credentials() -> dict:
-    """
-    Baca kredensial dari Streamlit Secrets.
-    Format di secrets.toml:
-        [users]
-        project_leader = "password1"
-        reviewer = "password2"
-        champion = "password3"
-    """
+def _get_users() -> dict:
     try:
-        return dict(st.secrets.get("users", {}))
+        result = {}
+        users_raw = st.secrets.get("users", {})
+        
+        for key in users_raw.keys():
+            val = users_raw[key]
+            # Format baru: nested dict [users.username]
+            if hasattr(val, 'get') or isinstance(val, dict):
+                result[key] = {
+                    "password":     str(val.get("password", "")),
+                    "role":         str(val.get("role", "")),
+                    "display_name": str(val.get("display_name", key)),
+                }
+            # Format lama: [users] username = "password"
+            elif isinstance(val, str):
+                result[key] = {
+                    "password":     val,
+                    "role":         key,
+                    "display_name": key.replace("_", " ").title(),
+                }
+        return result
+
     except Exception:
-        # Fallback untuk local dev tanpa secrets
         return {
-            "project_leader": "pl123",
-            "reviewer": "rev123",
-            "champion": "champ123",
+            "project_leader": {
+                "password": "pl123",
+                "role": "project_leader",
+                "display_name": "Project Leader",
+            },
+            "reviewer": {
+                "password": "rev123",
+                "role": "reviewer",
+                "display_name": "Reviewer",
+            },
+            "champion": {
+                "password": "champ123",
+                "role": "champion",
+                "display_name": "Champion",
+            },
         }
 
 
-def login(username: str, password: str) -> Optional[str]:
+def login(username: str, password: str) -> Optional[dict]:
     """
-    Coba login. Return role jika berhasil, None jika gagal.
+    Coba login. Return user dict jika berhasil, None jika gagal.
     """
-    creds = _get_credentials()
-    if username in creds and creds[username] == password:
-        return username  # username = role name
+    users = _get_users()
+    user  = users.get(username)
+    if user and user.get("password") == password:
+        return user
     return None
 
 
 def get_current_role() -> Optional[str]:
-    """Return role user yang sedang login, atau None."""
     return st.session_state.get("auth_role")
 
-
 def get_current_user() -> Optional[str]:
-    """Return display name user yang sedang login."""
     return st.session_state.get("auth_user")
 
+def get_current_display_name() -> str:
+    return st.session_state.get("auth_display_name", get_current_user() or "")
 
 def is_logged_in() -> bool:
     return get_current_role() is not None
 
-
 def can(action: str) -> bool:
-    """
-    Cek apakah role saat ini punya permission untuk action.
-    Actions: 'input', 'submit', 'review', 'approve'
-    """
     role = get_current_role()
     if not role or role not in ROLES:
         return False
@@ -88,27 +111,28 @@ def can(action: str) -> bool:
 
 
 def require_login():
-    """
-    Tampilkan login form jika belum login.
-    Panggil di awal setiap page.
-    """
     if is_logged_in():
         return
 
     st.markdown("## 🔐 Login")
-    st.caption("Masukkan username dan password sesuai role kamu.")
+    st.caption("Masukkan username dan password sesuai akun kamu.")
 
     with st.form("login_form"):
-        username = st.text_input("Username", placeholder="project_leader / reviewer / champion")
-        password = st.text_input("Password", type="password")
+        username  = st.text_input("Username")
+        password  = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Login", type="primary")
 
     if submitted:
-        role = login(username.strip(), password.strip())
-        if role:
-            st.session_state["auth_role"] = role
-            st.session_state["auth_user"] = username.strip()
-            st.rerun()
+        user = login(username.strip(), password.strip())
+        if user:
+            role = user.get("role", "")
+            if role not in ROLES:
+                st.error(f"Role '{role}' tidak dikenali. Hubungi administrator.")
+            else:
+                st.session_state["auth_role"]         = role
+                st.session_state["auth_user"]         = username.strip()
+                st.session_state["auth_display_name"] = user.get("display_name", username)
+                st.rerun()
         else:
             st.error("Username atau password salah.")
 
@@ -116,22 +140,20 @@ def require_login():
 
 
 def logout():
-    """Hapus session login."""
-    for key in ["auth_role", "auth_user"]:
+    for key in ["auth_role", "auth_user", "auth_display_name"]:
         st.session_state.pop(key, None)
 
 
 def render_user_badge():
-    """Tampilkan info user yang sedang login di sidebar."""
-    role = get_current_role()
-    user = get_current_user()
+    role         = get_current_role()
+    display_name = get_current_display_name()
     if not role:
         return
     label = ROLES.get(role, {}).get("label", role)
     st.sidebar.markdown(
         f"<div style='padding:8px;border-radius:6px;background:#1f2937;"
         f"color:#e5e7eb;margin-bottom:8px'>"
-        f"👤 <b>{user}</b><br>"
+        f"👤 <b>{display_name}</b><br>"
         f"<span style='color:#9ca3af;font-size:0.85em'>{label}</span>"
         f"</div>",
         unsafe_allow_html=True,

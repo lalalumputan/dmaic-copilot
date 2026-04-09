@@ -522,19 +522,23 @@ ACTION STEP — DEFINE PHASE
 
 you are a Lean Six Sigma Master Black Belt.
 Create DEFINE outputs that answer:
-- What is the problem? (summarize user input only)
-- What is the goal? (summarize user input only)
+- Why is this project important? (business case with context and impact from user input on problem statement)
+- What is the problem? (from user input on problem statement, compose as SMART: Specific, Measureable, Agreed to, Realistic, Time bound statement
+- What is the goal? (mirror problem but with target state, also SMART)
 - What is the scope?
-- SIPOC (high level)
-- CTQ/CTB translated from VOC/VOB and measurable
-- Y variable definition
+- SIPOC (high level, in Process use verbs)
+- VOC/VOB analysis: dari voice of customer/business, ekstrak Key Issue, lalu translate ke CTQ (measurable customer requirement) atau CTB (measurable business target)
+- CTQ/CTB harus MEASURABLE — harus punya nama, metric, unit, dan target arah (reduce/increase)
+- Y Variable adalah CTQ atau CTB yang paling langsung merepresentasikan problem dan goal — SATU variable utama, spesifik, measurable
+- Y Variable harus konsisten dengan goal statement (kalau goal bilang "reduce X dari A% ke B%", maka Y = X dengan unit %)
+- Jangan buat Y Variable yang generik seperti "total supply chain cost" kalau problem spesifik tentang "% shipments with extra charges"
 - Risk level & project type
 
 Return JSON with this structure:
 {{
+  "business_case": "...",  
   "problem_statement": "...",
   "goal_statement": "...",
-  "business_case": "...",
   "project_scope": {{
      "in_scope": [...],
      "out_of_scope": [...]
@@ -549,11 +553,29 @@ Return JSON with this structure:
   "ctq_list": [
      {{"name":"...", "metric":"...", "unit":"...", "description":"...", "customer":"..."}}
   ],
-  "y_variable": "...",
-  "risk_level": "...",
-  "project_type": "..."
-}}
-
+    \"y_variable\": \"...\",
+    \"risk_level\": \"...\",
+    \"project_type\": \"...\",
+    \"benefit_estimate\": {{
+        \"benefit_potentials\": \"...\",
+        \"calculation_method\": \"...\",
+        \"kpi_table\": [
+        {{
+            \"no\": 1,
+            \"kpi\": \"...\",
+            \"period\": \"...\",
+            \"unit\": \"...\",
+            \"baseline\": \"...\",
+            \"target\": \"...\",
+            \"delta_pct\": \"...\",
+            \"comment\": \"...\"
+        }}
+        ],
+        \"assumptions\": [\"...\"],
+        \"soft_benefits\": [\"...\"]
+    }}
+    }}
+  
 User inputs:
 {json.dumps(user_inputs, indent=2)}
 
@@ -599,17 +621,13 @@ Few-shot examples (if any):
         "schema_version": DEFINE_SCHEMA,
         "created_at": _now_iso(),
         "updated_at": _now_iso(),
-
         "inputs": dict(user_inputs),
         "outputs": outputs,
-
         "gate_evidence": gate_evidence,
         "gate_result": gate_result,
         "ctq_contract": ctq_contract,
-
         "insight_md": coaching_md,
                 "coaching_md": coaching_md,
-
         "quick_wins": prior_quick_wins if prior_quick_wins else [],
 
         # traces for debug (UI should trim/hide in JSON tab)
@@ -720,6 +738,10 @@ def finalize_define_agent(
     MUST NOT call LLM / must not regenerate.
     """
     final_state = dict(define_state) if isinstance(define_state, dict) else {}
+    # Reset approvals kalau ini adalah re-finalize setelah reject
+    reset_fn = getattr(memory, "reset_approvals", None)
+    if callable(reset_fn):
+        reset_fn(project_id, PHASE_NAME)
     final_state["project_id"] = project_id
     final_state["phase"] = PHASE_NAME
     final_state["status"] = "final"
@@ -729,8 +751,7 @@ def finalize_define_agent(
 
     # Lock: keep gate_result as-is (do not recompute)
     # Ensure summary exists
-    final_state["summary_md"] = final_state.get("summary_md") or _build_define_summary_md(final_state)
-
+    final_state["summary_md"] = _build_define_summary_md(final_state)
     # Persist final and remove draft
     if hasattr(memory, "save_define_final"):
         memory.save_define_final(project_id, final_state)

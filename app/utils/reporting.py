@@ -2,6 +2,7 @@ from __future__ import annotations
 from pydoc import doc
 from typing import Any, Dict, List
 from docx import Document
+from docx.shared import RGBColor
 
 
 def _get(d: Dict[str, Any], path: List[str], default=None):
@@ -208,74 +209,286 @@ def build_define_summary_md(define_state: Dict[str, Any]) -> str:
 def build_define_summary_markdown(define_state: Dict[str, Any]) -> str:
     return build_define_summary_md(define_state)
 
-
 def export_define_to_word(define_state: Dict[str, Any], path: str = "define_report.docx") -> str:
-    n = _normalize_define(define_state)
+    import re
+    from docx.shared import Pt, RGBColor, Inches
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+
+    inputs  = define_state.get("inputs") or {}
+    outputs = define_state.get("outputs") or {}
+    gate    = define_state.get("gate_result") or {}
+    n       = _normalize_define(define_state)
+
     doc = Document()
 
-    doc.add_heading(f"DEFINE PHASE REPORT — {n['project_name']}", 0)
-    doc.add_heading("Problem Statement", level=1)
-    doc.add_paragraph(_as_text(n["problem"]))
-    doc.add_heading("Goal Statement", level=1)
-    doc.add_paragraph(_as_text(n["goal"]))
-    doc.add_heading("Business Case", level=1)
-    doc.add_paragraph(_as_text(n["business_case"]))
+    # ── Page margins ──────────────────────────────────────
+    for section in doc.sections:
+        section.top_margin    = Inches(1)
+        section.bottom_margin = Inches(1)
+        section.left_margin   = Inches(1.2)
+        section.right_margin  = Inches(1.2)
 
-    doc.add_heading("Scope", level=1)
-    doc.add_paragraph(f"In Scope  : {_as_text(n['scope_in'])}")
-    doc.add_paragraph(f"Out Scope : {_as_text(n['scope_out'])}")
+    # ── Helpers ───────────────────────────────────────────
+    def heading(text, level=1):
+        p = doc.add_paragraph()
+        run = p.add_run(text)
+        run.bold = True
+        run.font.size = Pt(13 if level == 1 else 11)
+        run.font.color.rgb = RGBColor(0x07, 0x59, 0x85)
+        pPr = p._p.get_or_add_pPr()
+        pBdr = OxmlElement('w:pBdr')
+        bot = OxmlElement('w:bottom')
+        bot.set(qn('w:val'), 'single')
+        bot.set(qn('w:sz'), '4')
+        bot.set(qn('w:space'), '1')
+        bot.set(qn('w:color'), '0759a0')
+        pBdr.append(bot)
+        pPr.append(pBdr)
+        return p
 
-    doc.add_heading("CTQ List", level=1)
+    def body(text):
+        t = str(text or "").strip()
+        if not t or t in ("(not provided)", "_not available_", "-"):
+            p = doc.add_paragraph("(not provided)")
+            p.runs[0].font.italic = True
+            p.runs[0].font.color.rgb = RGBColor(0x94, 0xa3, 0xb8)
+        else:
+            doc.add_paragraph(t)
+
+    def bullet(text):
+        p = doc.add_paragraph(style="List Bullet")
+        p.add_run(str(text))
+
+    def kv(label, value):
+        p = doc.add_paragraph()
+        r = p.add_run(f"{label}: ")
+        r.bold = True
+        p.add_run(str(value or "(not provided)"))
+
+    def clean_md(text):
+        if not text: return ""
+        text = re.sub(r'#{1,6}\s*', '', text)
+        text = re.sub(r'\*{1,3}(.*?)\*{1,3}', r'\1', text)
+        text = re.sub(r'\\[*#_]', '', text)
+        return text.strip()
+
+    def styled_table(headers, rows, header_color="1e3a5f"):
+        t = doc.add_table(rows=1, cols=len(headers))
+        t.style = "Table Grid"
+        hdr_cells = t.rows[0].cells
+        for i, h in enumerate(headers):
+            hdr_cells[i].text = h
+            run = hdr_cells[i].paragraphs[0].runs[0]
+            run.bold = True
+            run.font.color.rgb = RGBColor(0xff, 0xff, 0xff)
+            run.font.size = Pt(10)
+            tc = hdr_cells[i]._tc
+            tcPr = tc.get_or_add_tcPr()
+            shd = OxmlElement('w:shd')
+            shd.set(qn('w:fill'), header_color)
+            shd.set(qn('w:val'), 'clear')
+            tcPr.append(shd)
+        for row in rows:
+            cells = t.add_row().cells
+            for i, val in enumerate(row):
+                cells[i].text = str(val or "")
+                cells[i].paragraphs[0].runs[0].font.size = Pt(9) if cells[i].paragraphs[0].runs else None
+        doc.add_paragraph()
+        return t
+
+    def gate_badge(status):
+        colors = {
+            "PASSED":      ("0f5132", "✅ GATE PASSED"),
+            "CONDITIONAL": ("7c4700", "⚠️ GATE CONDITIONAL"),
+            "FAILED":      ("842029", "❌ GATE FAILED"),
+        }
+        hex_color, label = colors.get(status, ("374151", f"GATE {status}"))
+        r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+        p = doc.add_paragraph()
+        run = p.add_run(f"  {label}  ")
+        run.bold = True
+        run.font.size = Pt(11)
+        run.font.color.rgb = RGBColor(r, g, b)
+
+    # ── COVER ─────────────────────────────────────────────
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p.add_run("DEFINE PHASE REPORT")
+    r.bold = True
+    r.font.size = Pt(22)
+    r.font.color.rgb = RGBColor(0x0f, 0x17, 0x2a)
+
+    p2 = doc.add_paragraph()
+    p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p2.add_run(n["project_name"]).font.size = Pt(14)
+
+    p3 = doc.add_paragraph()
+    p3.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    import datetime
+    p3.add_run(f"Generated: {datetime.datetime.now().strftime('%d %B %Y')}").font.size = Pt(10)
+
+    doc.add_paragraph()
+    gate_badge(gate.get("status", "-"))
+    doc.add_paragraph()
+    # Draft watermark
+    _status = define_state.get("status", "")
+    if _status != "final":
+        p_draft = doc.add_paragraph()
+        p_draft.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r_draft = p_draft.add_run("⚠️  DRAFT — NOT YET FINALIZED  ⚠️")
+        r_draft.bold = True
+        r_draft.font.size = Pt(12)
+        r_draft.font.color.rgb = RGBColor(0x84, 0x20, 0x29)
+    doc.add_paragraph()
+
+    # ── 1. PROBLEM & GOAL ────────────────────────────────
+    heading("1. Problem Statement")
+    body(n["problem"])
+
+    heading("2. Goal Statement")
+    body(n["goal"])
+
+    heading("3. Business Case")
+    body(n["business_case"])
+
+    # ── 4. SCOPE ─────────────────────────────────────────
+    heading("4. Scope")
+    scope_in  = n["scope_in"]
+    scope_out = n["scope_out"]
+    p = doc.add_paragraph()
+    p.add_run("In Scope:").bold = True
+    for item in (scope_in if isinstance(scope_in, list) else [scope_in] if scope_in else []):
+        bullet(item)
+    p2 = doc.add_paragraph()
+    p2.add_run("Out of Scope:").bold = True
+    for item in (scope_out if isinstance(scope_out, list) else [scope_out] if scope_out else []):
+        bullet(item)
+
+    # ── 5. VOC/VOB → CTQ/CTB ────────────────────────────
+    heading("5. VOC / VOB → CTQ / CTB (Tool I)")
+    voc_table = inputs.get("voc_table") or []
+    if voc_table:
+        rows = [
+            [r.get("Type",""), r.get("Voice",""), r.get("Key Issue",""), r.get("CTQ/CTB","")]
+            for r in voc_table
+        ]
+        styled_table(["Type", "Voice", "Key Issue", "CTQ / CTB"], rows)
+    else:
+        body(None)
+
+    # ── 6. CTQ LIST ──────────────────────────────────────
+    heading("6. CTQ / CTB List")
     ctqs = n["ctqs"]
     if isinstance(ctqs, list) and ctqs:
+        rows = []
         for c in ctqs:
             if isinstance(c, dict):
-                line = f"- {c.get('name','CTQ')} ({c.get('metric','')} {c.get('unit','')})"
-                doc.add_paragraph(line)
-                if c.get("description"):
-                    doc.add_paragraph(f"  - {c.get('description')}")
-            else:
-                doc.add_paragraph(f"- {c}")
+                rows.append([
+                    c.get("name",""),
+                    c.get("metric",""),
+                    c.get("unit",""),
+                    c.get("description",""),
+                ])
+        if rows:
+            styled_table(["CTQ Name","Metric","Unit","Description"], rows)
     else:
-        doc.add_paragraph("(no CTQs recorded)")
+        body(None)
 
-    doc.add_heading("Y Variable", level=1)
-    doc.add_paragraph(_as_text(n["y_variable"]))
+    # ── 7. Y VARIABLE ────────────────────────────────────
+    heading("7. Y Variable")
+    body(n["y_variable"])
 
-    doc.add_heading("X Categories (6M)", level=1)
-    xc = n["x_categories"]
-    if isinstance(xc, dict) and xc:
-        for k, v in xc.items():
-            doc.add_paragraph(f"{k}: {_as_text(v)}")
-    else:
-        doc.add_paragraph("(not provided)")
-
-    doc.add_heading("SIPOC", level=1)
+    # ── 8. SIPOC ─────────────────────────────────────────
+    heading("8. SIPOC")
     sipoc = n["sipoc"] or {}
-    doc.add_paragraph(f"Suppliers: {_as_text(sipoc.get('Suppliers') or sipoc.get('suppliers'))}")
-    doc.add_paragraph(f"Inputs   : {_as_text(sipoc.get('Inputs')   or sipoc.get('inputs'))}")
-    doc.add_paragraph(f"Process  : {_as_text(sipoc.get('Process')  or sipoc.get('process'))}")
-    doc.add_paragraph(f"Outputs  : {_as_text(sipoc.get('Outputs')  or sipoc.get('outputs'))}")
-    doc.add_paragraph(f"Customers: {_as_text(sipoc.get('Customers') or sipoc.get('customers'))}")
+    if sipoc:
+        keys = ["Suppliers","Inputs","Process","Outputs","Customers"]
+        sipoc_lists = []
+        for k in keys:
+            val = sipoc.get(k) or sipoc.get(k.lower()) or []
+            sipoc_lists.append(val if isinstance(val, list) else [str(val)] if val else [])
+        max_len = max([len(x) for x in sipoc_lists], default=0)
+        if max_len > 0:
+            rows = []
+            for i in range(max_len):
+                rows.append([lst[i] if i < len(lst) else "" for lst in sipoc_lists])
+            styled_table(keys, rows, header_color="1e3a5f")
+    else:
+        body(None)
 
-    doc.add_heading("Early Measurement Plan", level=1)
-    emp = n["early_measure_plan"] or {}
-    doc.add_paragraph(f"Measures   : {_as_text(emp.get('measures'))}")
-    doc.add_paragraph(f"Responsible: {_as_text(emp.get('responsible'))}")
+    # ── 9. BENEFIT ESTIMATE ──────────────────────────────
+    heading("9. Benefit Estimate")
+    benefit = outputs.get("benefit_estimate") or {}
+    if benefit:
+        if benefit.get("benefit_potentials"):
+            kv("Benefit Potentials", benefit["benefit_potentials"])
+        if benefit.get("calculation_method"):
+            kv("Calculation Method", benefit["calculation_method"])
 
-    doc.add_heading("Risk & Project Type", level=1)
-    doc.add_paragraph(f"Risk Level   : {_as_text(n['risk_level'])}")
-    doc.add_paragraph(f"Project Type : {_as_text(n['project_type'])}")
-    
-    # Agent Insight
-    ins = define_state.get("insight_md") or ""
-    ins = _strip_md_heading(ins)
+        kpi_rows_raw = benefit.get("kpi_table") or []
+        if kpi_rows_raw:
+            doc.add_paragraph().add_run("KPI Table:").bold = True
+            kpi_headers = ["No","KPI","Period","Unit","Baseline","Target","Δ%","Comment"]
+            kpi_rows = []
+            for r in kpi_rows_raw:
+                kpi_rows.append([
+                    str(r.get("no","")), r.get("kpi",""), r.get("period",""),
+                    r.get("unit",""), r.get("baseline",""), r.get("target",""),
+                    r.get("delta_pct",""), r.get("comment",""),
+                ])
+            styled_table(kpi_headers, kpi_rows, header_color="0f5132")
 
-    doc.add_heading("Agent Insight", level=1)
-    doc.add_paragraph(ins if ins.strip() else "(not provided)")
+        assumptions = benefit.get("assumptions") or []
+        if assumptions:
+            doc.add_paragraph().add_run("Assumptions:").bold = True
+            for a in assumptions:
+                bullet(a)
+
+        soft = benefit.get("soft_benefits") or []
+        if soft:
+            doc.add_paragraph().add_run("Soft Benefits:").bold = True
+            for s in soft:
+                bullet(s)
+    else:
+        body(None)
+
+    # ── 10. RISK & TYPE ──────────────────────────────────
+    heading("10. Risk & Project Classification")
+    kv("Risk Level", n["risk_level"])
+    kv("Project Type", n["project_type"])
+
+    # ── 11. GATE RESULT ──────────────────────────────────
+    heading("11. DEFINE Gate Result")
+    gate_badge(gate.get("status", "-"))
+    failed      = gate.get("failed_rules") or []
+    conditional = gate.get("conditional_rules") or []
+    if failed:
+        doc.add_paragraph().add_run("Critical Items (Failed):").bold = True
+        for f in failed:
+            bullet(f.replace("_", " "))
+    if conditional:
+        doc.add_paragraph().add_run("Conditional Items:").bold = True
+        for c in conditional:
+            bullet(c.replace("_", " "))
+
+    # ── 12. AGENT COACHING ───────────────────────────────
+    coaching_raw = define_state.get("coaching_md") or define_state.get("insight_md") or ""
+    coaching_clean = clean_md(coaching_raw)
+    if coaching_clean:
+        heading("12. Agent Coaching Notes")
+        for line in coaching_clean.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith("- "):
+                bullet(line[2:])
+            elif line and line[0].isdigit() and ". " in line:
+                bullet(line)
+            else:
+                doc.add_paragraph(line)
 
     doc.save(path)
-
-
-
     return path
+

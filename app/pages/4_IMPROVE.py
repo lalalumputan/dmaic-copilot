@@ -6,14 +6,14 @@ import pandas as pd
 import copy
 from app.utils import auth, memory, audit
 from app.agents.improve_agent import run_improve_agent, finalize_improve_agent
+from app.utils.ui_helpers import render_sidebar_header
 
 st.set_page_config(page_title="IMPROVE", layout="wide")
 auth.require_login()
 auth.render_user_badge()
 
 # ── Sidebar ──────────────────────────────────────────────
-st.sidebar.title("🎯 DMAIC Copilot")
-st.sidebar.caption("Agentic AI DMAIC Companion")
+render_sidebar_header()
 st.sidebar.divider()
 
 active_pid = st.session_state.get("active_project_id")
