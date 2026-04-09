@@ -6,8 +6,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import streamlit as st
 from app.utils import memory, audit, auth
+from app.utils.ui_helpers import render_sidebar_header
 
 st.set_page_config(page_title="DMAIC Copilot", layout="wide")
+# Logo/title di atas navigation links
+logo_path = "app/assets/logo3.jpg"
+if os.path.exists(logo_path):
+    render_sidebar_header()
+
+render_sidebar_header()
 
 # ── Login Gate ──────────────────────────────────────────
 auth.require_login()
@@ -161,14 +168,17 @@ else:
             )
         with row[9]:
             if st.button("Load", key=f"load_{pid}"):
-            # Set project aktif
                 st.session_state["active_project_id"] = pid
-            # Clear semua state pages agar tidak carry-over dari project sebelumnya
+                # Reset _loaded_pid agar pages reload dari disk
+                st.session_state["_loaded_pid"] = None
                 for key in [
                     "define_draft", "define_final",
                     "measure_draft", "measure_final",
                     "define_final_state",
                     "measure_baseline_df", "measure_uploaded_name",
+                    "analyze_draft", "analyze_final",
+                    "improve_draft", "improve_final",
+                    "control_draft", "control_final",
                 ]:
                     st.session_state.pop(key, None)
                 st.rerun()

@@ -5,6 +5,7 @@ import app.agents.define_agent as _da
 from app.agents.define_agent import run_define_agent, finalize_define_agent
 from app.utils import data_processing as dp, memory, audit, reporting, llm_engine
 from app.utils import auth
+from app.utils.ui_helpers import render_sidebar_header
 
 # ============================================
 #helper for md
@@ -78,18 +79,7 @@ def _render_define_md_fallback(state: dict) -> str:
     md.append(_kv("Risk Level", outputs.get("risk_level")))
     md.append(_kv("Project Type", outputs.get("project_type")))
 
-    # Agent Insight (if exists)
-        
-    show_agent_insight_in_report = False  # single source: keep in Revision Guidance only
-
-    if show_agent_insight_in_report:
-        ins = s.get("insight_md") or s.get("coaching_md") or ""
-    if isinstance(ins, str) and ins.strip():
-        md.append("### Agent Insight")
-        md.append(ins.strip())
-        md.append("")
-
-
+   
     # Clean empties
     out = "\n".join([x for x in md if isinstance(x, str) and x.strip() != ""])
     return out.strip()
@@ -281,6 +271,11 @@ def prefill_define_form_from_state(project_id: str, state: dict) -> None:
     if src.get("benefit_estimate") is not None:
         st.session_state["define_benefit_estimate"] = src.get("benefit_estimate")
 
+    # Prefill voc_table
+    voc_table_val = src.get("voc_table") or []
+    if voc_table_val:
+        st.session_state["define_voc_table"] = voc_table_val
+
     # feedback box should reset on load
     st.session_state["define_feedback_text"] = ""
 
@@ -298,16 +293,47 @@ def _get_current_result():
 # Sidebar
 # ============================================
 
-st.sidebar.title("Navigation")
-st.sidebar.caption("Agentic AI DMAIC Copilot")
+render_sidebar_header()
 
 st.sidebar.divider()
 active_pid = st.session_state.get("active_project_id")
 if active_pid:
     st.sidebar.success(f"Active: **{active_pid}**")
+
+    # Phase status ringkas
+    phases = ["define","measure","analyze","improve","control"]
+    labels = ["DEF","MEA","ANA","IMP","CON"]
+    icons  = []
+    for ph in phases:
+        f = memory._load_state(active_pid, ph, "final")
+        d = memory._load_state(active_pid, ph, "draft")
+        a = memory.get_phase_approval_status(active_pid, ph)
+        if f and a.get("can_advance"):  icons.append("✅")
+        elif f:                          icons.append("🔒")
+        elif d:                          icons.append("🔄")
+        else:                            icons.append("⬜")
+
+    phase_row = " | ".join([f"{icons[i]} {labels[i]}" for i in range(5)])
+    st.sidebar.caption(phase_row)
+    st.sidebar.divider()
+
+    # Governance ringkas untuk fase ini
+    appr = memory.get_phase_approval_status(active_pid, "define")
+    rev  = (appr.get("reviewer") or {}).get("action") or "pending"
+    chmp = (appr.get("champion") or {}).get("action") or "pending"
+    rev_icon  = "✅" if rev  == "approve" else ("❌" if rev  == "reject" else "⏳")
+    chmp_icon = "✅" if chmp == "approve" else ("❌" if chmp == "reject" else "⏳")
+    st.sidebar.markdown(
+        f"**Define Gate:**  \n"
+        f"{rev_icon} Reviewer  |  {chmp_icon} Champion"
+    )
+    if appr.get("can_advance"):
+        st.sidebar.success("🚀 Gate OPEN")
+    else:
+        st.sidebar.info("🔒 Gate LOCKED")
 else:
     st.sidebar.warning("Belum ada project aktif.")
-    st.sidebar.caption("Kembali ke halaman **Main** untuk memilih project.")
+    st.sidebar.caption("Kembali ke **Main** untuk memilih project.")
 
 # ==========================
 # GATE: empty page until project chosen
@@ -325,6 +351,11 @@ if active_pid and loaded_pid != active_pid:
     st.session_state["_loaded_pid"] = active_pid
     st.session_state["define_draft"] = None
     st.session_state["define_final"] = None
+
+    # Prefill nama project dari MAIN kalau baru dibuat
+    project_name_from_main = st.session_state.get("active_project_name", "")
+    if project_name_from_main:
+        st.session_state["define_project_name_input"] = project_name_from_main
 
     draft_state_disk = memory.load_define_draft(active_pid)
     final_state_disk = memory.load_define_final(active_pid)
@@ -358,7 +389,7 @@ if active_pid and loaded_pid != active_pid:
 # ---------- HEADER ----------
 import os
 
-logo_path = "app/assets/logo2.jpg"
+logo_path = "app/assets/logo3jpg"
 h_title, h_logo = st.columns([5, 1])
 
 with h_logo:
@@ -383,13 +414,6 @@ with h2:
         f"{view_badge}</span>",
         unsafe_allow_html=True,
     )
-with h3:
-    st.markdown(
-        "<span style='padding:6px 12px;border-radius:20px;"
-        "background:#1f2937;color:#e5e7eb;font-weight:500;'>"
-        "MODE: OPEN</span>",
-        unsafe_allow_html=True,
-    )
 
 #
 
@@ -412,21 +436,43 @@ if view == "none" and active_pid:
 left_col, right_col = st.columns([1, 1], gap="large")
 
 with left_col:
-    # ---------- Final Controls ----------
+
+# ---------- Final Controls ----------
     st.subheader("Revision Actions")
 
     final_on_disk = memory.load_define_final(active_pid) if active_pid else None
+    _has_final = bool(final_on_disk)
+    _has_draft = bool(memory.load_define_draft(active_pid))
 
-    a1, a2, = st.columns([1, 1])
-    with a1:
-        revise_clicked = st.button("✏️ Revise", key="define_revise_btn")
+    # Kalau rejected, anggap bisa revise meskipun sudah final
+    _appr_status = memory.get_phase_approval_status(active_pid, "define")
+    _is_rejected = (
+        ((_appr_status.get("reviewer") or {}).get("action") == "reject") or
+        ((_appr_status.get("champion") or {}).get("action") == "reject")
+    )
+    if _is_rejected:
+        _has_final = True  # enable revise button
 
-    with a2:
-        discard_draft_clicked = st.button("🧹 Discard", key="define_discard_draft_btn")
-# notes (informational only, not an action)
-    st.caption("ℹ️ Revise creates a new draft. The finalized version remains unchanged.")
-    st.caption("ℹ️ Discard deletes the current draft. Finalized version remains unchanged.") 
-        
+    if _has_final or _has_draft:
+        a1, a2 = st.columns(2)
+        with a1:
+            revise_clicked = st.button(
+                "✏️ Revise Final",
+                key="define_revise_btn",
+                disabled=not _has_final,
+                help="Buat draft baru dari versi final untuk diedit."
+            )
+        with a2:
+            discard_draft_clicked = st.button(
+                "🧹 Discard Draft",
+                key="define_discard_draft_btn",
+                disabled=not _has_draft,
+                help="Hapus draft saat ini. Final tetap tersimpan."
+            )
+    else:
+        revise_clicked = False
+        discard_draft_clicked = False
+
     if revise_clicked:
         if final_on_disk:
             prefill_define_form_from_state(active_pid, final_on_disk)
@@ -447,11 +493,18 @@ with left_col:
         st.session_state["define_draft"] = None
         st.rerun()
 
-    
     # =========================
     # DEFINE INPUT FORM (LEFT)
     # =========================
     with st.form(key="define_input_form", clear_on_submit=False):
+        # Lock check di dalam form
+        _final_exists = bool(memory.load_define_final(active_pid))
+        _appr = memory.get_phase_approval_status(active_pid, "define")
+        _rejected = (
+            ((_appr.get("reviewer") or {}).get("action") == "reject") or
+            ((_appr.get("champion") or {}).get("action") == "reject")
+        )
+        is_locked = _final_exists and not _rejected
 
         st.subheader("Project Inputs")
 
@@ -492,10 +545,43 @@ with left_col:
             height=100,
         )
 
-        voc_raw = st.text_area(
-            "VOC / VOB (bullet, satu per baris)",
-            key="define_voc_raw",
-            height=120,
+        st.markdown("**VOC / VOB → CTQ / CTB (Tool I)**")
+        st.caption("Isi tabel di bawah. VOC = suara pelanggan, VOB = suara bisnis.")
+
+        # Locked hanya kalau final DAN sudah approved penuh
+        _final_exists = bool(memory.load_define_final(active_pid))
+        _appr = memory.get_phase_approval_status(active_pid, "define")
+        _rejected = (
+            ((_appr.get("reviewer") or {}).get("action") == "reject") or
+            ((_appr.get("champion") or {}).get("action") == "reject")
+        )
+        
+        # Default rows
+        # Reset VOC table setiap kali project berubah
+        _voc_key = f"define_voc_table_{active_pid}"
+        if _voc_key not in st.session_state:
+            _saved = memory.load_define_final(active_pid) or memory.load_define_draft(active_pid) or {}
+            _saved_inputs = _saved.get("inputs") or {}
+            _saved_voc_data = _saved_inputs.get("voc_table") or []
+            st.session_state[_voc_key] = _saved_voc_data if _saved_voc_data else [
+                {"Type": "VOC", "Voice": "", "Key Issue": "", "CTQ/CTB": ""},
+                {"Type": "VOB", "Voice": "", "Key Issue": "", "CTQ/CTB": ""},
+            ]
+
+        voc_table = st.data_editor(
+            st.session_state[_voc_key],
+            num_rows="dynamic",
+            use_container_width=True,
+            key=f"define_voc_editor_{active_pid}",
+            column_config={
+                "Type": st.column_config.SelectboxColumn(
+                    "Type", options=["VOC", "VOB"], required=True
+                ),
+                "Voice": st.column_config.TextColumn("Voice (kutipan langsung)", width="large"),
+                "Key Issue": st.column_config.TextColumn("Key Issue / True Need"),
+                "CTQ/CTB": st.column_config.TextColumn("CTQ / CTB"),
+            },
+            disabled=is_locked,
         )
 
         key_issue = st.text_input(
@@ -547,18 +633,15 @@ with left_col:
             height=90,
         )
 
-        is_locked = bool(memory.load_define_final(active_pid))
         submitted = st.form_submit_button(
             "⚡ Generate / Update Draft" if not is_locked else "🔒 Locked — Cannot Generate Draft",
             type="primary",
             disabled=is_locked,
         )
 
-
 # OUTSIDE the form, but still can be anywhere (I put it after cols)
 if submitted:
     project_id = st.session_state.get("active_project_id", "").strip()
-
     user_inputs = {
         "project_name": project_name,
         "industry": industry,
@@ -566,9 +649,13 @@ if submitted:
         "pain_theme": pain_theme,
         "problem_text": problem_text,
         "goal_text": goal_text,
-        "voc_list": voc_raw,
+        "voc_list": [
+            f"{r.get('Type','')}: {r.get('Voice','')} → {r.get('Key Issue','')} → {r.get('CTQ/CTB','')}"
+             for r in (voc_table or [])
+            if r.get('Voice','').strip()
+        ],
+        "voc_table": voc_table if voc_table else [],
         "key_issue": key_issue,
-
         "charter_confirmed": charter_confirmed,
         "documentation_agreed": documentation_agreed,
         "similar_project_exists": similar_project_exists,
@@ -588,10 +675,6 @@ if submitted:
 
 # --- Revision Guidance (agent coaching) ---
 latest = None
-if st.session_state.get("define_draft") and isinstance(st.session_state["define_draft"], dict):
-    latest = st.session_state["define_draft"].get("define_state")
-elif st.session_state.get("define_final") and isinstance(st.session_state["define_final"], dict):
-    latest = st.session_state["define_final"].get("define_state")
 
 if isinstance(latest, dict):
     coaching = (latest.get("coaching_md") or latest.get("insight_md") or "").strip()
@@ -649,8 +732,8 @@ with right_col:
             ctq_text = "-"
 
         # ---------- TABS (DEFINED ONCE) ----------
-        tab1, tab2, tab3 = st.tabs(
-            ["📄 Report (Short)", "📊 Tables (Detail)", "🧾 JSON (trimmed)"]
+        tab1, tab2 = st.tabs(
+            ["📄 Report", "📊 Tables"]
         )
 
         # ---------- TAB 1 : SHORT REPORT ----------
@@ -682,18 +765,17 @@ with right_col:
 
             short_md = f"""
 ## DEFINE — {define_state.get('project_id','-')}
-
 - **Project Name**: {inputs.get('project_name','-')}
 - **Industry / Area / Theme**: {inputs.get('industry','-')} / {inputs.get('process_area','-')} / {inputs.get('pain_theme','-')}
+
+### Business Case
+{outs.get('business_case') or '-'}
 
 ### Problem
 {(outs.get('problem_statement') or inputs.get('problem_text') or '-').strip()}
 
 ### Goal
 {(outs.get('goal_statement') or inputs.get('goal_text') or '-').strip()}
-
-### Business Case
-{outs.get('business_case') or '-'}
 
 ### Scope
 {scope_md}
@@ -715,17 +797,78 @@ with right_col:
 
         # ---------- TAB 2 : TABLES ----------
         with tab2:
-            _render_tables_from_outputs(outs)
+        
+            # VOC/VOB table
+            import pandas as pd
+            # Ambil dari session state (lebih reliable dari inputs)
+            _voc_display_key = f"define_voc_table_{active_pid}"
+            # Prioritas: inputs dari state (paling akurat), lalu session state
+            voc_tbl_display = inputs.get("voc_table") or st.session_state.get(_voc_display_key) or []
+            if voc_tbl_display:
+                import pandas as pd
+                st.markdown("### Tool I — VOC/VOB → CTQ/CTB")
+                st.dataframe(pd.DataFrame(voc_tbl_display), use_container_width=True, hide_index=True)
+                             
+            import pandas as pd
+            # CTQ Table
+            ctq = outs.get("ctq_list") or []
+            if ctq:
+                st.markdown("### CTQ List")
+                rows = []
+                for c in ctq:
+                    if isinstance(c, dict):
+                        rows.append({
+                            "Name":        c.get("name",""),
+                            "Metric":      c.get("metric",""),
+                            "Unit":        c.get("unit",""),
+                            "Description": c.get("description",""),
+                        })
+                if rows:
+                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-        # ---------- TAB 3 : JSON (TRIMMED) ----------
-        with tab3:
-            def _safe_display_state(state: dict) -> dict:
-                s = copy.deepcopy(state or {})
-                for k in ["perception_trace", "decision_trace"]:
-                    s.pop(k, None)
-                return s
+            # SIPOC Table
+            sipoc_data = outs.get("sipoc") or {}
+            if sipoc_data:
+                st.markdown("### SIPOC")
+                sipoc_keys = ["Suppliers","Inputs","Process","Outputs","Customers"]
+                sipoc_lists = []
+                for k in sipoc_keys:
+                    val = sipoc_data.get(k) or sipoc_data.get(k.lower()) or []
+                    sipoc_lists.append(val if isinstance(val, list) else [str(val)] if val else [])
+                max_len = max([len(x) for x in sipoc_lists], default=1)
+                sipoc_rows = []
+                for i in range(max_len):
+                    row = {}
+                    for j, k in enumerate(sipoc_keys):
+                        row[k] = sipoc_lists[j][i] if i < len(sipoc_lists[j]) else ""
+                    sipoc_rows.append(row)
+                st.dataframe(pd.DataFrame(sipoc_rows), use_container_width=True, hide_index=True)
 
-            st.json(_safe_display_state(define_state))
+            # X Categories
+            xc = outs.get("x_categories") or {}
+            if xc:
+                st.markdown("### X Categories (6M)")
+                xc_rows = [{"Category": k, "Details": v if isinstance(v, str) else ", ".join(v) if isinstance(v, list) else str(v)} for k, v in xc.items()]
+                st.dataframe(pd.DataFrame(xc_rows), use_container_width=True, hide_index=True)
+
+            # Benefit Estimate
+            benefit = outs.get("benefit_estimate") or {}
+            if benefit:
+                st.markdown("### Benefit Estimate")
+                if benefit.get("benefit_potentials"):
+                    st.markdown(f"**Benefit Potentials:** {benefit['benefit_potentials']}")
+                if benefit.get("calculation_method"):
+                    st.markdown(f"**Calculation Method:** {benefit['calculation_method']}")
+                kpi_rows = benefit.get("kpi_table") or []
+                if kpi_rows:
+                    st.markdown("**KPI Table:**")
+                    st.dataframe(pd.DataFrame(kpi_rows), use_container_width=True, hide_index=True)
+                assumptions = benefit.get("assumptions") or []
+                if assumptions:
+                    st.markdown("**Assumptions:**")
+                    for a in assumptions:
+                        st.markdown(f"- {a}")
+
 
 st.divider()
 
@@ -739,7 +882,7 @@ c1, c2, c3 = st.columns([1, 1, 1])
 
 with c1:
     # Finalize: only if there is a draft AND no final yet (efficient, no double-finalize)
-    if draft_state and not final_state:
+    if draft_state:
         if st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn"):
             final_result = finalize_define_agent(
                 project_id=active_pid,
@@ -757,14 +900,19 @@ with c1:
         st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn_disabled", disabled=True)
 
 with c2:
-    # Generate Word ONLY from FINAL (no LLM, no state changes)
-    if final_state:
-        if st.button("🛠️ Generate/Refresh Final Word File", key="define_generate_final_word_btn"):
-            out_path = reporting.export_define_to_word(final_state, path=f"{active_pid}_DEFINE_REPORT.docx")
+    # Generate dari final kalau ada, kalau tidak dari draft
+    _word_source = final_state or draft_state
+    if _word_source:
+        _word_label = "🛠️ Generate Word (Final)" if final_state else "🛠️ Generate Word (Draft)"
+        if st.button(_word_label, key="define_generate_final_word_btn"):
+            out_path = reporting.export_define_to_word(
+                _word_source,
+                path=f"{active_pid}_DEFINE_REPORT.docx"
+            )
             st.session_state["define_last_docx_path"] = out_path
-            st.success("Word file generated/refreshed.")
+            st.success("Word file generated.")
     else:
-        st.button("🛠️ Generate/Refresh Final Word File", key="define_generate_final_word_btn_disabled", disabled=True)
+        st.button("🛠️ Generate Word", key="define_generate_final_word_btn_disabled", disabled=True)
 
 with c3:
     # Download ONLY if file exists

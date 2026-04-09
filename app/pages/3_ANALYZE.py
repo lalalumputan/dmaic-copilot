@@ -4,14 +4,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 import streamlit as st
 from app.utils import auth, memory, audit, reporting
 from app.agents.analyze_agent import run_analyze_agent, finalize_analyze_agent
+from app.utils.ui_helpers import render_sidebar_header
 
 st.set_page_config(page_title="ANALYZE", layout="wide")
 auth.require_login()
 auth.render_user_badge()
 
 # ── Sidebar ──────────────────────────────────────────────
-st.sidebar.title("🎯 DMAIC Copilot")
-st.sidebar.caption("Agentic AI DMAIC Companion")
+render_sidebar_header()
 st.sidebar.divider()
 
 active_pid = st.session_state.get("active_project_id")
