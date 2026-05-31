@@ -83,6 +83,10 @@ adalah halaman Streamlit tersendiri sehingga urutan metodologi tidak dapat dilom
 - **DMAIC Workspace** — `app/MAIN.py` (dashboard, pemilihan/pembuatan project, badge role)
   dan lima halaman fase `app/pages/1_DEFINE.py … 5_CONTROL.py`. Tiap halaman menampilkan
   panel **Input wajib** dan tab **Output/Artifacts**.
+- **Panduan jalur eksekusi** — `MAIN.py` menyediakan tab **"Panduan DMAIC & Quick
+  Improvement"** (di samping tab Dashboard) berisi card-grid lima fase untuk masing-masing
+  jalur (Standard vs Quick) sebagai guideline pengguna, sehingga perbedaan kedalaman tiap
+  jalur terlihat sebelum project dibuat.
 - **Artifact Viewer & Exporter** — tab Report pada tiap halaman + ekspor dokumen formal
   via `app/utils/reporting.py` (Word/struktur per fase).
 - **Review Panel** — hasil evaluasi gate (missing fields, rule gagal) ditampilkan langsung
@@ -163,6 +167,12 @@ upstream pada tiap agen (lihat §12 future work).
   decision/action terstruktur.
 - **Keyword rules** — `app/utils/text_rules.py` membantu menyarankan CTQ dari teks
   (deterministik, non-LLM).
+
+- **Coaching path-aware & Bahasa Indonesia** — builder coaching tiap fase
+  (`coaching_step` di Define, `_build_<phase>_coaching_llm` di Analyze/Improve/Control)
+  menerima `project_path` sehingga saran menyesuaikan jalur (Quick tidak menuntut
+  deliverable B-rule formal). Seluruh keluaran coaching ditulis **Bahasa Indonesia**
+  dengan istilah metodologi tetap Inggris; tersedia fallback deterministik bila LLM gagal.
 
 **Catatan as-built:** prompt template berada **inline** di masing-masing agen (belum ada
 *Prompt Template Repository* terpusat), dan validasi skema keluaran bersifat ringan
