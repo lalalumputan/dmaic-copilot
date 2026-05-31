@@ -1,300 +1,200 @@
 ========================================================
-DMAIC COPILOT — PROJECT CONTEXT FILE
+DMAIC COPILOT — PROJECT CONTEXT FILE (Updated: April 2026)
 =========================================================
+
 📌 1. Project Overview
 
-DMAIC Copilot adalah aplikasi agentic AI berbasis Python + LLM + Streamlit yang berfungsi sebagai digital Continuous Improvement engineer (Lean Sis Siga Master Black Belt) untuk menjalankan proyek Lean Six Sigma DMAIC (Define, Measure, Analyze, Improve, Control).
+DMAIC Copilot adalah aplikasi agentic AI berbasis Python + LLM + Streamlit yang berfungsi sebagai
+digital Continuous Improvement engineer (Lean Six Sigma Master Black Belt) untuk menjalankan
+proyek Lean Six Sigma DMAIC (Define, Measure, Analyze, Improve, Control).
 
-Sistem ini memiliki:
+Capstone Project — Magister Inovasi Regional, Universitas Padjadjaran (2025)
+Developer: Marla Ruby Quintine (NPM: 251020240501)
 
-Modular multi-phase agents (Define → Control)
+=========================================================
+📌 2. Current System Status (April 2026)
+=========================================================
 
-LLM reasoning for interpretation & decision-making
+✅ COMPLETED — Production-ready (deployed on Streamlit Community Cloud)
 
-Analytics engine for OEE, defect rate, Pareto, CTQ, DOE, RCA
+A. FULL DMAIC CYCLE — All 5 phases complete
+   - Define Agent + UI (1_DEFINE.py)
+   - Measure Agent + UI (2_MEASURE.py)
+   - Analyze Agent + UI (3_ANALYZE.py)
+   - Improve Agent + UI (4_IMPROVE.py)
+   - Control Agent + UI (5_CONTROL.py)
 
-Persistent memory per project
+B. AGENT ARCHITECTURE — Perception → Decision → Action → Gate → Finalize
+   - All agents follow PAD-Gate pattern
+   - LLM called ONLY during draft generation (run_*_agent)
+   - Finalize is LLM-free (no token cost on confirmation)
+   - Gate evaluation is rules-based (deterministic)
+   - Self-critique available in Measure phase
 
-Audit logging
+C. GOVERNANCE LAYER — Multi-role approval system
+   - 3 roles: project_leader, reviewer, champion
+   - Multi-user per role (configured via Streamlit secrets)
+   - Stage gate per phase: requires reviewer + champion approval
+   - Rejection triggers revision flow for project leader
+   - Audit trail per phase per project
 
-Phase reports + full DMAIC report generator
+D. PERSISTENCE — SQLite-based (cloud-safe)
+   - memory.py: SQLite (dmaic_memory.db) replaces old JSON filesystem
+   - audit.py: SQLite audit log
+   - All 5 phases supported: draft + final + approvals + episodes
+   - Migration script available (migrate_to_sqlite.py)
 
-(Upcoming) Agent Memory Layer & Feedback-based Adaptation
+E. AUTHENTICATION
+   - auth.py: role-based login
+   - Format secrets.toml:
+       [users.username]
+       password = "..."
+       role = "project_leader|reviewer|champion"
+       display_name = "..."
+   - Supports multiple users per role
 
-2. Goals of the System
-Primary Goals
+F. MAIN DASHBOARD
+   - Project status table (compact, searchable)
+   - Phase progress icons per project (⬜🔄🔒✅)
+   - Approval status (Rev/Champ) per project
+   - Load project → clears all phase session states
+   - New project with path selection (Standard/Quick)
 
-Membantu user mengeksekusi proyek DMAIC secara sistematis dan terstruktur
+G. DEFINE PHASE — Enhanced
+   - VOC/VOB → CTQ/CTB structured table (Tool I)
+   - SIPOC table render in UI
+   - Benefit estimate + KPI table (agent-proposed)
+   - Word report with styled tables (cover, gate badge, watermark for draft)
+   - Revision after rejection flow
+   - SMART gate validation (measurable + time-bound)
 
-Menghasilkan insight berbasis data dari file CSV maupun text input
+H. DEPLOYMENT
+   - GitHub: https://github.com/lalalumputan/dmaic-copilot
+   - Streamlit Community Cloud: deployed and running
+   - Secrets managed via Streamlit Cloud settings
+   - .gitignore: secrets.toml, *.docx, dmaic_memory.db excluded
 
-Memberikan rekomendasi berbasis LLM untuk setiap fase.
+=========================================================
+📌 3. Architecture — Current File Structure
+=========================================================
 
-Menghasilkan laporan standar DMAIC secara otomatis.
-
-Mengelola multi-project dengan state persistence.
-
-Menyiapkan arsitektur untuk agentic AI adaptation.
-
-🎯 Secondary Goals
-
-Mudah di-maintain dan scalable.
-
-Modular, sehingga setiap fase dapat dikembangkan terpisah.
-
-Dapat di-upgrade menjadi true agentic AI dengan memory & feedback loop.
-
-3. System Architecture Summary
-🔹 A. Data Processing Layer
-
-Melakukan perhitungan dan analitik DMAIC:
-
-CTQ extraction
-
-VOC clustering (opsional)
-
-Defect rate summary
-
-OEE
-
-Stratifikasi
-
-Pareto analysis
-
-RCA pattern extraction
-
-DOE planner (factor-level matrix generation)
-
-🔹 B. AI Agent Layer
-
-Setiap fase memiliki agent:
-
-Phase	Agent Name	Function
-Define	define_agent()	Charter, SIPOC, CTQ, problem statement refinement
-Measure	measure_msa_oee()	OEE, defect summary, measurement analysis
-Analyze	analyze_rootcause()	Pareto insight, RCA, hypothesis generation
-Improve	improve_doe() / improve_kaizen()	DOE matrix or Kaizen plan
-Control	control_plan()	Control plan, monitoring strategy
-
-Semua agent:
-
-menerima input data dan context
-
-menghasilkan structured output + AI Insight
-
-disimpan ke project memory
-
-🔹 C. UI Layer (Streamlit)
-
-Project creator & selector
-
-Phase runner
-
-CSV uploader
-
-AI Insight display
-
-Phase summary viewer
-
-Download report buttons
-
-Audit log viewer
-
-📌 4. Directory & File Structure
 /app
-   app.py                # Main Streamlit application
-   /agents
-       define_agent.py
-       measure_agent.py
-       analyze_agent.py
-       improve_agent.py
-       control_agent.py
-   /utils
-       llm_engine.py     # OpenAI/HF integration
-       data_processing.py
-       reporting.py
-       audit.py
-       memory.py         # (will host future adaptation logic)
-   /data
-       /projects
-           <project_name>/
-              define.json
-              measure.json
-              analyze.json
-              improve.json
-              control.json
-              audit_log.json
-
-📌 5. Core Logic Flow (High-level)
-
-User memilih project
-
-User memilih fase DMAIC
-
-User upload data (jika diperlukan)
-
-Python memanggil agent sesuai fase
-
-Agent melakukan:
-
-Data processing
-
-Prompt building
-
-LLM reasoning
-
-Synthesize output
-
-Output disimpan ke folder project
-
-Audit log diperbarui
-
-UI menampilkan & menyediakan download
-
-📌 6. Current Features Completed
-
-Modular multi-phase DMAIC agents
-
-Persistent project folder system
-
-JSON state saving per fase
-
-Full DMAIC report generation
-
-Phase report generation
-
-Audit trail functional
-
-OEE, defect rate, Pareto, CTQ, DOE analytics
-
-Kaizen Action Plan generator (Improve phase)
-
-LLM insight generator (Define → Control)
-
-Streamlit UI end-to-end flow
-
-Error handling & guardrails
-
-📌 7. Limitations / Work-in-progress
-
-Adaptation Layer belum ada (sesuai agentic AI reference)
-
-Belum ada episodic memory integration
-
-Belum ada user feedback loop (thumbs up/down)
-
-Belum ada LLM self-critique
-
-JSON consistency masih rentan (perlu schema validation)
-
-UI masih minimal (perlu perapihan minor)
-
-📌 8. Next Priority Tasks
-🚀 Priority 1 — Agent Memory Layer
-
-Create episodic memory store per phase
-
-Inject historical memory into prompts
-
-Build memory retrieval function
-
-🚀 Priority 2 — Feedback Loop
-
-Add UI: thumbs up/down + text feedback
-
-Save feedback to JSON
-
-Use feedback to modify next-phase prompt
-
-🚀 Priority 3 — Prompt Engineering Upgrade
-
-Add project-level structured context
-
-Improve prompt templates per fase
-
-Add self-reflection agent (LLM critique)
-
-🚀 Priority 4 — UI Improvements
-
-Better display of per-phase reports
-
-Notification for "phase completed"
-
-More robust error display
-
-📌 9. Prompt Style Guidelines (important!)
-All prompts must:
-
-Use DMAIC logic
-
-Use lean/practical manufacturing language
-
-Provide actionable insight
-
-Avoid generic coaching language
-
-Use structured output (tables, bullet, steps)
-
-Each phase must include:
-
-Define → Charter, CTQ, SIPOC
-Measure → OEE, MSA, defect analysis
-Analyze → Hypothesis, RCA, prioritization
-Improve → DOE/Kaizen plan + expected impact
-Control → Control plan + monitoring KPIs
-
-📌 10. Rules for Future Coding Sessions
-
-To ensure consistency:
-
-Do not rewrite entire files unless requested.
-
-Use diff mode for code updates.
-
-Maintain folder structure exactly.
-
-All new features must integrate with project memory system.
-
-Keep code modular — functions per phase, no giant blocks.
-
-For new features → update this context file.
-
-Always validate JSON before saving to project folder.
-
-📌 11. Glossary (for ChatGPT parsing)
-
-Agent = function/module that runs one DMAIC phase with LLM reasoning.
-
-Project memory = folder containing JSON per phase.
-
-Episode = one execution of an agent (future adaptation).
-
-AI Insight = LLM interpretation of analytics.
-
-Audit log = chronological list of agent actions.
-
-📌 12. Expected Output Quality Standards
-
-Clear, structured, actionable
-
-DMAIC terminology consistent
-
-Insight must tie to data uploaded
-
-No hallucination of columns/data
-
-No vague management-speak
-
-USER
- ↓
-[ 1_DEFINE.py ]      ← UI / orchestrator
- ↓
-[ define_agent.py ]  ← otak / agentic reasoning
- ↓
-[ define_state.json ]
- ↓
-[ reporting.py ]     ← formatter / exporter
-
+  MAIN.py                    ← Dashboard, project selector, new project
+  /agents
+      define_agent.py        ← PAD-Gate, SMART check, CTQ contract
+      measure_agent.py       ← PAD-Gate, DQ checks, baseline descriptives, self-critique
+      analyze_agent.py       ← PAD-Gate, fishbone, PFEA, pareto, RCA
+      improve_agent.py       ← PAD-Gate, effort-benefit matrix, DOE, implementation plan
+      control_agent.py       ← PAD-Gate, control plan, KPI monitoring, handover
+  /utils
+      llm_engine.py          ← OpenAI GPT-4o wrapper, reads from st.secrets
+      memory.py              ← SQLite persistence (all 5 phases + approvals + episodes)
+      audit.py               ← SQLite audit log
+      reporting.py           ← Markdown + styled Word export (define complete)
+      data_processing.py     ← Baseline analytics, perception state builder
+      auth.py                ← Multi-user role-based auth
+      ui_helpers.py          ← Shared UI components (sidebar logo)
+      guards.py              ← Data validation helpers
+      text_rules.py          ← CTQ keyword rules
+  /pages
+      1_DEFINE.py            ← Define UI (form + report + governance)
+      2_MEASURE.py           ← Measure UI (form + report + governance)
+      3_ANALYZE.py           ← Analyze UI (form + report + governance)
+      4_IMPROVE.py           ← Improve UI (form + report + governance)
+      5_CONTROL.py           ← Control UI (form + report + governance)
+  /assets
+      logo2.jpg, logo3.jpg
+
+/migrate_to_sqlite.py        ← One-time migration from old JSON to SQLite
+
+=========================================================
+📌 4. Agent Architecture Pattern (all phases)
+=========================================================
+
+run_*_agent():
+  1. PERCEPTION  — read upstream context + similar episodes from memory
+  2. DECISION    — LLM decides strategy (JSON output)
+  3. ACTION      — LLM generates full phase package (JSON output)
+  4. GATE        — deterministic rules-based evaluation (no LLM)
+  5. COACHING    — deterministic coaching markdown (no LLM)
+  → save draft to SQLite
+
+finalize_*_agent():
+  - NO LLM calls
+  - Gate must not be FAILED
+  - Saves final to SQLite, deletes draft
+  - Resets approvals if re-finalizing after rejection
+
+Governance flow:
+  project_leader → generate draft → submit (finalize)
+  reviewer       → approve/reject
+  champion       → approve/reject
+  gate OPEN      → project_leader can advance to next phase
+
+=========================================================
+📌 5. Key Rules for Coding Sessions
+=========================================================
+
+1. Logic in agents, NOT in pages — pages are UI only
+2. LLM called ONLY in run_*_agent() — never in finalize or UI callbacks
+3. All persistence via memory.py SQLite functions — never write files directly
+4. Single source of truth: define_state["outputs"] for all report rendering
+5. Patch minimal — do not rewrite entire files unless explicitly requested
+6. Session state keys are project-specific where needed: f"key_{active_pid}"
+7. st.data_editor must be OUTSIDE st.form() to avoid form context errors
+8. Always check _loaded_pid before auto-loading from disk
+9. VOC/VOB table key: f"define_voc_table_{active_pid}"
+10. secrets.toml, *.docx, dmaic_memory.db must stay in .gitignore
+
+=========================================================
+📌 6. Known Issues / Work In Progress
+=========================================================
+
+DEFINE:
+- benefit_estimate prompt needs refinement for better KPI generation
+- X Categories (6M) sometimes empty — prompt needs reinforcement
+
+MEASURE:
+- Governance panel not yet added (only gate, no approval panel)
+- Word report not yet created for Measure phase
+
+ANALYZE / IMPROVE / CONTROL:
+- Governance panel exists (UI) but Word reports not yet built
+- Fine-tuning of prompts needed after full simulation
+
+GENERAL:
+- Full cycle simulation not yet done (simulation scheduled after all phases ready)
+- Quick Improvement path logic not yet differentiated in agents
+- No feedback loop (thumbs up/down) yet implemented
+- No episodic memory injection into prompts yet
+
+=========================================================
+📌 7. Stack
+=========================================================
+
+Language:    Python 3.12
+UI:          Streamlit >= 1.35
+LLM:         OpenAI GPT-4o (via llm_engine.py)
+Persistence: SQLite (single file: dmaic_memory.db)
+Word export: python-docx
+Deployment:  Streamlit Community Cloud (free tier, public repo)
+Auth:        Role-based via Streamlit secrets (no external IdP)
+
+=========================================================
+📌 8. Glossary
+=========================================================
+
+Agent        = PAD-Gate module for one DMAIC phase
+draft        = unfinalized phase state (editable)
+final        = locked phase state (immutable until rejected)
+gate         = deterministic rules check before finalize
+approval     = reviewer/champion sign-off after finalize
+episode      = saved final state for few-shot memory retrieval
+coaching_md  = deterministic guidance markdown (no LLM)
+insight_md   = same as coaching_md (legacy alias)
+summary_md   = full phase report in markdown (stored in state)
+active_pid   = st.session_state["active_project_id"]
+_loaded_pid  = st.session_state["_loaded_pid"] (tracks last loaded project)
 
 =========================================================
 END OF FILE

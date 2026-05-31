@@ -132,7 +132,7 @@ def require_login():
                 st.session_state["auth_role"]         = role
                 st.session_state["auth_user"]         = username.strip()
                 st.session_state["auth_display_name"] = user.get("display_name", username)
-                st.rerun()
+                st.switch_page("MAIN.py")
         else:
             st.error("Username atau password salah.")
 
@@ -160,4 +160,4 @@ def render_user_badge():
     )
     if st.sidebar.button("Logout", key="auth_logout_btn"):
         logout()
-        st.rerun()
+        st.switch_page("MAIN.py")
