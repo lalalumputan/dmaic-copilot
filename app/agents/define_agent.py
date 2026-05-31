@@ -361,11 +361,11 @@ def evaluate_define_gate(
 
     # Short agent summary
     if status == "FAILED":
-        agent_summary = "DEFINE gate FAILED. Fix critical items (A-rules) before proceeding."
+        agent_summary = "DEFINE gate FAILED. Perbaiki item kritis (A-rules) sebelum melanjutkan."
     elif status == "CONDITIONAL":
-        agent_summary = "DEFINE gate CONDITIONAL. You may finalize, but resolve noted conditions to reduce risk."
+        agent_summary = "DEFINE gate CONDITIONAL. Boleh finalize, tetapi selesaikan kondisi yang dicatat untuk mengurangi risiko."
     else:
-        agent_summary = "DEFINE gate PASSED. DEFINE deliverables are ready and consistent."
+        agent_summary = "DEFINE gate PASSED. Deliverable DEFINE sudah siap dan konsisten."
 
     return {
         "status": status,
@@ -430,6 +430,7 @@ def build_define_coaching_summary_md(
     outputs: Dict[str, Any],
     gate_evidence: Dict[str, Any],
     prior_quick_wins: Optional[List[Dict[str, Any]]] = None,
+    project_path: str = "standard",
 ) -> str:
     """
     Deterministic coaching summary (rules-based). No LLM.
@@ -445,26 +446,26 @@ def build_define_coaching_summary_md(
 
     # strengths heuristics
     if (outputs.get("problem_statement") or "").strip():
-        strengths.append("Problem statement is documented.")
+        strengths.append("Problem statement sudah terdokumentasi.")
     if (outputs.get("goal_statement") or "").strip():
-        strengths.append("Goal statement is documented.")
+        strengths.append("Goal statement sudah terdokumentasi.")
     if outputs.get("sipoc"):
-        strengths.append("SIPOC is provided.")
+        strengths.append("SIPOC sudah tersedia.")
     if isinstance(outputs.get("ctq_list"), list) and len(outputs.get("ctq_list")) > 0:
-        strengths.append("CTQ/CTB list is provided.")
+        strengths.append("Daftar CTQ/CTB sudah tersedia.")
 
     # gaps based on rules
     if "A1_charter_not_confirmed" in failed:
-        gaps.append("Project charter is not confirmed (missing user confirmation).")
-        next_actions.append("Confirm project charter setup (checkbox) before finalize.")
+        gaps.append("Project charter belum dikonfirmasi (konfirmasi user belum ada).")
+        next_actions.append("Konfirmasi setup project charter (centang checkbox) sebelum finalize.")
 
     if "A1_problem_not_smart_enough" in failed:
-        gaps.append("Problem statement is not SMART enough (measurable and/or time-bound evidence is missing).")
-        next_actions.append("Add/clarify the measurable metric (number + unit) and the timeframe (date/period) without changing the core problem.")
+        gaps.append("Problem statement belum cukup SMART (bukti measurable dan/atau time-bound belum ada).")
+        next_actions.append("Tambahkan/perjelas metrik yang terukur (angka + satuan) dan rentang waktu (tanggal/periode) tanpa mengubah inti masalah.")
 
     if "A1_goal_not_smart_enough" in failed:
-        gaps.append("Goal statement is not SMART enough (measurable and/or time-bound evidence is missing).")
-        next_actions.append("Add/clarify numeric target + deadline (keep scope/metric consistent with the problem).")
+        gaps.append("Goal statement belum cukup SMART (bukti measurable dan/atau time-bound belum ada).")
+        next_actions.append("Tambahkan/perjelas target numerik + deadline (jaga scope/metrik tetap konsisten dengan problem).")
 
     if "A1b_goal_not_mirroring_problem" in conditional:
         gaps.append("Goal statement tidak mencerminkan problem statement — metrik berbeda atau tidak ada keterkaitan yang jelas.")
@@ -529,9 +530,9 @@ def build_define_coaching_summary_md(
         next_actions.append("Isi kolom Goal (End Date) untuk setiap milestone di sheet Project Charter.")
     # risks based on status
     if status == "FAILED":
-        risks.append("Proceeding without fixing critical gate items will invalidate later phases.")
+        risks.append("Lanjut tanpa memperbaiki item gate kritis akan membuat fase berikutnya tidak valid.")
     elif status == "CONDITIONAL":
-        risks.append("Proceeding with conditions unresolved increases rework risk.")
+        risks.append("Lanjut dengan kondisi yang belum diselesaikan meningkatkan risiko rework.")
 
     # quick wins: only from prior projects if available
     quick_wins_md = ""
@@ -547,27 +548,29 @@ def build_define_coaching_summary_md(
             else:
                 lines.append(f"- **{title}**")
         if lines:
-            quick_wins_md = "\n### Quick Wins (from prior projects)\n" + "\n".join(lines)
+            quick_wins_md = "\n### Quick Wins (dari project sebelumnya)\n" + "\n".join(lines)
 
     # Build MD
     md = []
     md.append(f"### DEFINE Gate Status: **{status}**")
+    if project_path == "quick":
+        md.append("> ⚡ **Quick Improvement** — coaching difokuskan pada problem & goal statement saja. Item rigor Standard (charter, VOC/CTQ traceability, SIPOC, benefit estimate) tidak diwajibkan.")
     md.append(f"- {gate_result.get('agent_summary','').strip()}")
 
     if strengths:
-        md.append("\n### Strengths")
+        md.append("\n### Kekuatan")
         md.extend([f"- {s}" for s in strengths[:4]])
 
     if gaps:
-        md.append("\n### Gaps")
+        md.append("\n### Kekurangan")
         md.extend([f"- {g}" for g in gaps[:6]])
 
     if next_actions:
-        md.append("\n### What to fix next (ordered)")
+        md.append("\n### Yang perlu diperbaiki (berurutan)")
         md.extend([f"{i+1}. {a}" for i, a in enumerate(next_actions[:6])])
 
     if risks:
-        md.append("\n### Risks if proceed")
+        md.append("\n### Risiko jika dilanjutkan")
         md.extend([f"- {r}" for r in risks[:3]])
 
     if quick_wins_md:
@@ -646,6 +649,8 @@ System-generated outputs:
 - CTQs identified ({len(ctq_list)}): {ctq_summary}
 
 Provide coaching as an MBB to the project leader. Rules:
+0. Write the ENTIRE coaching in Bahasa Indonesia. Keep Lean Six Sigma / DMAIC terminology in English
+   (e.g. CTQ, CTB, VOC, VOB, SIPOC, baseline, Cp, Cpk, gate, root cause, charter). Do NOT translate these terms.
 1. ALWAYS quote the user's exact text (problem/goal), then point out specifically what is missing
 2. Give concrete improvement examples — not generic instructions
 3. Address critical items (A-rules) first, in order of priority
@@ -679,6 +684,7 @@ Provide coaching as an MBB to the project leader. Rules:
         outputs=outputs,
         gate_evidence={},
         prior_quick_wins=None,
+        project_path=project_path,
     )
 
 def _extract_prior_quick_wins(similar_memory_episodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -963,6 +969,7 @@ Few-shot examples (if any):
         outputs=outputs,
         gate_evidence=gate_evidence,
         prior_quick_wins=prior_quick_wins if prior_quick_wins else None,
+        project_path=project_path,
     )
 
     define_state: Dict[str, Any] = {

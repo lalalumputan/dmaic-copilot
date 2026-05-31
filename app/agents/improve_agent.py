@@ -425,8 +425,9 @@ def _improve_gate_evaluate(
         failed.append("A4_no_implementation_plan")
         actions.append("Buat implementation plan dengan steps, owner, dan timeline.")
 
+    # A5: pilot plan — Quick path skip (advisory), Standard wajib
     pilot = outputs.get("pilot_plan") or {}
-    if not pilot or not pilot.get("scope"):
+    if (not pilot or not pilot.get("scope")) and enforce_b_rules:
         failed.append("A5_no_pilot_plan")
         actions.append("Definisikan pilot plan: scope, success criteria, rollback.")
 
@@ -484,6 +485,7 @@ def _build_improve_coaching_llm(
     outputs: dict,
     upstream: dict,
     user_inputs: dict,
+    project_path: str = "standard",
 ) -> str:
     failed      = gate.get("failed_rules") or []
     conditional = gate.get("conditional_rules") or []
@@ -519,6 +521,9 @@ def _build_improve_coaching_llm(
     prompt = f"""
 You are a Lean Six Sigma Master Black Belt coaching a project leader on the Improve phase.
 Tujuan coaching: meningkatkan PELUANG SUKSES implementasi dengan mengkritisi KUALITAS ISI Improve — bukan sekadar mengingatkan status administratif.
+
+Execution path: {"Quick Improvement" if project_path == "quick" else "Standard DMAIC"}
+{"Note: This is a Quick Improvement project — coaching must be concise, focus on critical gaps only (A-rules). Do NOT require Must Criteria matrix or formal Pilot Plan (B-rule items skipped in Quick path)." if project_path == "quick" else ""}
 
 Gate Status: {status}
 
@@ -800,7 +805,7 @@ def run_improve_agent(
     # Coaching — LLM only on FAIL/WEAK_PASS
     gate_status = gate.get("status","")
     if gate_status in ("FAIL","WEAK_PASS"):
-        coaching_md = _build_improve_coaching_llm(gate, outputs, upstream, user_inputs)
+        coaching_md = _build_improve_coaching_llm(gate, outputs, upstream, user_inputs, project_path=project_path)
     else:
         coaching_md = "✅ Gate PASS — must criteria defined, solutions selected, implementation and communication plan complete."
 

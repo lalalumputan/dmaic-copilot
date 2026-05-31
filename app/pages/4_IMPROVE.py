@@ -390,49 +390,55 @@ with tab_input:
 
     st.divider()
 
-    # ── Step 2: Must Criteria ──
-    st.markdown("### Step 2 — Must Criteria")
-    st.caption("Kriteria wajib yang SEMUA solusi harus penuhi. Isi manual, atau klik Propose untuk usulan agent, atau Skip jika belum perlu.")
+    if _proj_path != "quick":
+        # ── Step 2: Must Criteria ──
+        st.markdown("### Step 2 — Must Criteria")
+        st.caption("Kriteria wajib yang SEMUA solusi harus penuhi. Isi manual, atau klik Propose untuk usulan agent, atau Skip jika belum perlu.")
 
-    # Seed empty table (TIDAK auto-generate); user isi manual / propose / skip
-    if _must_key not in st.session_state:
-        st.session_state[_must_key] = _saved_outs.get("must_criteria") or []
+        # Seed empty table (TIDAK auto-generate); user isi manual / propose / skip
+        if _must_key not in st.session_state:
+            st.session_state[_must_key] = _saved_outs.get("must_criteria") or []
 
-    col_mc_propose, col_mc_skip, col_mc_save = st.columns([1,1,1])
-    with col_mc_propose:
-        if st.button("🤖 Propose Must Criteria", key=f"mc_propose_{active_pid}", disabled=is_locked or _no_confirmed_rc):
-            with st.spinner("Agent menyusun must criteria..."):
-                from app.agents.improve_agent import _propose_must_criteria_llm, _extract_upstream_context
-                _upstream_mc = _extract_upstream_context(define_final, measure_final, analyze_final)
-                st.session_state[_must_key] = _propose_must_criteria_llm(_upstream_mc, "")
-                st.session_state[_must_skipped_key] = False
-            st.rerun()
-    with col_mc_skip:
-        if st.button("⏭️ Skip Must Criteria", key=f"mc_skip_{active_pid}", disabled=is_locked):
-            st.session_state[_must_key] = []
-            st.session_state[_must_skipped_key] = True
-            st.success("Must criteria di-skip. Solusi tidak akan dievaluasi terhadap must criteria.")
+        col_mc_propose, col_mc_skip, col_mc_save = st.columns([1,1,1])
+        with col_mc_propose:
+            if st.button("🤖 Propose Must Criteria", key=f"mc_propose_{active_pid}", disabled=is_locked or _no_confirmed_rc):
+                with st.spinner("Agent menyusun must criteria..."):
+                    from app.agents.improve_agent import _propose_must_criteria_llm, _extract_upstream_context
+                    _upstream_mc = _extract_upstream_context(define_final, measure_final, analyze_final)
+                    st.session_state[_must_key] = _propose_must_criteria_llm(_upstream_mc, "")
+                    st.session_state[_must_skipped_key] = False
+                st.rerun()
+        with col_mc_skip:
+            if st.button("⏭️ Skip Must Criteria", key=f"mc_skip_{active_pid}", disabled=is_locked):
+                st.session_state[_must_key] = []
+                st.session_state[_must_skipped_key] = True
+                st.success("Must criteria di-skip. Solusi tidak akan dievaluasi terhadap must criteria.")
 
-    _mc_list = st.session_state.get(_must_key, [])
-    _mc_seed = _mc_list if _mc_list else [{"criterion": "", "category": "", "rationale": ""}]
-    _mc_df = pd.DataFrame([{
-        "criterion": m.get("criterion",""),
-        "category":  m.get("category",""),
-        "rationale": m.get("rationale",""),
-    } for m in _mc_seed])
-    _mc_edit = st.data_editor(
-        _mc_df, num_rows="dynamic", use_container_width=True,
-        key=f"mc_editor_{active_pid}", disabled=is_locked,
-    )
-    with col_mc_save:
-        if st.button("💾 Simpan Must Criteria", key=f"mc_save_{active_pid}", disabled=is_locked):
-            if isinstance(_mc_edit, pd.DataFrame):
-                _rows = [r for r in _mc_edit.to_dict(orient="records") if str(r.get("criterion","")).strip()]
-                st.session_state[_must_key] = _rows
-                st.session_state[_must_skipped_key] = (len(_rows) == 0)
-            st.success("Must criteria tersimpan.")
-    if st.session_state.get(_must_skipped_key) and not _mc_list:
-        st.info("⏭️ Must criteria di-skip — Step 3 solutions tidak akan divalidasi terhadap must criteria.")
+        _mc_list = st.session_state.get(_must_key, [])
+        _mc_seed = _mc_list if _mc_list else [{"criterion": "", "category": "", "rationale": ""}]
+        _mc_df = pd.DataFrame([{
+            "criterion": m.get("criterion",""),
+            "category":  m.get("category",""),
+            "rationale": m.get("rationale",""),
+        } for m in _mc_seed])
+        _mc_edit = st.data_editor(
+            _mc_df, num_rows="dynamic", use_container_width=True,
+            key=f"mc_editor_{active_pid}", disabled=is_locked,
+        )
+        with col_mc_save:
+            if st.button("💾 Simpan Must Criteria", key=f"mc_save_{active_pid}", disabled=is_locked):
+                if isinstance(_mc_edit, pd.DataFrame):
+                    _rows = [r for r in _mc_edit.to_dict(orient="records") if str(r.get("criterion","")).strip()]
+                    st.session_state[_must_key] = _rows
+                    st.session_state[_must_skipped_key] = (len(_rows) == 0)
+                st.success("Must criteria tersimpan.")
+        if st.session_state.get(_must_skipped_key) and not _mc_list:
+            st.info("⏭️ Must criteria di-skip — Step 3 solutions tidak akan divalidasi terhadap must criteria.")
+    else:
+        # Quick Path: must criteria di-skip otomatis
+        st.session_state[_must_key] = []
+        st.session_state[_must_skipped_key] = True
+        st.caption("⚡ **Quick Path** — Must Criteria matrix di-skip. Solusi dipilih langsung berdasarkan dampak.")
 
     st.divider()
 
@@ -576,29 +582,33 @@ with tab_input:
     st.markdown("### Step 5 — Pilot & Implementation Plan")
     st.caption("Diisi oleh Project Leader (bukan agent). Setelah simpan, agent otomatis menyiapkan usulan Communication Plan di Step 6.")
 
-    _pilot_scope = st.text_area(
-        "Pilot scope",
-        key=f"pilot_scope_{active_pid}",
-        placeholder="Contoh: Pilot di line 3, shift pagi, selama 2 minggu",
-        height=60, disabled=is_locked,
-    )
-    _pilot_criteria = st.text_area(
-        "Pilot success criteria",
-        key=f"pilot_criteria_{active_pid}",
-        placeholder="Contoh: A/R Overdue % turun dari 27% ke < 20% selama periode pilot",
-        height=60, disabled=is_locked,
-    )
-    _pilot_owner = st.text_input(
-        "Pilot owner",
-        key=f"pilot_owner_{active_pid}",
-        placeholder="Nama/role", disabled=is_locked,
-    )
-    _pilot_rollback = st.text_area(
-        "Rollback plan",
-        key=f"pilot_rollback_{active_pid}",
-        placeholder="Jika pilot gagal, langkah apa yang diambil?",
-        height=60, disabled=is_locked,
-    )
+    _pilot_scope = _pilot_criteria = _pilot_owner = _pilot_rollback = ""
+    if _proj_path != "quick":
+        _pilot_scope = st.text_area(
+            "Pilot scope",
+            key=f"pilot_scope_{active_pid}",
+            placeholder="Contoh: Pilot di line 3, shift pagi, selama 2 minggu",
+            height=60, disabled=is_locked,
+        )
+        _pilot_criteria = st.text_area(
+            "Pilot success criteria",
+            key=f"pilot_criteria_{active_pid}",
+            placeholder="Contoh: A/R Overdue % turun dari 27% ke < 20% selama periode pilot",
+            height=60, disabled=is_locked,
+        )
+        _pilot_owner = st.text_input(
+            "Pilot owner",
+            key=f"pilot_owner_{active_pid}",
+            placeholder="Nama/role", disabled=is_locked,
+        )
+        _pilot_rollback = st.text_area(
+            "Rollback plan",
+            key=f"pilot_rollback_{active_pid}",
+            placeholder="Jika pilot gagal, langkah apa yang diambil?",
+            height=60, disabled=is_locked,
+        )
+    else:
+        st.caption("⚡ **Quick Path** — Pilot plan tidak wajib. Langsung isi Implementation Plan di bawah.")
 
     # Implementation plan table — diisi user (starter empty rows)
     if _impl_key not in st.session_state:

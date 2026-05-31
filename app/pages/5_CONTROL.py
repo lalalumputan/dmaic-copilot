@@ -410,145 +410,160 @@ with tab_input:
 
     st.divider()
 
-    # ── Step 3: Control Plan ──
-    st.markdown("### Step 3 — Control Plan per CTQ")
-    col_cp_gen, col_cp_save = st.columns([1,1])
-    with col_cp_gen:
-        if st.button("🤖 Generate Control Plan", key=f"cp_gen_{active_pid}", disabled=is_locked):
-            st.session_state.pop(_cp_key, None)
-            st.rerun()
-
-    if _cp_key not in st.session_state and not is_locked:
-        with st.spinner("Agent menyusun control plan..."):
-            from app.agents.control_agent import _build_control_plan_llm, _extract_upstream_context
-            _upstream_cp = _extract_upstream_context(define_final, measure_final, analyze_final, improve_final)
-            st.session_state[_cp_key] = _build_control_plan_llm(_upstream_cp, {})
-
-    _cp_list = st.session_state.get(_cp_key, [])
-    if _cp_list:
-        _cp_df = pd.DataFrame([{
-            "CTQ":         c.get("ctq",""),
-            "Metric":      c.get("metric",""),
-            "Spec Limit":  c.get("spec_limit",""),
-            "Method":      c.get("control_method",""),
-            "Frequency":   c.get("measurement_frequency",""),
-            "Owner":       c.get("owner",""),
-            "System":      c.get("recording_system",""),
-        } for c in _cp_list])
-        _cp_edit = st.data_editor(
-            _cp_df, num_rows="dynamic", use_container_width=True,
-            key=f"cp_editor_{active_pid}", disabled=is_locked,
-        )
-        with col_cp_save:
-            if st.button("💾 Simpan Control Plan", key=f"cp_save_{active_pid}", disabled=is_locked):
-                if isinstance(_cp_edit, pd.DataFrame):
-                    st.session_state[_cp_key] = [{
-                        "ctq":                   r.get("CTQ",""),
-                        "metric":                r.get("Metric",""),
-                        "spec_limit":            r.get("Spec Limit",""),
-                        "control_method":        r.get("Method",""),
-                        "measurement_frequency": r.get("Frequency",""),
-                        "owner":                 r.get("Owner",""),
-                        "recording_system":      r.get("System",""),
-                    } for r in _cp_edit.to_dict(orient="records")]
-                st.success("Control plan tersimpan.")
+    if _proj_path != "quick":
+        # ── Step 3: Control Plan ──
+        st.markdown("### Step 3 — Control Plan per CTQ")
+        col_cp_gen, col_cp_save = st.columns([1,1])
+        with col_cp_gen:
+            if st.button("🤖 Generate Control Plan", key=f"cp_gen_{active_pid}", disabled=is_locked):
+                st.session_state.pop(_cp_key, None)
                 st.rerun()
+
+        if _cp_key not in st.session_state and not is_locked:
+            with st.spinner("Agent menyusun control plan..."):
+                from app.agents.control_agent import _build_control_plan_llm, _extract_upstream_context
+                _upstream_cp = _extract_upstream_context(define_final, measure_final, analyze_final, improve_final)
+                st.session_state[_cp_key] = _build_control_plan_llm(_upstream_cp, {})
+
+        _cp_list = st.session_state.get(_cp_key, [])
+        if _cp_list:
+            _cp_df = pd.DataFrame([{
+                "CTQ":         c.get("ctq",""),
+                "Metric":      c.get("metric",""),
+                "Spec Limit":  c.get("spec_limit",""),
+                "Method":      c.get("control_method",""),
+                "Frequency":   c.get("measurement_frequency",""),
+                "Owner":       c.get("owner",""),
+                "System":      c.get("recording_system",""),
+            } for c in _cp_list])
+            _cp_edit = st.data_editor(
+                _cp_df, num_rows="dynamic", use_container_width=True,
+                key=f"cp_editor_{active_pid}", disabled=is_locked,
+            )
+            with col_cp_save:
+                if st.button("💾 Simpan Control Plan", key=f"cp_save_{active_pid}", disabled=is_locked):
+                    if isinstance(_cp_edit, pd.DataFrame):
+                        st.session_state[_cp_key] = [{
+                            "ctq":                   r.get("CTQ",""),
+                            "metric":                r.get("Metric",""),
+                            "spec_limit":            r.get("Spec Limit",""),
+                            "control_method":        r.get("Method",""),
+                            "measurement_frequency": r.get("Frequency",""),
+                            "owner":                 r.get("Owner",""),
+                            "recording_system":      r.get("System",""),
+                        } for r in _cp_edit.to_dict(orient="records")]
+                    st.success("Control plan tersimpan.")
+                    st.rerun()
+        else:
+            st.info("Generate control plan setelah monitoring plan tersedia.")
     else:
-        st.info("Generate control plan setelah monitoring plan tersedia.")
+        st.caption("⚡ **Quick Path** — Control Plan per CTQ formal di-skip. Monitoring plan & control chart sudah cukup.")
 
     st.divider()
 
-    # ── Step 4: Handover Protocol ──
-    st.markdown("### Step 4 — Handover Protocol")
-    st.caption("Isi sesuai template handover protocol. Wajib ditandatangani oleh Project Leader DAN Process Owner.")
+    # Quick Path: handover fields default kosong (Step 4 disembunyikan)
+    _ho_setup = True
+    _kpis_monitoring_note = ""
+    _training_note = ""
+    _open_issues_note = ""
+    _open_issues_responsible = ""
+    _handover_comments = ""
+    _responsible = ""
+    _process_owner = ""
+    if _proj_path != "quick":
+        # ── Step 4: Handover Protocol ──
+        st.markdown("### Step 4 — Handover Protocol")
+        st.caption("Isi sesuai template handover protocol. Wajib ditandatangani oleh Project Leader DAN Process Owner.")
 
-    _ho_setup_choice = st.selectbox(
-        "1. Apakah should-be process sudah disiapkan (set up)?",
-        options=["Yes", "No"],
-        key=f"ctrl_ho_setup_{active_pid}",
-        disabled=is_locked,
-    )
-    _ho_setup = (_ho_setup_choice == "Yes")
+        _ho_setup_choice = st.selectbox(
+            "1. Apakah should-be process sudah disiapkan (set up)?",
+            options=["Yes", "No"],
+            key=f"ctrl_ho_setup_{active_pid}",
+            disabled=is_locked,
+        )
+        _ho_setup = (_ho_setup_choice == "Yes")
 
-    _kpis_monitoring_note = st.text_area(
-        "2. Apakah new process KPIs sudah disepakati & continuous monitoring terjamin? (jelaskan KPI)",
-        key=f"ctrl_ho_kpis_{active_pid}",
-        placeholder=(
-            "Contoh:\n"
-            "Yes, lihat Monitoring–Reaction plan. Track KPI:\n"
-            "1. Throughput Neutralization process (Ton/hour)\n"
-            "2. Output HPBE (Ton/month)"
-        ),
-        height=100, disabled=is_locked,
-    )
-    _training_note = st.text_area(
-        "3. Siapa dan apa yang harus dilatih?",
-        key=f"ctrl_ho_training_{active_pid}",
-        placeholder="Contoh: Neutralization Process Operator — new process flow & reaction plan",
-        height=80, disabled=is_locked,
-    )
-    _open_issues_note = st.text_area(
-        "4. Apa saja open issues?",
-        key=f"ctrl_ho_issues_{active_pid}",
-        placeholder="Contoh: Filtration Process jadi constraint berikutnya, throughput 4.1 Ton/h...",
-        height=80, disabled=is_locked,
-    )
-    _open_issues_responsible = st.text_input(
-        "5. Siapa penanggung jawab open issues?",
-        key=f"ctrl_ho_issues_resp_{active_pid}",
-        placeholder="Contoh: Marla Ruby Quintine (as BB Project)",
-        disabled=is_locked,
-    )
-    _handover_comments = st.text_area(
-        "6. Comments / catatan tambahan?",
-        key=f"ctrl_ho_comments_{active_pid}",
-        placeholder="Contoh: akan ditangani sebagai 3rd gen project, timeline Juni–Maret 2019",
-        height=60, disabled=is_locked,
-    )
-    _responsible = st.text_input(
-        "7. Responsible? (penanggung jawab proses)",
-        key=f"ctrl_ho_responsible_{active_pid}",
-        placeholder="Contoh: Production Manager",
-        disabled=is_locked,
-    )
-    # Process Owner (penanggung jawab proses)
-    _process_owner = _responsible
+        _kpis_monitoring_note = st.text_area(
+            "2. Apakah new process KPIs sudah disepakati & continuous monitoring terjamin? (jelaskan KPI)",
+            key=f"ctrl_ho_kpis_{active_pid}",
+            placeholder=(
+                "Contoh:\n"
+                "Yes, lihat Monitoring–Reaction plan. Track KPI:\n"
+                "1. Throughput Neutralization process (Ton/hour)\n"
+                "2. Output HPBE (Ton/month)"
+            ),
+            height=100, disabled=is_locked,
+        )
+        _training_note = st.text_area(
+            "3. Siapa dan apa yang harus dilatih?",
+            key=f"ctrl_ho_training_{active_pid}",
+            placeholder="Contoh: Neutralization Process Operator — new process flow & reaction plan",
+            height=80, disabled=is_locked,
+        )
+        _open_issues_note = st.text_area(
+            "4. Apa saja open issues?",
+            key=f"ctrl_ho_issues_{active_pid}",
+            placeholder="Contoh: Filtration Process jadi constraint berikutnya, throughput 4.1 Ton/h...",
+            height=80, disabled=is_locked,
+        )
+        _open_issues_responsible = st.text_input(
+            "5. Siapa penanggung jawab open issues?",
+            key=f"ctrl_ho_issues_resp_{active_pid}",
+            placeholder="Contoh: Marla Ruby Quintine (as BB Project)",
+            disabled=is_locked,
+        )
+        _handover_comments = st.text_area(
+            "6. Comments / catatan tambahan?",
+            key=f"ctrl_ho_comments_{active_pid}",
+            placeholder="Contoh: akan ditangani sebagai 3rd gen project, timeline Juni–Maret 2019",
+            height=60, disabled=is_locked,
+        )
+        _responsible = st.text_input(
+            "7. Responsible? (penanggung jawab proses)",
+            key=f"ctrl_ho_responsible_{active_pid}",
+            placeholder="Contoh: Production Manager",
+            disabled=is_locked,
+        )
+        # Process Owner (penanggung jawab proses)
+        _process_owner = _responsible
 
-    # ── Upload Handover Protocol Confirmation Sheet (ditandatangani Process Owner) ──
-    st.markdown("**📄 Handover Protocol Confirmation Sheet (ditandatangani Process Owner):**")
-    import base64 as _b64_ho
-    _ho_b64_k  = f"ctrl_ho_conf_b64_{active_pid}"
-    _ho_name_k = f"ctrl_ho_conf_name_{active_pid}"
-    _ho_type_k = f"ctrl_ho_conf_type_{active_pid}"
-    _ho_wip = memory.load_control_wip(active_pid) or {}
-    if _ho_b64_k not in st.session_state:
-        st.session_state[_ho_b64_k]  = _ho_wip.get("handover_conf_b64", "")
-        st.session_state[_ho_name_k] = _ho_wip.get("handover_conf_name", "")
-        st.session_state[_ho_type_k] = _ho_wip.get("handover_conf_type", "")
-    _ho_up = st.file_uploader(
-        "📤 Upload confirmation sheet (signed)",
-        type=["xlsx", "xls", "csv", "pdf", "png", "jpg", "jpeg"],
-        key=f"ctrl_ho_conf_uploader_{active_pid}",
-        disabled=is_locked,
-    )
-    if _ho_up is not None:
-        _ho_bytes = _ho_up.read()
-        st.session_state[_ho_b64_k]  = _b64_ho.b64encode(_ho_bytes).decode("utf-8")
-        st.session_state[_ho_name_k] = _ho_up.name
-        st.session_state[_ho_type_k] = _ho_up.type or ""
-        _ho_wip_save = memory.load_control_wip(active_pid) or {}
-        _ho_wip_save["handover_conf_b64"]  = st.session_state[_ho_b64_k]
-        _ho_wip_save["handover_conf_name"] = _ho_up.name
-        _ho_wip_save["handover_conf_type"] = st.session_state[_ho_type_k]
-        memory.save_control_wip(active_pid, _ho_wip_save)
-    if st.session_state.get(_ho_name_k):
-        st.caption(f"📎 Tersimpan: {st.session_state[_ho_name_k]}")
-        if str(st.session_state.get(_ho_type_k, "")).startswith("image/"):
-            try:
-                st.image(_b64_ho.b64decode(st.session_state[_ho_b64_k]),
-                         use_container_width=True)
-            except Exception:
-                pass
+        # ── Upload Handover Protocol Confirmation Sheet (ditandatangani Process Owner) ──
+        st.markdown("**📄 Handover Protocol Confirmation Sheet (ditandatangani Process Owner):**")
+        import base64 as _b64_ho
+        _ho_b64_k  = f"ctrl_ho_conf_b64_{active_pid}"
+        _ho_name_k = f"ctrl_ho_conf_name_{active_pid}"
+        _ho_type_k = f"ctrl_ho_conf_type_{active_pid}"
+        _ho_wip = memory.load_control_wip(active_pid) or {}
+        if _ho_b64_k not in st.session_state:
+            st.session_state[_ho_b64_k]  = _ho_wip.get("handover_conf_b64", "")
+            st.session_state[_ho_name_k] = _ho_wip.get("handover_conf_name", "")
+            st.session_state[_ho_type_k] = _ho_wip.get("handover_conf_type", "")
+        _ho_up = st.file_uploader(
+            "📤 Upload confirmation sheet (signed)",
+            type=["xlsx", "xls", "csv", "pdf", "png", "jpg", "jpeg"],
+            key=f"ctrl_ho_conf_uploader_{active_pid}",
+            disabled=is_locked,
+        )
+        if _ho_up is not None:
+            _ho_bytes = _ho_up.read()
+            st.session_state[_ho_b64_k]  = _b64_ho.b64encode(_ho_bytes).decode("utf-8")
+            st.session_state[_ho_name_k] = _ho_up.name
+            st.session_state[_ho_type_k] = _ho_up.type or ""
+            _ho_wip_save = memory.load_control_wip(active_pid) or {}
+            _ho_wip_save["handover_conf_b64"]  = st.session_state[_ho_b64_k]
+            _ho_wip_save["handover_conf_name"] = _ho_up.name
+            _ho_wip_save["handover_conf_type"] = st.session_state[_ho_type_k]
+            memory.save_control_wip(active_pid, _ho_wip_save)
+        if st.session_state.get(_ho_name_k):
+            st.caption(f"📎 Tersimpan: {st.session_state[_ho_name_k]}")
+            if str(st.session_state.get(_ho_type_k, "")).startswith("image/"):
+                try:
+                    st.image(_b64_ho.b64decode(st.session_state[_ho_b64_k]),
+                             use_container_width=True)
+                except Exception:
+                    pass
+    else:
+        st.caption("⚡ **Quick Path** — Handover Protocol formal di-skip. Fokus pada monitoring & control chart.")
 
     st.divider()
 

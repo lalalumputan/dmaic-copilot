@@ -154,6 +154,29 @@ def _doc_heading(doc: Document, text: str, level: int = 1):
     pPr.append(pBdr)
 
 
+class _SecNum:
+    """Dynamic section numberer — only increments when a section is actually emitted,
+    sehingga section yang disembunyikan (kosong) tidak meninggalkan nomor bolong."""
+    def __init__(self):
+        self._n = 0
+    def h(self, title: str) -> str:
+        self._n += 1
+        return f"{self._n}. {title}"
+
+
+def _is_blank(v: Any) -> bool:
+    """True jika konten section dianggap kosong (tidak perlu ditampilkan di report)."""
+    if v is None:
+        return True
+    if isinstance(v, str):
+        return v.strip() in ("", "(not provided)", "_not available_", "-")
+    if isinstance(v, dict):
+        return not any(not _is_blank(x) for x in v.values())
+    if isinstance(v, (list, tuple, set)):
+        return len(v) == 0
+    return False
+
+
 def _doc_phase_header(doc: Document, phase_name: str, is_draft: bool = False):
     p   = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -506,24 +529,29 @@ def _write_define_section(doc: Document, define_state: Dict, pid: str):
     doc.add_paragraph()
 
 
-    # ── 1. Business Case ─────────────────────────────────────────────────
-    _doc_heading(doc, "1. Business Case")
-    _doc_body(doc, n["business_case"])
+    _sn = _SecNum()
 
-    # ── 2. Problem Statement ─────────────────────────────────────────────
-    _doc_heading(doc, "2. Problem Statement")
-    _doc_body(doc, n["problem"])
+    # ── Business Case ─────────────────────────────────────────────────
+    if not _is_blank(n["business_case"]):
+        _doc_heading(doc, _sn.h("Business Case"))
+        _doc_body(doc, n["business_case"])
 
-    # ── 3. Goal Statement ────────────────────────────────────────────────
-    _doc_heading(doc, "3. Goal Statement")
-    _doc_body(doc, n["goal"])
+    # ── Problem Statement ─────────────────────────────────────────────
+    if not _is_blank(n["problem"]):
+        _doc_heading(doc, _sn.h("Problem Statement"))
+        _doc_body(doc, n["problem"])
 
-    # ── 4. Project Charter ───────────────────────────────────────────────
-    _doc_heading(doc, "4. Project Charter")
+    # ── Goal Statement ────────────────────────────────────────────────
+    if not _is_blank(n["goal"]):
+        _doc_heading(doc, _sn.h("Goal Statement"))
+        _doc_body(doc, n["goal"])
+
+    # ── Project Charter ───────────────────────────────────────────────
     charter = n.get("charter") or {}
     if charter and charter.get("available") is not False and any([
         charter.get("project_leader"), charter.get("champion"), charter.get("process_owner"),
     ]):
+        _doc_heading(doc, _sn.h("Project Charter"))
         res_rows = []
         for role_label, key in [
             ("Project Leader",   "project_leader"),
@@ -560,36 +588,34 @@ def _write_define_section(doc: Document, define_state: Dict, pid: str):
             ]
             if tl_rows:
                 _doc_styled_table(doc, ["Milestone", "Target Date"], tl_rows)
-    else:
-        _doc_body(doc, "(Project charter template not yet uploaded)")
 
-    # ── 5. Scope ─────────────────────────────────────────────────────────
-    _doc_heading(doc, "5. Scope")
+    # ── Scope ─────────────────────────────────────────────────────────────
     scope_in  = n["scope_in"]
     scope_out = n["scope_out"]
-    p = doc.add_paragraph()
-    p.add_run("In Scope:").bold = True
-    for item in (scope_in if isinstance(scope_in, list) else ([scope_in] if scope_in else [])):
-        _doc_bullet(doc, item)
-    p2 = doc.add_paragraph()
-    p2.add_run("Out of Scope:").bold = True
-    for item in (scope_out if isinstance(scope_out, list) else ([scope_out] if scope_out else [])):
-        _doc_bullet(doc, item)
+    _scope_in_list  = scope_in if isinstance(scope_in, list) else ([scope_in] if scope_in else [])
+    _scope_out_list = scope_out if isinstance(scope_out, list) else ([scope_out] if scope_out else [])
+    if _scope_in_list or _scope_out_list:
+        _doc_heading(doc, _sn.h("Scope"))
+        p = doc.add_paragraph()
+        p.add_run("In Scope:").bold = True
+        for item in _scope_in_list:
+            _doc_bullet(doc, item)
+        p2 = doc.add_paragraph()
+        p2.add_run("Out of Scope:").bold = True
+        for item in _scope_out_list:
+            _doc_bullet(doc, item)
 
-    # ── 6. VOC/VOB → CTQ/CTB ────────────────────────────────────────────
-    _doc_heading(doc, "6. VOC / VOB → CTQ / CTB")
+    # ── VOC/VOB → CTQ/CTB ────────────────────────────────────────────────
     voc_table = inputs.get("voc_table") or []
     if voc_table:
+        _doc_heading(doc, _sn.h("VOC / VOB → CTQ / CTB"))
         rows = [
             [r.get("Type", ""), r.get("Voice", ""), r.get("Key Issue", ""), r.get("CTQ/CTB", "")]
             for r in voc_table
         ]
         _doc_styled_table(doc, ["Type", "Voice", "Key Issue", "CTQ / CTB"], rows)
-    else:
-        _doc_body(doc, None)
 
-    # ── 7. CTQ / CTB List ────────────────────────────────────────────────
-    _doc_heading(doc, "7. CTQ / CTB List")
+    # ── CTQ / CTB List ────────────────────────────────────────────────────
     ctqs = n["ctqs"]
     if isinstance(ctqs, list) and ctqs:
         rows = []
@@ -598,16 +624,15 @@ def _write_define_section(doc: Document, define_state: Dict, pid: str):
                 rows.append([c.get("name", ""), c.get("metric", ""),
                              c.get("unit", ""), c.get("description", "")])
         if rows:
+            _doc_heading(doc, _sn.h("CTQ / CTB List"))
             _doc_styled_table(doc, ["CTQ Name", "Metric", "Unit", "Description"], rows)
-    else:
-        _doc_body(doc, None)
 
-    # ── 8. Y Variable ────────────────────────────────────────────────────
-    _doc_heading(doc, "8. Y Variable")
-    _doc_body(doc, n["y_variable"])
+    # ── Y Variable ────────────────────────────────────────────────────────
+    if not _is_blank(n["y_variable"]):
+        _doc_heading(doc, _sn.h("Y Variable"))
+        _doc_body(doc, n["y_variable"])
 
-    # ── 9. SIPOC ─────────────────────────────────────────────────────────
-    _doc_heading(doc, "9. SIPOC")
+    # ── SIPOC ─────────────────────────────────────────────────────────────
     sipoc = n["sipoc"] or {}
     if sipoc:
         keys = ["Suppliers", "Inputs", "Process", "Outputs", "Customers"]
@@ -617,17 +642,16 @@ def _write_define_section(doc: Document, define_state: Dict, pid: str):
             sipoc_lists.append(val if isinstance(val, list) else ([str(val)] if val else []))
         max_len = max([len(x) for x in sipoc_lists], default=0)
         if max_len > 0:
+            _doc_heading(doc, _sn.h("SIPOC"))
             rows = [[lst[i] if i < len(lst) else "" for lst in sipoc_lists]
                     for i in range(max_len)]
             _doc_styled_table(doc, keys, rows)
-    else:
-        _doc_body(doc, None)
 
-    # ── 10. Benefit Estimate ─────────────────────────────────────────────
-    _doc_heading(doc, "10. Benefit Estimate")
+    # ── Benefit Estimate ─────────────────────────────────────────────────
     benefit          = n.get("benefit") or {}
     benefit_from_upload = n.get("benefit_from_upload", False)
-    if benefit and isinstance(benefit, dict):
+    if benefit and isinstance(benefit, dict) and not _is_blank(benefit):
+        _doc_heading(doc, _sn.h("Benefit Estimate"))
         if benefit.get("benefit_potentials"):
             _doc_kv(doc, "Benefit Potentials", benefit["benefit_potentials"])
         if benefit.get("calculation_method"):
@@ -657,8 +681,6 @@ def _write_define_section(doc: Document, define_state: Dict, pid: str):
                 doc.add_paragraph().add_run("Soft Benefits:").bold = True
                 for s in soft:
                     _doc_bullet(doc, s)
-    else:
-        _doc_body(doc, "(Benefit estimate template not yet uploaded)")
 
 
 def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
@@ -677,19 +699,20 @@ def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
     doc.add_paragraph()
 
 
-    # ── 1. Output Measurement ─────────────────────────────────────────────
-    _doc_heading(doc, "1. Output Measurement")
+    _sn = _SecNum()
+
+    # ── Output Measurement ─────────────────────────────────────────────────
     y_conf = outputs.get("y_variable_confirmed") or inputs.get("y_variable") or "-"
-    _doc_kv(doc, "Y Variable Confirmed", y_conf)
-
     primary = outputs.get("primary_measurement_output") or {}
-    if primary and primary.get("metric_name"):
-        _doc_kv(doc, "Primary Measurement", primary.get("metric_name"))
-        _doc_kv(doc, "Basis",               primary.get("basis"))
-        _doc_kv(doc, "Rationale",           primary.get("rationale"))
+    if (not _is_blank(y_conf)) or (primary and primary.get("metric_name")):
+        _doc_heading(doc, _sn.h("Output Measurement"))
+        _doc_kv(doc, "Y Variable Confirmed", y_conf)
+        if primary and primary.get("metric_name"):
+            _doc_kv(doc, "Primary Measurement", primary.get("metric_name"))
+            _doc_kv(doc, "Basis",               primary.get("basis"))
+            _doc_kv(doc, "Rationale",           primary.get("rationale"))
 
-    # ── 2. Operational Definition ─────────────────────────────────────────
-    _doc_heading(doc, "2. Operational Definition")
+    # ── Operational Definition ─────────────────────────────────────────────
     op_defs = outputs.get("operational_definitions") or []
     if op_defs:
         rows = []
@@ -704,17 +727,16 @@ def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
                     od.get("decision_criteria", ""),
                 ])
         if rows:
+            _doc_heading(doc, _sn.h("Operational Definition"))
             _doc_styled_table(doc,
                               ["Metric Name", "What Measured", "Formula/Method",
                                "Unit", "Frequency", "Decision Criteria"],
                               rows)
-    else:
-        _doc_body(doc, None)
 
-    # ── 3. Measurement System Analysis (MSA) ─────────────────────────────
-    _doc_heading(doc, "3. Measurement System Analysis (MSA)")
+    # ── Measurement System Analysis (MSA) ─────────────────────────────────
     msa = outputs.get("measurement_system_analysis") or {}
-    if msa and isinstance(msa, dict):
+    if msa and isinstance(msa, dict) and not _is_blank(msa):
+        _doc_heading(doc, _sn.h("Measurement System Analysis (MSA)"))
         if msa.get("approach"):
             _doc_kv(doc, "Measurement Approach", msa["approach"])
         for field, label in [
@@ -732,11 +754,8 @@ def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
             _doc_kv(doc, "Data Quality Rating", msa["data_quality_rating"].upper())
         if msa.get("data_quality_rationale"):
             _doc_kv(doc, "Rationale", msa["data_quality_rationale"])
-    else:
-        _doc_body(doc, "(MSA documentation not yet provided)")
 
-    # ── 4. Data Collection Plan ───────────────────────────────────────────
-    _doc_heading(doc, "4. Data Collection Plan")
+    # ── Data Collection Plan ───────────────────────────────────────────────
     mplan = outputs.get("measurement_plan") or outputs.get("data_availability_map") or []
     if mplan and isinstance(mplan, list):
         rows = []
@@ -747,17 +766,16 @@ def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
                     m.get("frequency", ""), m.get("owner", ""),
                 ])
         if rows:
+            _doc_heading(doc, _sn.h("Data Collection Plan"))
             _doc_styled_table(doc, ["What", "Where", "How", "Frequency", "Owner"], rows)
-    else:
-        _doc_body(doc, None)
 
-    # ── 5. Process Performance ────────────────────────────────────────────
-    _doc_heading(doc, "5. Process Performance")
+    # ── Process Performance ────────────────────────────────────────────────
     perf_raw = outputs.get("process_performance_summary")
     perf     = perf_raw if isinstance(perf_raw, dict) else {}
     summary  = perf.get("summary") or {}
 
     if summary and isinstance(summary, dict) and summary.get("available"):
+        _doc_heading(doc, _sn.h("Process Performance"))
         target_info = perf.get("target_info") or {}
         if target_info.get("value") is not None:
             t_val = target_info["value"]
@@ -806,13 +824,11 @@ def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
             p_c = doc.add_paragraph()
             p_c.add_run("Performance Commentary: ").bold = True
             p_c.add_run(commentary)
-    else:
-        _doc_body(doc, "(Dataset not yet uploaded — baseline performance not available)")
 
-    # ── 6. Data Quality Results ───────────────────────────────────────────
-    _doc_heading(doc, "6. Data Quality Results")
+    # ── Data Quality Results ───────────────────────────────────────────────
     dq = outputs.get("data_quality_results") or {}
     if dq.get("available"):
+        _doc_heading(doc, _sn.h("Data Quality Results"))
         # Completeness
         comp = (dq.get("completeness") or {}).get("columns_with_missing_over_5pct") or []
         if comp:
@@ -850,13 +866,11 @@ def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
                     f"Rows: {prof.get('rows')} | Columns: {prof.get('cols')} "
                     f"| Duplicates: {prof.get('duplicate_rows', 0)} "
                     f"| Missing cells: {prof.get('missing_cells', 0)}")
-    else:
-        _doc_body(doc, "(Dataset belum diupload — data quality tidak tersedia)")
 
-    # ── 7. Problem Validation ─────────────────────────────────────────────
-    _doc_heading(doc, "7. Problem Validation")
+    # ── Problem Validation ─────────────────────────────────────────────────
     conclusion = outputs.get("measure_conclusion") or {}
     if conclusion:
+        _doc_heading(doc, _sn.h("Problem Validation"))
         verdict = conclusion.get("problem_validated", "unknown")
         verdict_map = {
             "true":    "✅ CONFIRMED — Data confirms the problem stated in Define",
@@ -871,8 +885,6 @@ def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
             doc.add_paragraph().add_run("Basis:").bold = True
             for b in basis:
                 _doc_bullet(doc, b)
-    else:
-        _doc_body(doc, "(Problem validation not yet available)")
 
 
 def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
@@ -892,118 +904,104 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
     doc.add_paragraph()
 
 
-    # ── 1. Process Map ────────────────────────────────────────────────────
-    _doc_heading(doc, "1. Process Map")
+    _sn = _SecNum()
+
+    # ── Process Map ────────────────────────────────────────────────────────
     pm_steps = outputs.get("process_map_steps") or []
-    if pm_steps:
-        pm_rows = []
-        for s in pm_steps:
-            if isinstance(s, dict) and str(s.get("step_name", "")).strip():
-                pm_rows.append([
-                    str(s.get("step_no", "")), s.get("step_name", ""),
-                    s.get("responsible", ""), s.get("input", ""),
-                    s.get("output", ""), s.get("notes", ""),
-                ])
-        if pm_rows:
-            _doc_styled_table(doc,
-                              ["Step #", "Step Name", "Responsible",
-                               "Input", "Output", "Notes / Failure Mode"],
-                              pm_rows)
+    pm_rows = []
+    for s in pm_steps:
+        if isinstance(s, dict) and str(s.get("step_name", "")).strip():
+            pm_rows.append([
+                str(s.get("step_no", "")), s.get("step_name", ""),
+                s.get("responsible", ""), s.get("input", ""),
+                s.get("output", ""), s.get("notes", ""),
+            ])
+    if pm_rows:
+        _doc_heading(doc, _sn.h("Process Map"))
+        _doc_styled_table(doc,
+                          ["Step #", "Step Name", "Responsible",
+                           "Input", "Output", "Notes / Failure Mode"],
+                          pm_rows)
         pm_check = outputs.get("process_map_check") or {}
         if pm_check.get("feedback"):
             _doc_kv(doc, "Agent Check", pm_check["feedback"])
         if pm_check.get("problem_area_steps"):
             _doc_kv(doc, "Problem Area Steps", ", ".join(pm_check["problem_area_steps"]))
-    else:
-        _doc_body(doc, None)
 
-    # ── 2. Fishbone Diagram (6M) ──────────────────────────────────────────
-    _doc_heading(doc, "2. Fishbone Diagram (6M)")
+    # ── Fishbone Diagram (6M) ──────────────────────────────────────────────
     fishbone = outputs.get("fishbone_inputs") or {}
-    if fishbone:
-        fb_rows = []
-        for cat, causes in fishbone.items():
-            if isinstance(causes, list):
-                for c in causes:
-                    fb_rows.append([cat, str(c)])
-            elif causes:
-                fb_rows.append([cat, str(causes)])
-        if fb_rows:
-            _doc_styled_table(doc, ["Category (6M)", "Potential Cause"], fb_rows)
+    fb_rows = []
+    for cat, causes in fishbone.items():
+        if isinstance(causes, list):
+            for c in causes:
+                fb_rows.append([cat, str(c)])
+        elif causes:
+            fb_rows.append([cat, str(causes)])
+    if fb_rows:
+        _doc_heading(doc, _sn.h("Fishbone Diagram (6M)"))
+        _doc_styled_table(doc, ["Category (6M)", "Potential Cause"], fb_rows)
         fb_check = outputs.get("fishbone_check") or {}
         if fb_check.get("feedback"):
             _doc_kv(doc, "Agent Check", fb_check["feedback"])
-    else:
-        _doc_body(doc, None)
 
-    # ── 3. Potential Causes (Xn) ──────────────────────────────────────────
-    _doc_heading(doc, "3. Potential Causes (Xn List)")
+    # ── Potential Causes (Xn) ──────────────────────────────────────────────
     pot_causes = outputs.get("potential_causes") or []
-    if pot_causes:
-        rows = []
-        for c in pot_causes:
-            if isinstance(c, dict):
-                rows.append([c.get("xn", ""), c.get("cause", ""),
-                             c.get("source", ""), c.get("direct_effect_on_y", "")])
-        if rows:
-            _doc_styled_table(doc, ["Xn", "Cause", "Source", "Direct Effect on Y"], rows)
-    else:
-        _doc_body(doc, None)
+    pc_rows = []
+    for c in pot_causes:
+        if isinstance(c, dict):
+            pc_rows.append([c.get("xn", ""), c.get("cause", ""),
+                            c.get("source", ""), c.get("direct_effect_on_y", "")])
+    if pc_rows:
+        _doc_heading(doc, _sn.h("Potential Causes (Xn List)"))
+        _doc_styled_table(doc, ["Xn", "Cause", "Source", "Direct Effect on Y"], pc_rows)
 
-    # ── 4. Verification Plan ──────────────────────────────────────────────
-    _doc_heading(doc, "4. Verification Plan")
+    # ── Verification Plan ──────────────────────────────────────────────────
     vplan = outputs.get("verification_plan") or []
-    if vplan:
-        vp_rows = []
-        for v in vplan:
-            if isinstance(v, dict):
-                vp_rows.append([
-                    v.get("xn", ""), v.get("root_cause", ""),
-                    v.get("input_measurement_x", ""), v.get("relation_to_y", ""),
-                    v.get("verification_method", ""), v.get("data_needed", ""),
-                ])
-        if vp_rows:
-            _doc_styled_table(doc,
-                              ["Xn", "Root Cause", "Input Measurement X",
-                               "Relation to Y", "Verification Method", "Data Needed"],
-                              vp_rows)
-    else:
-        _doc_body(doc, None)
+    vp_rows = []
+    for v in vplan:
+        if isinstance(v, dict):
+            vp_rows.append([
+                v.get("xn", ""), v.get("root_cause", ""),
+                v.get("input_measurement_x", ""), v.get("relation_to_y", ""),
+                v.get("verification_method", ""), v.get("data_needed", ""),
+            ])
+    if vp_rows:
+        _doc_heading(doc, _sn.h("Verification Plan"))
+        _doc_styled_table(doc,
+                          ["Xn", "Root Cause", "Input Measurement X",
+                           "Relation to Y", "Verification Method", "Data Needed"],
+                          vp_rows)
 
-    # ── 5. Verification Results (User-filled field data) ──────────────────
-    _doc_heading(doc, "5. Verification Results")
-    p_vr_note = doc.add_paragraph()
-    p_vr_note.add_run(
-        "Diisi oleh Project Leader setelah melakukan verifikasi lapangan/data."
-    ).italic = True
-    p_vr_note.runs[0].font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
-
+    # ── Verification Results (User-filled field data) ──────────────────────
     vresults = outputs.get("verification_results") or []
-    if vresults:
-        vr_rows = []
-        for r in vresults:
-            if isinstance(r, dict):
-                is_rc_vr = r.get("is_root_cause", False)
-                vr_rows.append([
-                    r.get("xn", ""),
-                    r.get("root_cause", ""),
-                    r.get("verification_result", ""),
-                    str(r.get("impact_pct_of_target", "") or ""),
-                    r.get("impact_level", ""),
-                    "✅ Yes" if is_rc_vr else "❌ No",
-                ])
-        if vr_rows:
-            _doc_styled_table(doc,
-                              ["Xn", "Root Cause", "Verification Result",
-                               "Impact % of Target Gap", "Impact Level", "Root Cause?"],
-                              vr_rows, header_color="0f5132")
-    else:
-        _doc_body(doc, "(Verification results belum diisi — isi setelah verifikasi lapangan)")
+    vr_rows = []
+    for r in vresults:
+        if isinstance(r, dict):
+            is_rc_vr = r.get("is_root_cause", False)
+            vr_rows.append([
+                r.get("xn", ""),
+                r.get("root_cause", ""),
+                r.get("verification_result", ""),
+                str(r.get("impact_pct_of_target", "") or ""),
+                r.get("impact_level", ""),
+                "✅ Yes" if is_rc_vr else "❌ No",
+            ])
+    if vr_rows:
+        _doc_heading(doc, _sn.h("Verification Results"))
+        p_vr_note = doc.add_paragraph()
+        p_vr_note.add_run(
+            "Diisi oleh Project Leader setelah melakukan verifikasi lapangan/data."
+        ).italic = True
+        p_vr_note.runs[0].font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
+        _doc_styled_table(doc,
+                          ["Xn", "Root Cause", "Verification Result",
+                           "Impact % of Target Gap", "Impact Level", "Root Cause?"],
+                          vr_rows, header_color="0f5132")
 
-    # ── 6. Detailed Verification Analysis (Agent-generated) ───────────────
-    _doc_heading(doc, "6. Detailed Verification Analysis")
+    # ── Detailed Verification Analysis (Agent-generated) ───────────────────
     analyses = outputs.get("verification_analysis") or []
     if analyses:
+        _doc_heading(doc, _sn.h("Detailed Verification Analysis"))
         for a in analyses:
             if not isinstance(a, dict):
                 continue
@@ -1033,27 +1031,22 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
             p_v = doc.add_paragraph()
             p_v.add_run(f"Verdict: {verdict_text}").bold = True
             doc.add_paragraph()
-    else:
-        _doc_body(doc, None)
 
-    # ── 7. Root Cause Summary Table ───────────────────────────────────────
-    _doc_heading(doc, "7. Root Cause Summary Table")
+    # ── Root Cause Summary Table ───────────────────────────────────────────
     rca_table = outputs.get("root_cause_summary_table") or []
-    if rca_table:
-        rca_rows = []
-        for r in rca_table:
-            if isinstance(r, dict):
-                rca_rows.append([
-                    r.get("xn", ""), r.get("root_cause", ""),
-                    r.get("is_root_cause", ""), r.get("impact", ""),
-                    r.get("comment", ""),
-                ])
-        if rca_rows:
-            _doc_styled_table(doc,
-                              ["Xn", "Root Cause", "Confirmed?", "Impact", "Comment on KPI"],
-                              rca_rows)
-    else:
-        _doc_body(doc, None)
+    rca_rows = []
+    for r in rca_table:
+        if isinstance(r, dict):
+            rca_rows.append([
+                r.get("xn", ""), r.get("root_cause", ""),
+                r.get("is_root_cause", ""), r.get("impact", ""),
+                r.get("comment", ""),
+            ])
+    if rca_rows:
+        _doc_heading(doc, _sn.h("Root Cause Summary Table"))
+        _doc_styled_table(doc,
+                          ["Xn", "Root Cause", "Confirmed?", "Impact", "Comment on KPI"],
+                          rca_rows)
 
 
 def _write_improve_section(doc: Document, improve_state: Dict, pid: str):
@@ -1073,85 +1066,79 @@ def _write_improve_section(doc: Document, improve_state: Dict, pid: str):
     doc.add_paragraph()
 
 
-    # ── 1. Confirmed Root Causes (context) ───────────────────────────────
+    _sn = _SecNum()
+
+    # ── Confirmed Root Causes (context) ────────────────────────────────────
     confirmed_rc = upstream.get("confirmed_root_causes") or []
     if confirmed_rc:
-        _doc_heading(doc, "1. Confirmed Root Causes (from Analyze)")
+        _doc_heading(doc, _sn.h("Confirmed Root Causes (from Analyze)"))
         for r in confirmed_rc:
             if isinstance(r, dict):
                 _doc_bullet(doc, f"{r.get('xn', '')} — {r.get('root_cause', '')} "
                                  f"(Impact: {r.get('impact', '')})")
         doc.add_paragraph()
 
-    # ── 2. Must Criteria ──────────────────────────────────────────────────
-    _doc_heading(doc, "2. Solution Must Criteria")
+    # ── Must Criteria ──────────────────────────────────────────────────────
     must = outputs.get("must_criteria") or []
-    if must:
-        mc_rows = []
-        for m in must:
-            if isinstance(m, dict):
-                mc_rows.append([m.get("criterion", ""), m.get("category", ""),
-                                m.get("rationale", "")])
-        if mc_rows:
-            _doc_styled_table(doc, ["Criterion", "Category", "Rationale"], mc_rows)
-    else:
-        _doc_body(doc, None)
+    mc_rows = []
+    for m in must:
+        if isinstance(m, dict):
+            mc_rows.append([m.get("criterion", ""), m.get("category", ""),
+                            m.get("rationale", "")])
+    if mc_rows:
+        _doc_heading(doc, _sn.h("Solution Must Criteria"))
+        _doc_styled_table(doc, ["Criterion", "Category", "Rationale"], mc_rows)
 
-    # ── 3. Potential Solutions ────────────────────────────────────────────
-    _doc_heading(doc, "3. Potential Solutions")
+    # ── Potential Solutions ────────────────────────────────────────────────
     solutions = outputs.get("potential_solutions") or []
-    if solutions:
-        sol_rows = []
-        for s in solutions:
-            if isinstance(s, dict):
-                all_met = "✅" if s.get("all_must_criteria_met") else "❌"
-                sol_rows.append([
-                    s.get("solution_id", ""), s.get("idea", ""),
-                    s.get("addresses_root_cause", ""), all_met,
-                    s.get("type", ""), s.get("investment_needed", ""),
-                    s.get("investment_estimate", ""), s.get("comments", ""),
-                ])
-        if sol_rows:
-            _doc_styled_table(doc,
-                              ["ID", "Idea", "Root Cause", "All MC Met",
-                               "Type", "Investment", "Est. Cost", "Comments"],
-                              sol_rows)
-    else:
-        _doc_body(doc, None)
+    sol_rows = []
+    for s in solutions:
+        if isinstance(s, dict):
+            all_met = "✅" if s.get("all_must_criteria_met") else "❌"
+            sol_rows.append([
+                s.get("solution_id", ""), s.get("idea", ""),
+                s.get("addresses_root_cause", ""), all_met,
+                s.get("type", ""), s.get("investment_needed", ""),
+                s.get("investment_estimate", ""), s.get("comments", ""),
+            ])
+    if sol_rows:
+        _doc_heading(doc, _sn.h("Potential Solutions"))
+        _doc_styled_table(doc,
+                          ["ID", "Idea", "Root Cause", "All MC Met",
+                           "Type", "Investment", "Est. Cost", "Comments"],
+                          sol_rows)
 
-    # ── 4. Selected Solutions ─────────────────────────────────────────────
-    _doc_heading(doc, "4. Selected Solutions")
+    # ── Selected Solutions ─────────────────────────────────────────────────
     selected_list = outputs.get("selected_solutions") or []
-    if selected_list:
-        sel_rows = []
-        for i, s in enumerate(selected_list, 1):
-            if isinstance(s, dict):
-                sel_rows.append([
-                    str(s.get("no", i)),
-                    s.get("solution", ""),
-                    s.get("ctq_ctb_impacted", ""),
-                    s.get("comments", ""),
-                ])
-        if sel_rows:
-            _doc_styled_table(doc,
-                              ["No", "Solution", "CTQ/CTB Impacted", "Comments"],
-                              sel_rows, header_color="0f5132")
-    else:
-        _doc_body(doc, None)
+    sel_rows = []
+    for i, s in enumerate(selected_list, 1):
+        if isinstance(s, dict):
+            sel_rows.append([
+                str(s.get("no", i)),
+                s.get("solution", ""),
+                s.get("ctq_ctb_impacted", ""),
+                s.get("comments", ""),
+            ])
+    if sel_rows:
+        _doc_heading(doc, _sn.h("Selected Solutions"))
+        _doc_styled_table(doc,
+                          ["No", "Solution", "CTQ/CTB Impacted", "Comments"],
+                          sel_rows, header_color="0f5132")
 
-    # ── 5. Future State / Should-Be Process ───────────────────────────────
-    _doc_heading(doc, "5. Future State / Should-Be Process")
+    # ── Future State / Should-Be Process ───────────────────────────────────
     _future_text = (
         outputs.get("should_be_process")
         or outputs.get("improved_process_map_summary")
         or ""
     )
-    _doc_body(doc, _future_text)
+    if not _is_blank(_future_text):
+        _doc_heading(doc, _sn.h("Future State / Should-Be Process"))
+        _doc_body(doc, _future_text)
 
-    # ── 6. Pilot Plan ────────────────────────────────────────────────────
-    _doc_heading(doc, "6. Pilot Plan")
+    # ── Pilot Plan ─────────────────────────────────────────────────────────
     pilot = outputs.get("pilot_plan") or {}
-    if pilot and isinstance(pilot, dict):
+    if pilot and isinstance(pilot, dict) and not _is_blank(pilot):
+        _doc_heading(doc, _sn.h("Pilot Plan"))
         pilot_rows = [
             ["Scope",            pilot.get("scope", "")],
             ["Duration",         pilot.get("duration", "")],
@@ -1165,74 +1152,61 @@ def _write_improve_section(doc: Document, improve_state: Dict, pid: str):
             doc.add_paragraph().add_run("Resources Needed:").bold = True
             for res in resources:
                 _doc_bullet(doc, res)
-    else:
-        _doc_body(doc, None)
 
-    # ── 7. Implementation Plan ────────────────────────────────────────────
-    _doc_heading(doc, "7. Implementation Plan")
+    # ── Implementation Plan ────────────────────────────────────────────────
     impl = outputs.get("implementation_plan") or []
-    if impl:
-        impl_rows = []
-        for i in impl:
-            if isinstance(i, dict):
-                impl_rows.append([
-                    str(i.get("step", "")), i.get("action", ""), i.get("owner", ""),
-                    i.get("timeline", ""), i.get("deliverable", ""), i.get("dependencies", ""),
-                ])
-        if impl_rows:
-            _doc_styled_table(doc,
-                              ["Step", "Action", "Owner", "Timeline", "Deliverable",
-                               "Dependencies"],
-                              impl_rows)
-    else:
-        _doc_body(doc, None)
+    impl_rows = []
+    for i in impl:
+        if isinstance(i, dict):
+            impl_rows.append([
+                str(i.get("step", "")), i.get("action", ""), i.get("owner", ""),
+                i.get("timeline", ""), i.get("deliverable", ""), i.get("dependencies", ""),
+            ])
+    if impl_rows:
+        _doc_heading(doc, _sn.h("Implementation Plan"))
+        _doc_styled_table(doc,
+                          ["Step", "Action", "Owner", "Timeline", "Deliverable",
+                           "Dependencies"],
+                          impl_rows)
 
-    # ── 8. Communication Plan ─────────────────────────────────────────────
-    _doc_heading(doc, "8. Communication Plan")
+    # ── Communication Plan ─────────────────────────────────────────────────
     comm = outputs.get("communication_plan") or []
-    if comm:
-        comm_rows = []
-        for c in comm:
-            if isinstance(c, dict):
-                comm_rows.append([
-                    c.get("who_informed", ""), c.get("about_what", ""),
-                    c.get("who_informs", ""), c.get("channel", ""),
-                    c.get("due_date", ""), c.get("status", "pending"),
-                ])
-        if comm_rows:
-            _doc_styled_table(doc,
-                              ["Who Informed", "About What", "Who Informs",
-                               "Channel", "Due Date", "Status"],
-                              comm_rows)
-    else:
-        _doc_body(doc, None)
+    comm_rows = []
+    for c in comm:
+        if isinstance(c, dict):
+            comm_rows.append([
+                c.get("who_informed", ""), c.get("about_what", ""),
+                c.get("who_informs", ""), c.get("channel", ""),
+                c.get("due_date", ""), c.get("status", "pending"),
+            ])
+    if comm_rows:
+        _doc_heading(doc, _sn.h("Communication Plan"))
+        _doc_styled_table(doc,
+                          ["Who Informed", "About What", "Who Informs",
+                           "Channel", "Due Date", "Status"],
+                          comm_rows)
 
-    # ── 9. Implementation Status ──────────────────────────────────────────
-    _doc_heading(doc, "9. Implementation Status")
+    # ── Implementation Status ──────────────────────────────────────────────
     impl_status = outputs.get("implementation_status") or []
-    if impl_status:
-        status_rows = []
-        for s in impl_status:
-            if isinstance(s, dict):
-                status_rows.append([
-                    s.get("solution", ""),
-                    s.get("status", "not started"),
-                    s.get("notes", ""),
-                ])
-        if status_rows:
-            _doc_styled_table(doc, ["Solution", "Status", "Notes"], status_rows,
-                              header_color="374151")
-    else:
-        _doc_body(doc, None)
+    status_rows = []
+    for s in impl_status:
+        if isinstance(s, dict):
+            status_rows.append([
+                s.get("solution", ""),
+                s.get("status", "not started"),
+                s.get("notes", ""),
+            ])
+    if status_rows:
+        _doc_heading(doc, _sn.h("Implementation Status"))
+        _doc_styled_table(doc, ["Solution", "Status", "Notes"], status_rows,
+                          header_color="374151")
 
-    # ── 10. Risks & Assumptions ───────────────────────────────────────────
-    _doc_heading(doc, "10. Risks & Assumptions")
+    # ── Risks & Assumptions ────────────────────────────────────────────────
     risks = outputs.get("risks_and_assumptions") or []
     if risks:
+        _doc_heading(doc, _sn.h("Risks & Assumptions"))
         for r in risks:
             _doc_bullet(doc, r)
-    else:
-        _doc_body(doc, None)
 
 
 def _write_control_section(doc: Document, control_state: Dict, pid: str):
@@ -1252,10 +1226,12 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
     doc.add_paragraph()
 
 
-    # ── 1. Monitoring & Reaction Plan ────────────────────────────────────
-    _doc_heading(doc, "1. Monitoring & Reaction Plan")
+    _sn = _SecNum()
+
+    # ── Monitoring & Reaction Plan ─────────────────────────────────────────
     mon_plan = outputs.get("monitoring_reaction_plan") or []
     if mon_plan:
+        _doc_heading(doc, _sn.h("Monitoring & Reaction Plan"))
         mon_rows = []
         for m in mon_plan:
             if isinstance(m, dict):
@@ -1310,108 +1286,29 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
                 p_cn.add_run("Catatan: ").bold = True
                 p_cn.add_run(chart_note)
             doc.add_paragraph()
-    else:
-        _doc_body(doc, None)
 
-    # ── 2. Control Plan per CTQ ───────────────────────────────────────────
-    _doc_heading(doc, "2. Control Plan per CTQ")
+    # ── Control Plan per CTQ ───────────────────────────────────────────────
     control_plan = outputs.get("control_plan") or []
-    if control_plan:
-        cp_rows = []
-        for c in control_plan:
-            if isinstance(c, dict):
-                cp_rows.append([
-                    c.get("ctq", ""), c.get("metric", ""), c.get("spec_limit", ""),
-                    c.get("control_method", ""), c.get("measurement_frequency", ""),
-                    c.get("sample_size", ""), c.get("owner", ""),
-                    c.get("recording_system", ""),
-                ])
-        if cp_rows:
-            _doc_styled_table(doc,
-                              ["CTQ", "Metric", "Spec Limit", "Control Method",
-                               "Frequency", "Sample Size", "Owner", "System"],
-                              cp_rows)
-    else:
-        _doc_body(doc, None)
+    cp_rows = []
+    for c in control_plan:
+        if isinstance(c, dict):
+            cp_rows.append([
+                c.get("ctq", ""), c.get("metric", ""), c.get("spec_limit", ""),
+                c.get("control_method", ""), c.get("measurement_frequency", ""),
+                c.get("sample_size", ""), c.get("owner", ""),
+                c.get("recording_system", ""),
+            ])
+    if cp_rows:
+        _doc_heading(doc, _sn.h("Control Plan per CTQ"))
+        _doc_styled_table(doc,
+                          ["CTQ", "Metric", "Spec Limit", "Control Method",
+                           "Frequency", "Sample Size", "Owner", "System"],
+                          cp_rows)
 
-    # ── 3. Control Chart ──────────────────────────────────────────────────
-    _doc_heading(doc, "3. Control Chart")
-    cc = outputs.get("control_chart") or {}
-    if cc.get("available"):
-        from app.utils import charts as _charts_doc
-        _ct = cc.get("chart_type", "")
-        cc_rows = [["Chart Type", _charts_doc.CHART_LABELS.get(_ct, _ct or "I-MR")]]
-        for _lbl, _key in (["Center (X̄)", "center"], ["UCL", "ucl"], ["LCL", "lcl"],
-                           ["Std Dev", "std"], ["Mean", "mean"], ["Cp", "cp"],
-                           ["Cpk", "cpk"], ["Median", "median"], ["N", "n"]):
-            _v = cc.get(_key)
-            if _v is not None:
-                cc_rows.append([_lbl, str(_v)])
-        _doc_styled_table(doc, ["Parameter", "Value"], cc_rows, header_color="374151")
-
-        # Embed chart (sesuai chart_type) via mesin chart bersama
-        _png_b64 = _charts_doc.chart_to_png_b64(cc, title="Control Chart")
-        if _png_b64:
-            try:
-                import io as _io_cc, base64 as _b64_cc
-                _png = _io_cc.BytesIO(_b64_cc.b64decode(_png_b64))
-                doc.add_picture(_png, width=Inches(5.5))
-                doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-            except Exception:
-                _doc_body(doc, "(Control chart could not be embedded)")
-
-    # Chart improved performance yang diupload (gambar), bila ada
-    _cc_img = outputs.get("control_chart_image") or {}
-    if _cc_img.get("b64"):
-        try:
-            import io as _io_ci, base64 as _b64_ci
-            doc.add_picture(_io_ci.BytesIO(_b64_ci.b64decode(_cc_img["b64"])), width=Inches(5.5))
-            doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-        except Exception:
-            _doc_body(doc, "(Uploaded chart could not be embedded)")
-
-    if not cc.get("available") and not _cc_img.get("b64"):
-        note = cc.get("note", "Control chart akan ditambahkan setelah 12 bulan data post-implementation.")
-        _doc_body(doc, note)
-
-    # ── 4. Benefit Validation ─────────────────────────────────────────────
-    _doc_heading(doc, "4. Benefit Validation")
-    benefit = outputs.get("benefit_validation") or {}
-    if benefit and benefit.get("validated_benefit"):
-        _doc_kv(doc, "Validated Benefit", benefit.get("validated_benefit"))
-        _doc_kv(doc, "Benefit Type",      benefit.get("benefit_type"))
-        _doc_kv(doc, "Validated by",      benefit.get("validated_by"))
-        _doc_kv(doc, "Validation Date",   benefit.get("validation_date"))
-        if benefit.get("approval_sheet_name"):
-            _doc_kv(doc, "Benefit Approval Sheet", benefit.get("approval_sheet_name"))
-        if benefit.get("tracking_sheet_name"):
-            _doc_kv(doc, "Benefit Tracking Sheet", benefit.get("tracking_sheet_name"))
-    else:
-        _doc_body(doc, None)
-
-    # ── 5. Sustain Audit Protocol ─────────────────────────────────────────
-    _doc_heading(doc, "5. Sustain Audit Protocol")
-    sustain = outputs.get("sustain_audit_protocol") or {}
-    if sustain and isinstance(sustain, dict):
-        _doc_kv(doc, "Audit Frequency", sustain.get("audit_frequency"))
-        _doc_kv(doc, "Auditor",         sustain.get("auditor"))
-        _doc_kv(doc, "30-Day Check",    sustain.get("30_day_check"))
-        _doc_kv(doc, "60-Day Check",    sustain.get("60_day_check"))
-        _doc_kv(doc, "90-Day Check",    sustain.get("90_day_check"))
-        checklist = sustain.get("checklist_items") or []
-        if checklist:
-            doc.add_paragraph().add_run("Audit Checklist:").bold = True
-            for item in checklist:
-                _doc_bullet(doc, item)
-        if sustain.get("escalation_if_slipping"):
-            _doc_kv(doc, "Escalation if Slipping", sustain["escalation_if_slipping"])
-    else:
-        _doc_body(doc, None)
-
-    # ── 6. Handover Protocol ──────────────────────────────────────────────
-    _doc_heading(doc, "6. Handover Protocol")
+    # ── Handover Protocol ──────────────────────────────────────────────────
     handover = outputs.get("handover_protocol") or {}
-    if handover:
+    if handover and not _is_blank(handover):
+        _doc_heading(doc, _sn.h("Handover Protocol"))
         status_rows = [
             ["Should-be process set up",
              "✅" if handover.get("should_be_process_set_up") else "⏳ Pending"],
@@ -1477,30 +1374,90 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
         r_hc.bold = True
         r_hc.font.color.rgb = (RGBColor(0x0F, 0x51, 0x32) if handover_complete
                                 else RGBColor(0x7C, 0x47, 0x00))
-    else:
-        _doc_body(doc, None)
 
-    # ── 7. Lessons Learned ────────────────────────────────────────────────
-    _doc_heading(doc, "7. Lessons Learned")
+    # ── Benefit Validation ─────────────────────────────────────────────────
+    benefit = outputs.get("benefit_validation") or {}
+    if benefit and benefit.get("validated_benefit"):
+        _doc_heading(doc, _sn.h("Benefit Validation"))
+        _doc_kv(doc, "Validated Benefit", benefit.get("validated_benefit"))
+        _doc_kv(doc, "Benefit Type",      benefit.get("benefit_type"))
+        _doc_kv(doc, "Validated by",      benefit.get("validated_by"))
+        _doc_kv(doc, "Validation Date",   benefit.get("validation_date"))
+        if benefit.get("approval_sheet_name"):
+            _doc_kv(doc, "Benefit Approval Sheet", benefit.get("approval_sheet_name"))
+        if benefit.get("tracking_sheet_name"):
+            _doc_kv(doc, "Benefit Tracking Sheet", benefit.get("tracking_sheet_name"))
+
+    # ── Control Chart ──────────────────────────────────────────────────────
+    cc = outputs.get("control_chart") or {}
+    _cc_img = outputs.get("control_chart_image") or {}
+    if cc.get("available") or _cc_img.get("b64"):
+        _doc_heading(doc, _sn.h("Control Chart"))
+    if cc.get("available"):
+        from app.utils import charts as _charts_doc
+        _ct = cc.get("chart_type", "")
+        cc_rows = [["Chart Type", _charts_doc.CHART_LABELS.get(_ct, _ct or "I-MR")]]
+        for _lbl, _key in (["Center (X̄)", "center"], ["UCL", "ucl"], ["LCL", "lcl"],
+                           ["Std Dev", "std"], ["Mean", "mean"], ["Cp", "cp"],
+                           ["Cpk", "cpk"], ["Median", "median"], ["N", "n"]):
+            _v = cc.get(_key)
+            if _v is not None:
+                cc_rows.append([_lbl, str(_v)])
+        _doc_styled_table(doc, ["Parameter", "Value"], cc_rows, header_color="374151")
+
+        # Embed chart (sesuai chart_type) via mesin chart bersama
+        _png_b64 = _charts_doc.chart_to_png_b64(cc, title="Control Chart")
+        if _png_b64:
+            try:
+                import io as _io_cc, base64 as _b64_cc
+                _png = _io_cc.BytesIO(_b64_cc.b64decode(_png_b64))
+                doc.add_picture(_png, width=Inches(5.5))
+                doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+            except Exception:
+                _doc_body(doc, "(Control chart could not be embedded)")
+
+    # Chart improved performance yang diupload (gambar), bila ada
+    if _cc_img.get("b64"):
+        try:
+            import io as _io_ci, base64 as _b64_ci
+            doc.add_picture(_io_ci.BytesIO(_b64_ci.b64decode(_cc_img["b64"])), width=Inches(5.5))
+            doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        except Exception:
+            _doc_body(doc, "(Uploaded chart could not be embedded)")
+
+    # ── Sustain Audit Protocol ─────────────────────────────────────────────
+    sustain = outputs.get("sustain_audit_protocol") or {}
+    if sustain and isinstance(sustain, dict) and not _is_blank(sustain):
+        _doc_heading(doc, _sn.h("Sustain Audit Protocol"))
+        _doc_kv(doc, "Audit Frequency", sustain.get("audit_frequency"))
+        _doc_kv(doc, "Auditor",         sustain.get("auditor"))
+        _doc_kv(doc, "30-Day Check",    sustain.get("30_day_check"))
+        _doc_kv(doc, "60-Day Check",    sustain.get("60_day_check"))
+        _doc_kv(doc, "90-Day Check",    sustain.get("90_day_check"))
+        checklist = sustain.get("checklist_items") or []
+        if checklist:
+            doc.add_paragraph().add_run("Audit Checklist:").bold = True
+            for item in checklist:
+                _doc_bullet(doc, item)
+        if sustain.get("escalation_if_slipping"):
+            _doc_kv(doc, "Escalation if Slipping", sustain["escalation_if_slipping"])
+
+    # ── Lessons Learned ────────────────────────────────────────────────────
     lessons = outputs.get("lessons_learned") or []
     if lessons:
+        _doc_heading(doc, _sn.h("Lessons Learned"))
         for l in lessons:
             _doc_bullet(doc, l)
-    else:
-        _doc_body(doc, None)
 
-    # ── 8. Project Closure Checklist ──────────────────────────────────────
-    _doc_heading(doc, "8. Project Closure Checklist")
+    # ── Project Closure Checklist ──────────────────────────────────────────
     closure = outputs.get("project_closure_checklist") or []
-    if closure:
-        cl_rows = []
-        for c in closure:
-            if isinstance(c, dict):
-                cl_rows.append([c.get("item", ""), c.get("status", "pending")])
-        if cl_rows:
-            _doc_styled_table(doc, ["Item", "Status"], cl_rows, header_color="374151")
-    else:
-        _doc_body(doc, None)
+    cl_rows = []
+    for c in closure:
+        if isinstance(c, dict):
+            cl_rows.append([c.get("item", ""), c.get("status", "pending")])
+    if cl_rows:
+        _doc_heading(doc, _sn.h("Project Closure Checklist"))
+        _doc_styled_table(doc, ["Item", "Status"], cl_rows, header_color="374151")
 
 
 # ══════════════════════════════════════════════════════════════════════════════

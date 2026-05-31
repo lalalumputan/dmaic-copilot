@@ -735,56 +735,67 @@ with tab_input:
 
         st.divider()
 
-        with st.expander("✅ DEFINE Gate Evidence (Stage Gate)", expanded=False):
-            # Status upload charter & benefit (read from session, tidak bisa diubah di sini)
-            _cu = st.session_state.get("define_charter_upload_data") or {}
-            _bu = st.session_state.get("define_benefit_upload_data") or {}
-            col_cu, col_bu = st.columns(2)
-            with col_cu:
-                if _cu.get("available"):
-                    st.success("✅ Charter: uploaded & extracted")
-                elif st.session_state.get(f"define_no_upload_reason_{active_pid}", "").strip():
-                    st.warning("⚠️ Charter: not uploaded (justification provided)")
-                else:
-                    st.error("❌ Charter: not uploaded")
-            with col_bu:
-                if _bu.get("available"):
-                    kpi_ok = any(
-                        str(r.get("baseline","")).strip() and str(r.get("target","")).strip()
-                        for r in (_bu.get("kpi_table") or []) if isinstance(r, dict)
-                    )
-                    if kpi_ok:
-                        st.success("✅ Benefit estimate: uploaded & KPI complete")
+        if _form_path == "standard":
+            with st.expander("✅ DEFINE Gate Evidence (Stage Gate)", expanded=False):
+                # Status upload charter & benefit (read from session, tidak bisa diubah di sini)
+                _cu = st.session_state.get("define_charter_upload_data") or {}
+                _bu = st.session_state.get("define_benefit_upload_data") or {}
+                col_cu, col_bu = st.columns(2)
+                with col_cu:
+                    if _cu.get("available"):
+                        st.success("✅ Charter: uploaded & extracted")
+                    elif st.session_state.get(f"define_no_upload_reason_{active_pid}", "").strip():
+                        st.warning("⚠️ Charter: not uploaded (justification provided)")
                     else:
-                        st.warning("⚠️ Benefit estimate: uploaded but KPI incomplete")
-                elif st.session_state.get(f"define_no_upload_reason_{active_pid}", "").strip():
-                    st.warning("⚠️ Benefit: not uploaded (justification provided)")
-                else:
-                    st.error("❌ Benefit estimate: not uploaded")
+                        st.error("❌ Charter: not uploaded")
+                with col_bu:
+                    if _bu.get("available"):
+                        kpi_ok = any(
+                            str(r.get("baseline","")).strip() and str(r.get("target","")).strip()
+                            for r in (_bu.get("kpi_table") or []) if isinstance(r, dict)
+                        )
+                        if kpi_ok:
+                            st.success("✅ Benefit estimate: uploaded & KPI complete")
+                        else:
+                            st.warning("⚠️ Benefit estimate: uploaded but KPI incomplete")
+                    elif st.session_state.get(f"define_no_upload_reason_{active_pid}", "").strip():
+                        st.warning("⚠️ Benefit: not uploaded (justification provided)")
+                    else:
+                        st.error("❌ Benefit estimate: not uploaded")
 
-            st.divider()
+                st.divider()
 
-            colg1, colg2 = st.columns(2)
-            with colg1:
-                documentation_agreed = st.checkbox(
-                    "Dokumentasi berikut telah dipresentasikan dan disetujui",
-                    key="define_documentation_agreed",
-                )
-                similar_project_exists = st.checkbox(
-                    "Ada proyek sebelumnya dengan topik yang sama",
-                    key="define_similar_project_exists",
-                )
-                similar_project_note = st.text_area(
-                    "Catatan proyek sebelumnya (opsional)",
-                    key="define_similar_project_note",
-                    height=80,
-                )
-            with colg2:
-                parallel_projects_risk = st.text_area(
-                    "Apakah ada proyek lain yang bisa mempengaruhi proyek ini?",
-                    key="define_parallel_projects_risk",
-                    height=100,
-                )
+                colg1, colg2 = st.columns(2)
+                with colg1:
+                    documentation_agreed = st.checkbox(
+                        "Dokumentasi berikut telah dipresentasikan dan disetujui",
+                        key="define_documentation_agreed",
+                    )
+                    similar_project_exists = st.checkbox(
+                        "Ada proyek sebelumnya dengan topik yang sama",
+                        key="define_similar_project_exists",
+                    )
+                    similar_project_note = st.text_area(
+                        "Catatan proyek sebelumnya (opsional)",
+                        key="define_similar_project_note",
+                        height=80,
+                    )
+                with colg2:
+                    parallel_projects_risk = st.text_area(
+                        "Apakah ada proyek lain yang bisa mempengaruhi proyek ini?",
+                        key="define_parallel_projects_risk",
+                        height=100,
+                    )
+        else:
+            # Quick Path: stage gate evidence formal tidak wajib
+            documentation_agreed = False
+            similar_project_exists = False
+            similar_project_note = ""
+            parallel_projects_risk = ""
+            st.caption(
+                "⚡ **Quick Path** — Stage Gate Evidence formal (charter, dokumentasi, "
+                "proyek paralel) tidak wajib. Fokus pada Problem & Goal statement di atas."
+            )
 
         st.divider()
 
@@ -914,26 +925,24 @@ if submitted:
     )
     st.session_state["define_draft"] = result
 
-# --- Revision Guidance (agent coaching) ---
-_current_result = st.session_state.get("define_draft") or st.session_state.get("define_final")
-latest = (_current_result or {}).get("define_state") if isinstance(_current_result, dict) else None
+# --- Revision Guidance (agent coaching) — ditempatkan di tab Input, bukan global ---
+with tab_input:
+    _current_result = st.session_state.get("define_draft") or st.session_state.get("define_final")
+    latest = (_current_result or {}).get("define_state") if isinstance(_current_result, dict) else None
 
-if isinstance(latest, dict):
-    coaching = (latest.get("coaching_md") or latest.get("insight_md") or "").strip()
-    gate = latest.get("gate_result") or {}
-    status = gate.get("status", "-")
+    if isinstance(latest, dict):
+        coaching = (latest.get("coaching_md") or latest.get("insight_md") or "").strip()
+        gate = latest.get("gate_result") or {}
+        status = gate.get("status", "-")
 
-    st.markdown("### 🧭 Agent Coaching")
-    st.markdown(f"**Gate Status:** `{status}`")
+        st.markdown("### 🧭 Agent Coaching")
+        st.markdown(f"**Gate Status:** `{status}`")
 
-    if coaching:
-        st.markdown(coaching)
-    else:
-        st.info("Belum ada coaching dari agent. Jalankan Generate / Update Draft.")
-    st.divider() 
-
-    # ---------- Finalize (kept near form) ----------
-    
+        if coaching:
+            st.markdown(coaching)
+        else:
+            st.info("Belum ada coaching dari agent. Jalankan Generate / Update Draft.")
+        st.divider()
 
 # ---------- Report View ----------
 

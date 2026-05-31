@@ -532,13 +532,14 @@ def _analyze_gate_evaluate(
 
     # A2 dihapus — 5-Why dilakukan offline, root cause di tabel Xn sudah final
 
+    # A3/A4: verification plan & results — Quick path skip (advisory), Standard wajib
     vplan = outputs.get("verification_plan") or []
-    if pot_causes and not vplan:
+    if pot_causes and not vplan and enforce_b_rules:
         failed.append("A3_no_verification_plan")
         actions.append("Susun verification plan per potential root cause.")
 
     vresults = outputs.get("verification_results") or []
-    if vplan and not vresults:
+    if vplan and not vresults and enforce_b_rules:
         failed.append("A4_no_verification_results")
         actions.append("Isi verification results setelah melakukan verifikasi lapangan/data.")
 
@@ -617,6 +618,7 @@ def _build_analyze_coaching_llm(
     outputs: dict,
     upstream: dict,
     user_inputs: dict,
+    project_path: str = "standard",
 ) -> str:
     failed      = gate.get("failed_rules") or []
     conditional = gate.get("conditional_rules") or []
@@ -642,6 +644,9 @@ def _build_analyze_coaching_llm(
 
     prompt = f"""
 You are a Lean Six Sigma Master Black Belt coaching a project leader on the Analyze phase.
+
+Execution path: {"Quick Improvement" if project_path == "quick" else "Standard DMAIC"}
+{"Note: This is a Quick Improvement project — coaching must be concise, focus on critical gaps only (A-rules), and avoid requiring full Standard DMAIC rigor for B-rule items (formal verification plan/results, detailed 6M fishbone, etc.)." if project_path == "quick" else ""}
 
 Gate Status: {status}
 Failed rules: {json.dumps(failed)}
@@ -938,7 +943,7 @@ def run_analyze_agent(
     # Coaching — LLM only on FAIL/WEAK_PASS
     gate_status = gate.get("status","")
     if gate_status in ("FAIL","WEAK_PASS"):
-        coaching_md = _build_analyze_coaching_llm(gate, outputs, upstream, user_inputs)
+        coaching_md = _build_analyze_coaching_llm(gate, outputs, upstream, user_inputs, project_path=project_path)
     else:
         coaching_md = "✅ Gate PASS — root causes identified, drilled, and verified."
 
