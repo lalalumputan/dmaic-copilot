@@ -11,6 +11,7 @@ from app.utils import (
     reporting,
     llm_engine,
 )
+from app.agents.classification_agent import get_gate_mode
 
 PHASE_NAME = "define"
 DEFINE_SCHEMA = "DEFINE_SCHEMA_V3_STAGEGATE"
@@ -106,7 +107,6 @@ def _smart_check(text: str) -> Dict[str, Any]:
     ok = measurable and timebound
     return {"ok": ok, "reasons": reasons}
 
-
 # ======================================================
 # Stage Gate — Rule Formal (Tahap 1)
 # ======================================================
@@ -133,6 +133,7 @@ def evaluate_define_gate(
     outputs: Dict[str, Any],
     gate_evidence: Dict[str, Any],
     user_inputs: Dict[str, Any],
+    enforce_b_rules: bool = True,
 ) -> Dict[str, Any]:
     """
     return {
@@ -176,50 +177,120 @@ def evaluate_define_gate(
     "user_inputs_keys": sorted(list(user_inputs.keys())),
     "user_problem_text_present": bool(user_inputs.get("problem_text")),
     "user_goal_text_present": bool(user_inputs.get("goal_text")),
+    "orphan_ctqs": [],
 }
-
 
     if not p_ok:
         failed.append("A1_problem_not_smart_enough")
     if not g_ok:
         failed.append("A1_goal_not_smart_enough")
+    # A1b: Goal harus mirror problem — metrik yang sama, direction berlawanan
+    if p_ok and g_ok and problem and goal:
+        # Extract angka dari problem dan goal
+        p_numbers = set(re.findall(r'\d+(?:[.,]\d+)?', problem))
+        g_numbers = set(re.findall(r'\d+(?:[.,]\d+)?', goal))
 
-    # A1: Charter + SMART framing
+        # Extract key metric words (noun phrases around numbers)
+        p_lower = problem.lower()
+        g_lower = goal.lower()
+
+        # Cek apakah ada angka yang sama atau setidaknya ada overlap metric context
+        # Heuristic: goal harus menyebut setidaknya 1 kata kunci yang ada di problem
+        p_keywords = set(re.findall(r'\b[a-z]{4,}\b', p_lower)) - {
+            "that", "with", "from", "this", "have", "been", "were", "will",
+            "their", "which", "when", "where", "what", "then", "than",
+            "pada", "dari", "dengan", "untuk", "yang", "dalam", "telah",
+            "adalah", "sebesar", "antara", "hingga", "selama",
+        }
+        g_keywords = set(re.findall(r'\b[a-z]{4,}\b', g_lower))
+        keyword_overlap = p_keywords & g_keywords
+
+        # Mirror check: minimal ada 1 shared keyword DAN (shared number OR improvement verb)
+        improvement_verbs = bool(re.search(
+            r'\b(reduce|increase|improve|achieve|reach|decrease|meningkat|menurun|mencapai|'
+            r'memperbaiki|mengurangi|meningkatkan)\b',
+            g_lower
+        ))
+
+        if not keyword_overlap and not improvement_verbs:
+            conditional.append("A1b_goal_not_mirroring_problem")
+        elif not keyword_overlap and improvement_verbs:
+            # Goal punya improvement verb tapi tidak ada keyword overlap
+            conditional.append("A1b_goal_metric_mismatch_with_problem")
+
+    # A1: Charter — hanya enforce untuk Standard path
     charter_confirmed = bool(gate_evidence.get("charter_confirmed"))
-    if not charter_confirmed:
+    if not charter_confirmed and enforce_b_rules:
         failed.append("A1_charter_not_confirmed")
 
-    # A2: SIPOC focus & boundary
+    # A2: SIPOC — hanya enforce untuk Standard path
     sipoc = outputs.get("sipoc") or {}
-    # minimal SIPOC validation: customers + outputs exist, process not empty
     sipoc_customers = sipoc.get("Customers") or sipoc.get("customers") or []
-    sipoc_outputs = sipoc.get("Outputs") or sipoc.get("outputs") or []
-    sipoc_process = sipoc.get("Process") or sipoc.get("process") or []
-    if not (isinstance(sipoc_customers, list) and len(sipoc_customers) > 0):
-        failed.append("A2_sipoc_missing_customers")
-    if not (isinstance(sipoc_outputs, list) and len(sipoc_outputs) > 0):
-        failed.append("A2_sipoc_missing_outputs")
-    if not (isinstance(sipoc_process, list) and len(sipoc_process) > 0):
-        failed.append("A2_sipoc_missing_process")
+    sipoc_outputs   = sipoc.get("Outputs")   or sipoc.get("outputs")   or []
+    sipoc_process   = sipoc.get("Process")   or sipoc.get("process")   or []
+    if enforce_b_rules:
+        if not (isinstance(sipoc_customers, list) and len(sipoc_customers) > 0):
+            failed.append("A2_sipoc_missing_customers")
+        if not (isinstance(sipoc_outputs, list) and len(sipoc_outputs) > 0):
+            failed.append("A2_sipoc_missing_outputs")
+        if not (isinstance(sipoc_process, list) and len(sipoc_process) > 0):
+            failed.append("A2_sipoc_missing_process")
 
-    # A3: VOC/VOB -> CTQ/CTB traceability & measurability intent
+    # A3: CTQ measurability — hanya enforce untuk Standard path
     ctq_list = outputs.get("ctq_list") or outputs.get("ctq") or []
     approved_ctq_count = 0
     if isinstance(ctq_list, list):
         for ctq in ctq_list:
             if isinstance(ctq, dict):
-                name = (ctq.get("name") or "").strip()
+                name   = (ctq.get("name")   or "").strip()
                 metric = (ctq.get("metric") or ctq.get("measure") or "").strip()
-                unit = (ctq.get("unit") or "").strip()
-                # minimum "measurable intent": has name and (metric or unit)
+                unit   = (ctq.get("unit")   or "").strip()
                 if name and (metric or unit):
                     approved_ctq_count += 1
-            elif isinstance(ctq, str):
-                # if it's string only, it's weak (not measurable intent)
-                pass
-
-    if approved_ctq_count < 1:
+    if approved_ctq_count < 1 and enforce_b_rules:
         failed.append("A3_no_measurable_ctq_defined")
+
+    # A4: VOC/VOB → CTQ traceability (standard path only)
+    if enforce_b_rules:
+        voc_table = user_inputs.get("voc_table") or []
+        if isinstance(voc_table, list) and len(voc_table) > 0:
+            # Kumpulkan CTQ references dari VOC table
+            voc_ctq_refs = set()
+            for row in voc_table:
+                if isinstance(row, dict):
+                    ref = (row.get("CTQ/CTB") or row.get("ctq") or "").strip().lower()
+                    if ref:
+                        # Split by comma untuk handle multiple CTQ per row
+                        for part in re.split(r'[,;/]', ref):
+                            part = part.strip()
+                            if part:
+                                voc_ctq_refs.add(part)
+
+            # Cek setiap CTQ apakah ter-trace ke minimal 1 VOC entry
+            orphan_ctqs = []
+            if isinstance(ctq_list, list):
+                for c in ctq_list:
+                    if not isinstance(c, dict):
+                        continue
+                    ctq_name = (c.get("name") or "").strip().lower()
+                    if not ctq_name:
+                        continue
+                    # Fuzzy match: cek apakah ada VOC ref yang mengandung CTQ name atau vice versa
+                    matched = any(
+                        ctq_name in ref or ref in ctq_name or
+                        any(word in ref for word in ctq_name.split() if len(word) > 3)
+                        for ref in voc_ctq_refs
+                    )
+                    if not matched:
+                        orphan_ctqs.append(c.get("name", ctq_name))
+
+            if orphan_ctqs:
+                conditional.append("A4_ctq_not_traceable_to_voc")
+                # Store orphan names for coaching
+                debug_smart["orphan_ctqs"] = orphan_ctqs
+        elif isinstance(ctq_list, list) and len(ctq_list) > 0:
+            # CTQ ada tapi VOC table kosong
+            conditional.append("A4_voc_missing_but_ctq_exists")
 
     # B1: Similar project history
     if gate_evidence.get("similar_project_exists") is True:
@@ -232,15 +303,58 @@ def evaluate_define_gate(
     if parallel_risk:
         conditional.append("B2_parallel_projects_risk_noted")
 
-    # B3: High-level benefit estimation
-    benefit = (gate_evidence.get("benefit_estimate") or "").strip()
-    if not benefit:
-        conditional.append("B3_benefit_estimate_missing")
+# B3: Benefit estimate — standard path requires uploaded KPI table
+    if enforce_b_rules:
+        benefit_upload = user_inputs.get("benefit_data_uploaded") or {}
+        if isinstance(benefit_upload, dict) and benefit_upload.get("available"):
+            kpi_table = benefit_upload.get("kpi_table") or []
+            has_valid_kpi = any(
+                str(r.get("baseline","")).strip() not in ("","nan") and
+                str(r.get("target","")).strip() not in ("","nan")
+                for r in kpi_table if isinstance(r, dict)
+            )
+            if not kpi_table:
+                conditional.append("B3_benefit_kpi_table_missing")
+            elif not has_valid_kpi:
+                conditional.append("B3_benefit_kpi_missing_baseline_or_target")
+        else:
+            justification = (user_inputs.get("benefit_no_upload_reason") or "").strip()
+            if not justification:
+                conditional.append("B3_benefit_not_uploaded_no_justification")
+            else:
+                conditional.append("B3_benefit_not_uploaded_with_justification")
+    else:
+        # Quick path: cukup cek string benefit_estimate
+        benefit = (gate_evidence.get("benefit_estimate") or
+                   str(user_inputs.get("benefit_data_uploaded") or "")).strip()
+        if not benefit:
+            conditional.append("B3_benefit_estimate_missing")    # B3: Benefit estimate — standard path requires uploaded KPI table
 
-    # Decide status
+
+    # B4: Project Charter upload (standard path only)
+    if enforce_b_rules:
+        charter_upload = user_inputs.get("charter_data_uploaded") or {}
+        if isinstance(charter_upload, dict) and charter_upload.get("available"):
+            # Cek completeness
+            required_fields = ["project_leader", "champion", "process_owner"]
+            missing_fields = [f for f in required_fields
+                              if not str(charter_upload.get(f, "")).strip()
+                              or charter_upload.get(f, "").strip() in ("TBD", "nan", "")]
+            if missing_fields:
+                conditional.append(f"B4_charter_incomplete_fields_missing")
+            if not charter_upload.get("timeline"):
+                conditional.append("B4_charter_timeline_missing")
+        else:
+            justification = (user_inputs.get("charter_no_upload_reason") or "").strip()
+            if not justification:
+                conditional.append("B4_charter_not_uploaded_no_justification")
+            else:
+                conditional.append("B4_charter_not_uploaded_with_justification")
+
+    # Decide status — B-rules downgraded to advisory for quick path
     if failed:
         status = "FAILED"
-    elif conditional:
+    elif conditional and enforce_b_rules:
         status = "CONDITIONAL"
     else:
         status = "PASSED"
@@ -352,12 +466,33 @@ def build_define_coaching_summary_md(
         gaps.append("Goal statement is not SMART enough (measurable and/or time-bound evidence is missing).")
         next_actions.append("Add/clarify numeric target + deadline (keep scope/metric consistent with the problem).")
 
-    if "A2_sipoc_missing_customers" in failed or "A2_sipoc_missing_outputs" in failed or "A2_sipoc_missing_process" in failed:
-        gaps.append("SIPOC is incomplete or inconsistent (Customers/Outputs/Process missing).")
-        next_actions.append("Complete SIPOC focusing on ONE core process and correct customers/outputs.")
-    if "A3_no_measurable_ctq_defined" in failed:
-        gaps.append("No measurable CTQ/CTB defined (CTQ needs metric and/or unit).")
-        next_actions.append("Convert VOC/VOB into measurable CTQ (name + metric + unit).")
+    if "A1b_goal_not_mirroring_problem" in conditional:
+        gaps.append("Goal statement tidak mencerminkan problem statement — metrik berbeda atau tidak ada keterkaitan yang jelas.")
+        next_actions.append(
+            "Pastikan goal menggunakan metrik yang sama dengan problem. "
+            "Contoh: jika problem menyebut 'output 38 ton/shift', goal harus menyebut target output per shift juga, bukan metrik lain."
+        )
+    if "A1b_goal_metric_mismatch_with_problem" in conditional:
+        gaps.append("Goal mengandung improvement verb tapi metrik yang disebutkan tidak konsisten dengan problem.")
+        next_actions.append(
+            "Cek kembali: apakah angka/unit di goal sama dengan yang di problem? "
+            "Goal harus menjadi 'bayangan positif' dari problem — masalah yang sama, kondisi target yang berbeda."
+        )
+        
+    if "A4_ctq_not_traceable_to_voc" in conditional:
+        orphans = gate_result.get("debug_smart", {}).get("orphan_ctqs") or []
+        orphan_str = ", ".join([f"'{x}'" for x in orphans]) if orphans else "beberapa CTQ"
+        gaps.append(f"CTQ tidak ter-trace ke VOC/VOB: {orphan_str} tidak ditemukan di kolom CTQ/CTB tabel VOC.")
+        next_actions.append(
+            f"Untuk setiap CTQ yang tidak ter-trace ({orphan_str}): "
+            "tambahkan baris VOC/VOB yang menghasilkan CTQ tersebut, atau hapus CTQ jika tidak ada voice yang mendukungnya."
+        )
+    if "A4_voc_missing_but_ctq_exists" in conditional:
+        gaps.append("CTQ sudah ada tapi tabel VOC/VOB kosong — traceability tidak bisa diverifikasi.")
+        next_actions.append(
+            "Isi tabel VOC/VOB dengan minimal 1 entry per CTQ. "
+            "Kolom CTQ/CTB di tabel VOC harus mencantumkan nama CTQ yang dihasilkan dari voice tersebut."
+        )
 
     # conditional coaching
     if "B1_similar_project_exists_no_review_note" in conditional:
@@ -368,7 +503,30 @@ def build_define_coaching_summary_md(
     if "B3_benefit_estimate_missing" in conditional:
         gaps.append("High-level benefit estimate is missing.")
         next_actions.append("Add benefit estimate (type + order of magnitude).")
-
+    if "B3_benefit_kpi_table_missing" in conditional:
+        gaps.append("Benefit estimate tidak memiliki KPI table.")
+        next_actions.append("Tambah KPI table: kolom KPI, periode, unit, baseline, target, delta%, asumsi.")
+    if "B3_benefit_kpi_missing_baseline_or_target" in conditional:
+        gaps.append("KPI table ada tapi baseline atau target kosong.")
+        next_actions.append("Lengkapi baseline (kondisi saat ini) dan target (kondisi yang ingin dicapai) untuk setiap KPI.")
+    if "B3_benefit_not_uploaded_no_justification" in conditional:
+        gaps.append("Benefit estimate template belum diupload dan tidak ada justifikasi.")
+        next_actions.append("Download template benefit estimate, isi KPI table (baseline + target), lalu upload kembali. Atau berikan justifikasi mengapa tidak bisa diupload sekarang.")
+    if "B3_benefit_kpi_table_missing" in conditional:
+        gaps.append("File benefit estimate diupload tapi KPI table kosong.")
+        next_actions.append("Isi minimal 1 baris KPI table dengan baseline dan target yang terukur.")
+    if "B3_benefit_kpi_missing_baseline_or_target" in conditional:
+        gaps.append("KPI table ada tapi baseline atau target kosong.")
+        next_actions.append("Lengkapi kolom Baseline (BSL) dan Target untuk setiap KPI.")
+    if "B4_charter_not_uploaded_no_justification" in conditional:
+        gaps.append("Project charter template belum diupload dan tidak ada justifikasi.")
+        next_actions.append("Download template charter, isi semua roles dan timeline, lalu upload kembali. Atau berikan justifikasi.")
+    if "B4_charter_incomplete_fields_missing" in conditional:
+        gaps.append("Charter diupload tapi ada role penting yang kosong (Project Leader/Champion/Process Owner).")
+        next_actions.append("Lengkapi semua role di sheet Project Charter dan upload ulang.")
+    if "B4_charter_timeline_missing" in conditional:
+        gaps.append("Charter diupload tapi timeline tidak diisi.")
+        next_actions.append("Isi kolom Goal (End Date) untuk setiap milestone di sheet Project Charter.")
     # risks based on status
     if status == "FAILED":
         risks.append("Proceeding without fixing critical gate items will invalidate later phases.")
@@ -417,6 +575,111 @@ def build_define_coaching_summary_md(
 
     return "\n".join(md).strip()
 
+# ======================================================
+# COACHING STEP — LLM-driven contextual coaching
+# ======================================================
+
+def coaching_step(
+    user_inputs: Dict[str, Any],
+    outputs: Dict[str, Any],
+    gate_result: Dict[str, Any],
+    project_path: str = "standard",
+) -> str:
+    """
+    LLM-driven contextual coaching. Called from run_define_agent()
+    only when gate status is FAILED or CONDITIONAL.
+    Falls back to deterministic coaching if LLM fails or returns empty.
+    """
+    failed      = gate_result.get("failed_rules") or []
+    conditional = gate_result.get("conditional_rules") or []
+    status      = gate_result.get("status", "UNKNOWN")
+
+    problem_text = (user_inputs.get("problem_text") or "").strip()
+    goal_text    = (user_inputs.get("goal_text") or "").strip()
+
+    # VOC: prefer structured table, fallback to flattened list
+    # Build VOC analysis untuk coaching
+    voc_table = user_inputs.get("voc_table") or []
+    voc_analysis_lines = []
+    if isinstance(voc_table, list) and voc_table:
+        for row in voc_table:
+            if not isinstance(row, dict):
+                continue
+            voice = (row.get("Voice") or "").strip()
+            key_issue = (row.get("Key Issue") or "").strip()
+            ctq_ref = (row.get("CTQ/CTB") or "").strip()
+            voc_type = (row.get("Type") or "VOC").strip()
+            if voice:
+                voc_analysis_lines.append(
+                    f"- [{voc_type}] \"{voice}\" → Issue: \"{key_issue}\" → CTQ/CTB: \"{ctq_ref}\""
+                )
+        voc_summary = "\n".join(voc_analysis_lines[:8]) if voc_analysis_lines else "Not provided"
+    else:
+        voc_summary = "Not provided"
+
+    problem_statement = (outputs.get("problem_statement") or "").strip()[:300]
+    goal_statement    = (outputs.get("goal_statement") or "").strip()[:300]
+    ctq_list          = outputs.get("ctq_list") or []
+    ctq_summary       = ", ".join(
+        [c.get("name", "") for c in ctq_list if isinstance(c, dict) and c.get("name")][:5]
+    ) or "None identified"
+
+    
+    prompt = f"""
+You are a Lean Six Sigma Master Black Belt reviewing the Define phase of a manufacturing process improvement project.
+
+Execution path: {"Quick Improvement" if project_path == "quick" else "Standard DMAIC"}
+Gate Status: {status}
+Failed rules: {json.dumps(failed)}
+Conditional rules: {json.dumps(conditional)}
+{"Note: This is a Quick Improvement project — coaching should be concise, focus on critical gaps only (A-rules), and avoid requiring full Standard DMAIC rigor for B-rule items." if project_path == "quick" else ""}
+
+Project leader's original inputs:
+- Problem (raw): "{problem_text}"
+- Goal (raw): "{goal_text}"
+- VOC / VOB entries:
+{voc_summary}
+
+System-generated outputs:
+- Problem Statement: "{problem_statement}"
+- Goal Statement: "{goal_statement}"
+- CTQs identified ({len(ctq_list)}): {ctq_summary}
+
+Provide coaching as an MBB to the project leader. Rules:
+1. ALWAYS quote the user's exact text (problem/goal), then point out specifically what is missing
+2. Give concrete improvement examples — not generic instructions
+3. Address critical items (A-rules) first, in order of priority
+4. For mirror validation: if A1b rules are flagged, quote BOTH the problem AND goal verbatim, 
+   then explain specifically which metric in the problem is not reflected in the goal.
+   Give a corrected goal example using the exact metric from the problem.
+5. For CONDITIONAL: also note what is already strong
+7. Professional tone — write as an MBB coaching a project leader, not as an error list
+8. Format: markdown with ### headings and bullet points
+9. Maximum 350 words. Start directly with coaching content — no preamble.
+10. For VOC/CTQ coaching: 
+   - If a VOC voice clearly points to a different CTQ than what was written, say so explicitly
+   - Quote the VOC entry verbatim, then explain what CTQ it should generate
+   - Example: 'Your VOC entry "[exact voice text]" points to a delivery/quality issue, 
+     but the CTQ listed is "[ctq name]" which measures cost — these are inconsistent'
+   - If VOC entries are vague (no Key Issue filled), coach the user to be more specific
+11. For mirror validation: quote BOTH problem AND goal verbatim, then point to the specific 
+   metric in problem that is absent or changed in goal. Provide a corrected goal example.
+""".strip()
+
+    try:
+        raw = llm(prompt)
+        if raw and len(raw.strip()) > 80:
+            return raw.strip()
+    except Exception:
+        pass
+
+    # Fallback to deterministic coaching if LLM fails
+    return build_define_coaching_summary_md(
+        gate_result=gate_result,
+        outputs=outputs,
+        gate_evidence={},
+        prior_quick_wins=None,
+    )
 
 def _extract_prior_quick_wins(similar_memory_episodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -510,72 +773,155 @@ def action_step(
     perception: Dict[str, Any],
     decisions: Dict[str, Any],
     user_feedback: Dict[str, Any] | None = None,
+    project_path: str = "standard",
 ) -> Dict[str, Any]:
+    
+    gate_mode = get_gate_mode(project_path)
+    path_instruction = (
+            "This is a QUICK IMPROVEMENT project. Keep outputs concise and focused on essentials. "
+            "SIPOC can be high-level (3-5 items per element). CTQ: 1-2 items maximum. "
+            "Benefit estimate: order of magnitude only, no detailed KPI table required."
+            if project_path == "quick"
+            else
+            "This is a STANDARD DMAIC project. Provide complete and rigorous outputs. "
+            "Full SIPOC, 2-4 CTQs with complete metrics, detailed benefit estimate with KPI table."
+        )
+
+
     similar_memory = memory.retrieve_similar_define_episodes(
         user_inputs.get("industry"),
         user_inputs.get("pain_theme"),
         k=2,
     )
 
-    prompt = f"""
-ACTION STEP — DEFINE PHASE
+    if project_path == "quick":
+        prompt = f"""
+ACTION STEP — QUICK IMPROVEMENT PROJECT (A3 thinking)
 
-you are a Lean Six Sigma Master Black Belt.
-Create DEFINE outputs that answer:
-- Why is this project important? (business case with context and impact from user input on problem statement)
-- What is the problem? (from user input on problem statement, compose as SMART: Specific, Measureable, Agreed to, Realistic, Time bound statement
-- What is the goal? (mirror problem but with target state, also SMART)
-- What is the scope?
-- SIPOC (high level, in Process use verbs)
-- VOC/VOB analysis: dari voice of customer/business, ekstrak Key Issue, lalu translate ke CTQ (measurable customer requirement) atau CTB (measurable business target)
-- CTQ/CTB harus MEASURABLE — harus punya nama, metric, unit, dan target arah (reduce/increase)
-- Y Variable adalah CTQ atau CTB yang paling langsung merepresentasikan problem dan goal — SATU variable utama, spesifik, measurable
-- Y Variable harus konsisten dengan goal statement (kalau goal bilang "reduce X dari A% ke B%", maka Y = X dengan unit %)
-- Jangan buat Y Variable yang generik seperti "total supply chain cost" kalau problem spesifik tentang "% shipments with extra charges"
-- Risk level & project type
+You are a Lean Six Sigma Master Black Belt facilitating a Quick Improvement project.
+This is NOT a full DMAIC — it follows A3 thinking: concise, action-oriented, one page.
 
-Return JSON with this structure:
+Generate ONLY these outputs — nothing more:
+
+1. business_case: 2-3 sentences max. Why does this matter to the business?
+2. problem_statement: SMART, 2-3 sentences. Quote specific numbers from user input.
+3. goal_statement: Mirror problem with target state + deadline. Max 2 sentences.
+4. project_scope: In scope = 1-3 bullet points (process only). Out of scope = 1-2 items.
+5. key_stakeholders: List of roles involved (not SIPOC — just who is affected/responsible).
+6. ctq_list: EXACTLY 1 item — the single most direct measurable indicator of success.
+   Format: [{{"name":"...", "metric":"...", "unit":"...", "description":"..."}}]
+7. y_variable: Same as the 1 CTQ name above.
+8. x_categories: Top 3 probable root causes (A3 "Analyze" quadrant — lightweight).
+   Format: {{"Man": "...", "Method": "...", "Machine/Material": "..."}}
+   Use only the most likely 3M categories based on the problem. Do not fabricate all 6M.
+9. estimated_benefit: 1 sentence, order of magnitude only. No KPI table.
+10. risk_level: "low" or "medium" only for quick projects.
+11. project_type: "Quick Improvement"
+
+CRITICAL RULES for y_variable and goal_statement:
+- y_variable MUST be derived directly from the user's goal_statement text.
+- Do NOT infer y_variable from pain_theme, industry, or process_area.
+- If goal_statement contains a measurable target (e.g. "output minimal 43 ton per shift"),
+  y_variable = that exact metric (e.g. "Output per shift (ton)").
+- If goal_statement is empty or vague, use the problem_statement metric.
+- NEVER default to generic labels like "cost per ton" unless explicitly stated in user input.
+
+Return JSON:
 {{
-  "business_case": "...",  
+  "business_case": "...",
   "problem_statement": "...",
   "goal_statement": "...",
-  "project_scope": {{
-     "in_scope": [...],
-     "out_of_scope": [...]
-  }},
+  "project_scope": {{"in_scope": [...], "out_of_scope": [...]}},
+  "key_stakeholders": [...],
+  "ctq_list": [{{"name":"...", "metric":"...", "unit":"...", "description":"..."}}],
+  "y_variable": "...",
+  "x_categories": {{"Man": "...", "Method": "...", "Machine/Material": "..."}},
+  "estimated_benefit": "...",
+  "risk_level": "...",
+  "project_type": "Quick Improvement"
+}}
+
+User inputs:
+{json.dumps(user_inputs, indent=2)}
+
+Decisions:
+{json.dumps(decisions, indent=2)}
+""".strip()
+
+    else:
+        prompt = f"""
+ACTION STEP — DEFINE PHASE (STANDARD DMAIC)
+
+You are a Lean Six Sigma Master Black Belt.
+This is a Standard DMAIC project — provide complete and rigorous outputs.
+
+"CRITICAL: project_charter must include all roles and timeline milestones. "
+    "Derive roles from user inputs if provided. Use 'TBD' if not mentioned. "
+    "Timeline must be derived from goal deadline — work backward from control_end. "
+    "Never leave timeline fields empty.",
+
+Create DEFINE outputs that answer:
+- Why is this project important? (business case with context and impact)
+- What is the problem? (SMART: Specific, Measurable, Agreed, Realistic, Time-bound)
+- What is the goal? (mirror problem with target state, also SMART)
+- What is the scope?
+- SIPOC (high level, use verbs in Process column)
+- VOC/VOB → CTQ/CTB: extract Key Issue, translate to measurable CTQ or CTB
+- CTQ/CTB must be MEASURABLE — name, metric, unit, direction (reduce/increase)
+- Y Variable: single most direct CTQ/CTB representing the problem. Must match goal statement metric.
+- Risk level and project type
+- Detailed benefit estimate with KPI table
+
+CRITICAL RULES for y_variable:
+- y_variable MUST come from the CTQ chain: VOC/VOB → CTQ → y_variable.
+- y_variable = the metric field of the most representative CTQ item.
+- Do NOT infer from pain_theme or industry.
+
+Return JSON:
+{{
+  "business_case": "...",
+  "problem_statement": "...",
+  "goal_statement": "...",
+  "project_scope": {{"in_scope": [...], "out_of_scope": [...]}},
   "sipoc": {{
-     "Suppliers": [...],
-     "Inputs": [...],
-     "Process": [...],
-     "Outputs": [...],
-     "Customers": [...]
+    "Suppliers": [...], "Inputs": [...], "Process": [...],
+    "Outputs": [...], "Customers": [...]
   }},
   "ctq_list": [
-     {{"name":"...", "metric":"...", "unit":"...", "description":"...", "customer":"..."}}
+    {{"name":"...", "metric":"...", "unit":"...", "description":"...", "customer":"..."}}
   ],
-    \"y_variable\": \"...\",
-    \"risk_level\": \"...\",
-    \"project_type\": \"...\",
-    \"benefit_estimate\": {{
-        \"benefit_potentials\": \"...\",
-        \"calculation_method\": \"...\",
-        \"kpi_table\": [
-        {{
-            \"no\": 1,
-            \"kpi\": \"...\",
-            \"period\": \"...\",
-            \"unit\": \"...\",
-            \"baseline\": \"...\",
-            \"target\": \"...\",
-            \"delta_pct\": \"...\",
-            \"comment\": \"...\"
-        }}
-        ],
-        \"assumptions\": [\"...\"],
-        \"soft_benefits\": [\"...\"]
+  "y_variable": "...",
+  "risk_level": "...",
+  "project_type": "...",
+  "project_charter": {{
+    "project_leader": "...",
+    "champion": "...",
+    "mentor_coach": "...",
+    "process_owner": "...",
+    "controller": "...",
+    "team_members": ["..."],
+    "timeline": {{
+      "kickoff": "MMM YYYY",
+      "define_end": "MMM YYYY",
+      "measure_end": "MMM YYYY",
+      "analyze_end": "MMM YYYY",
+      "improve_end": "MMM YYYY",
+      "implement_end": "MMM YYYY",
+      "control_end": "MMM YYYY"
     }}
-    }}
-  
+  }},
+  "benefit_estimate": {{
+    "benefit_potentials": "...",
+    "calculation_method": "...",
+    "kpi_table": [{{
+      "no": 1, "kpi": "...", "period": "...", "unit": "...",
+      "baseline": "...", "target": "...", "delta_pct": "...", "comment": "..."
+    }}],
+    "assumptions": ["..."],
+    "soft_benefits": ["..."]
+  }}
+}}
+
 User inputs:
 {json.dumps(user_inputs, indent=2)}
 
@@ -603,7 +949,12 @@ Few-shot examples (if any):
 
     outputs = parsed if isinstance(parsed, dict) else {}
 
-    gate_result = evaluate_define_gate(outputs=outputs, gate_evidence=gate_evidence, user_inputs=user_inputs)
+    gate_result = evaluate_define_gate(
+        outputs=outputs,
+        gate_evidence=gate_evidence,
+        user_inputs=user_inputs,
+        enforce_b_rules=gate_mode["enforce_b_rules"],
+    )
     ctq_contract = build_ctq_contract(outputs=outputs, gate_result=gate_result)
 
     prior_quick_wins = _extract_prior_quick_wins(similar_memory)
@@ -638,12 +989,14 @@ Few-shot examples (if any):
         },
         "decision_trace": decisions,
         "user_feedback": user_feedback or {},
+        "project_path": project_path,
     }
 
     # summary md should be deterministic from state
     define_state["summary_md"] = _build_define_summary_md(define_state)
 
     return define_state
+
 
 
 # ======================================================
@@ -699,14 +1052,39 @@ def run_define_agent(
     user_inputs: Dict[str, Any],
     baseline_df=None,
     user_feedback=None,
+    project_path: str | None = None,
 ):
+    # Load project_path from DB if not provided
+    if project_path is None:
+        try:
+            project_path = memory.load_project_meta(project_id).get("path", "standard")
+        except Exception:
+            project_path = "standard"
+
     audit.log_phase_event(project_id, PHASE_NAME, "started", meta=user_inputs)
 
-    perception = perception_step(project_id, user_inputs, baseline_df)
-    decisions = decision_step(perception, user_feedback=user_feedback)
-    draft_state = action_step(project_id, user_inputs, perception, decisions, user_feedback=user_feedback)
+    perception  = perception_step(project_id, user_inputs, baseline_df)
+    decisions   = decision_step(perception, user_feedback=user_feedback)
+    draft_state = action_step(
+        project_id, user_inputs, perception, decisions,
+        user_feedback=user_feedback,
+        project_path=project_path,
+    )
 
-    # Refresh timestamp
+    # ── Contextual LLM coaching — triggered only when gate needs explanation ──
+    gate_status = (draft_state.get("gate_result") or {}).get("status", "")
+    if gate_status in ("FAILED", "CONDITIONAL"):
+        llm_coaching = coaching_step(
+            user_inputs=user_inputs,
+            outputs=draft_state.get("outputs") or {},
+            gate_result=draft_state.get("gate_result") or {},
+            project_path=project_path,
+        )
+        draft_state["coaching_md"] = llm_coaching
+        draft_state["insight_md"]  = llm_coaching
+    # PASSED: deterministic coaching from action_step() is retained as-is
+    # ─────────────────────────────────────────────────────────────────────────
+
     if isinstance(draft_state, dict):
         draft_state["updated_at"] = _now_iso()
 

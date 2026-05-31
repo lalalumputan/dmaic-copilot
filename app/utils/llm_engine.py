@@ -29,18 +29,33 @@ client = OpenAI(api_key=_get_api_key())
 # 1. CORE ENGINE (AGENTIC FOUNDATION)
 # ==========================================
 
+_LANGUAGE_INSTRUCTION = """
+
+---
+INSTRUKSI BAHASA (WAJIB): Seluruh respons harus dalam Bahasa Indonesia.
+Pertahankan istilah teknis berikut dalam bahasa aslinya (JANGAN diterjemahkan):
+nama fase DMAIC (Define, Measure, Analyze, Improve, Control), CTQ, SIPOC,
+VOC, VOB, 5-Why, Fishbone, Ishikawa, root cause, X variable, Y variable,
+baseline, pilot, stakeholder, process map, control chart, gauge R&R,
+Lean Six Sigma, Black Belt, Green Belt, Master Black Belt, A3, Kaizen,
+dan istilah metodologi atau statistik lainnya yang tidak memiliki padanan Bahasa Indonesia yang baku.
+---"""
+
+
 def call_agentic_llm(system_prompt: str, user_prompt: str, response_format="text") -> str:
     """
     Fungsi dasar untuk semua Agent (Define, Measure, dst).
     Mendukung format JSON untuk 'Decision' dan 'Action'.
+    Semua respons di-inject instruksi Bahasa Indonesia secara otomatis.
     """
     try:
         fmt = {"type": "json_object"} if response_format == "json" else {"type": "text"}
-        
+        full_system = system_prompt + _LANGUAGE_INSTRUCTION
+
         response = client.chat.completions.create(
             model="gpt-4o", # Menggunakan model cerdas untuk reasoning
             messages=[
-                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": full_system},
                 {"role": "user", "content": user_prompt}
             ],
             response_format=fmt,

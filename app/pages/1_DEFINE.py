@@ -6,6 +6,11 @@ from app.agents.define_agent import run_define_agent, finalize_define_agent
 from app.utils import data_processing as dp, memory, audit, reporting, llm_engine
 from app.utils import auth
 from app.utils.ui_helpers import render_sidebar_header
+from app.utils.charter_template import (
+    generate_charter_benefit_template,
+    extract_charter_from_upload,
+    extract_benefit_from_upload,
+)
 
 # ============================================
 #helper for md
@@ -168,6 +173,115 @@ def _render_tables_from_outputs(outputs: dict) -> None:
 # ============================================
 
 st.set_page_config(page_title="DEFINE", layout="wide")
+st.markdown("""
+<style>
+.stApp {
+    background-color: #f4f8fb;
+    color: #0f172a;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+section[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #e2e8f0;
+}
+.card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+    margin-bottom: 18px;
+}
+h1, h2, h3 { color: #0f172a; }
+h2 { font-size: 22px; margin-bottom: 12px; }
+h3 { font-size: 18px; margin-bottom: 8px; }
+.stButton > button {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-weight: 500;
+}
+.stButton > button:hover {
+    background-color: #e0f2fe;
+    border-color: #38bdf8;
+}
+div[data-baseweb="input"] > div,
+div[data-baseweb="textarea"] > div,
+div[data-baseweb="select"] > div {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    color: #0f172a !important;
+}
+/* ── Slanted Tabs (pseudo-element, no text transform) ── */
+div[data-baseweb="tab-list"] {
+    gap: 0 !important;
+    background: #f4f8fb !important;
+    border-bottom: 3px solid #16a34a !important;
+    padding: 0 0 0 20px !important;
+    align-items: flex-end !important;
+    overflow: visible !important;
+}
+button[data-baseweb="tab"] {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    color: #334155 !important;
+    font-weight: 600 !important;
+    font-style: normal !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.015em !important;
+    padding: 9px 30px !important;
+    margin-right: -16px !important;
+    position: relative !important;
+    z-index: 1 !important;
+    overflow: visible !important;
+    transition: color 0.15s !important;
+}
+button[data-baseweb="tab"]::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important; right: 0 !important; bottom: 0 !important; left: 0 !important;
+    background: #dde3ea !important;
+    transform: skewX(-20deg) !important;
+    z-index: -1 !important;
+    transition: background 0.15s !important;
+    border-radius: 3px 3px 0 0 !important;
+}
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #ffffff !important;
+    z-index: 3 !important;
+    font-weight: 700 !important;
+}
+button[data-baseweb="tab"][aria-selected="true"]::before {
+    background: #16a34a !important;
+}
+button[data-baseweb="tab"]:hover:not([aria-selected="true"]) {
+    color: #0f172a !important;
+    z-index: 2 !important;
+}
+button[data-baseweb="tab"]:hover:not([aria-selected="true"])::before {
+    background: #c3cdd6 !important;
+}
+div[data-baseweb="tab-highlight"],
+div[data-baseweb="tab-border"] { display: none !important; }
+div[data-testid="stDataFrame"],
+div[data-testid="stDataEditor"] {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background-color: #ffffff;
+}
+.v-divider {
+    width: 1px;
+    min-height: 1200px;
+    margin: 0 auto;
+    background: linear-gradient(to bottom, rgba(15,23,42,0.00), rgba(15,23,42,0.20), rgba(15,23,42,0.00));
+}
+</style>
+""", unsafe_allow_html=True)
+
 auth.require_login()
 auth.render_user_badge()
 
@@ -176,6 +290,8 @@ st.session_state.setdefault("active_project_id", None)
 st.session_state.setdefault("mode", "create")  # create/open
 st.session_state.setdefault("define_draft", None)  # wrapper result
 st.session_state.setdefault("define_final", None)  # wrapper result
+st.session_state.setdefault("define_charter_upload_data", None)
+st.session_state.setdefault("define_benefit_upload_data", None)
 
 
 # ---------- Form helpers ----------
@@ -271,11 +387,11 @@ def prefill_define_form_from_state(project_id: str, state: dict) -> None:
     if src.get("benefit_estimate") is not None:
         st.session_state["define_benefit_estimate"] = src.get("benefit_estimate")
 
-    # Prefill voc_table
+    # Prefill voc_table — key harus match dengan data_editor key
     voc_table_val = src.get("voc_table") or []
-    if voc_table_val:
-        st.session_state["define_voc_table"] = voc_table_val
-
+    if voc_table_val and project_id:
+        _voc_key = f"define_voc_table_{project_id}"
+        st.session_state[_voc_key] = voc_table_val
     # feedback box should reset on load
     st.session_state["define_feedback_text"] = ""
 
@@ -387,9 +503,9 @@ if active_pid and loaded_pid != active_pid:
 # Main
 # ============================================
 # ---------- HEADER ----------
-import os
 
-logo_path = "app/assets/logo3jpg"
+
+logo_path = "app/assets/logo3.jpg"
 h_title, h_logo = st.columns([5, 1])
 
 with h_logo:
@@ -398,20 +514,31 @@ with h_logo:
 
 with h_title:
     st.markdown("# DMAIC Copilot — DEFINE Phase")
-    st.caption("### Agentic AI for Continuous Improvement Projects using Lean Six Sigma DMAIC Methodology")
+    _proj_meta = memory.load_project_meta(active_pid) if active_pid else {}
+    _proj_path = _proj_meta.get("path", "standard")
+    _path_label = "🟢 Quick Improvement Project" if _proj_path == "quick" else "🔵 Standard DMAIC Project"
+    st.caption(f"Agentic AI for Continuous Improvement — Lean Six Sigma DMAIC Methodology &nbsp;|&nbsp; {_path_label}")
     
 st.divider()
 
 # ---------- Project Info Bar ----------
-h1, h2, h3 = st.columns([2, 1, 1])
+_def_title_hdr = (
+    st.session_state.get("define_project_name_input", "")
+    or (memory.load_define_final(active_pid) or {}).get("inputs", {}).get("project_name", "")
+    or (memory.load_define_draft(active_pid) or {}).get("inputs", {}).get("project_name", "")
+    or st.session_state.get("active_project_name", "")
+)
+if _def_title_hdr:
+    st.markdown(f"<p style='font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 4px 0;'>{_def_title_hdr}</p>", unsafe_allow_html=True)
+h1, h2 = st.columns([5, 1])
 with h1:
-    st.caption(f"Active Project: `{active_pid}`")
+    st.caption(f"**Active Project:** `{active_pid}`")
 with h2:
     view_badge = "FINAL" if memory.load_define_final(active_pid) else "DRAFT"
     st.markdown(
-        f"<span style='padding:6px 12px;border-radius:20px;"
+        f"<div style='text-align:right'><span style='padding:6px 12px;border-radius:20px;"
         f"background:#0f5132;color:#d1e7dd;font-weight:600;'>"
-        f"{view_badge}</span>",
+        f"{view_badge}</span></div>",
         unsafe_allow_html=True,
     )
 
@@ -432,65 +559,77 @@ if view == "none" and active_pid:
         view, res = _get_current_result()
 
 
-# ---------- Two-column responsive layout ----------
-left_col, right_col = st.columns([1, 1], gap="large")
+# ---------- Single-column layout with tabs ----------
+import pandas as pd
+import copy
 
-with left_col:
+view, res = _get_current_result()
 
-# ---------- Final Controls ----------
-    st.subheader("Revision Actions")
+tab_input, tab1, tab2, tab3, tab4 = st.tabs([
+    "✏️ Input",
+    "📄 Report", "📊 Tables", "Charter", "Benefit"
+])
 
-    final_on_disk = memory.load_define_final(active_pid) if active_pid else None
-    _has_final = bool(final_on_disk)
-    _has_draft = bool(memory.load_define_draft(active_pid))
+with tab_input:
 
-    # Kalau rejected, anggap bisa revise meskipun sudah final
-    _appr_status = memory.get_phase_approval_status(active_pid, "define")
-    _is_rejected = (
+# ---------- Revision Actions ----------
+    final_on_disk  = memory.load_define_final(active_pid) if active_pid else None
+    draft_on_disk  = memory.load_define_draft(active_pid) if active_pid else None
+    _has_final     = bool(final_on_disk)
+    _has_draft     = bool(draft_on_disk)
+
+    _appr_status   = memory.get_phase_approval_status(active_pid, "define")
+    _is_rejected   = (
         ((_appr_status.get("reviewer") or {}).get("action") == "reject") or
         ((_appr_status.get("champion") or {}).get("action") == "reject")
     )
-    if _is_rejected:
-        _has_final = True  # enable revise button
 
-    if _has_final or _has_draft:
-        a1, a2 = st.columns(2)
-        with a1:
-            revise_clicked = st.button(
-                "✏️ Revise Final",
-                key="define_revise_btn",
-                disabled=not _has_final,
-                help="Buat draft baru dari versi final untuk diedit."
-            )
-        with a2:
-            discard_draft_clicked = st.button(
-                "🧹 Discard Draft",
-                key="define_discard_draft_btn",
-                disabled=not _has_draft,
-                help="Hapus draft saat ini. Final tetap tersimpan."
-            )
-    else:
-        revise_clicked = False
-        discard_draft_clicked = False
+    # Revise mode: hanya aktif jika leader eksplisit klik "Revise Final"
+    _revise_mode_key = f"define_revise_mode_{active_pid}"
+    st.session_state.setdefault(_revise_mode_key, False)
+    _in_revise_mode = st.session_state.get(_revise_mode_key, False)
+
+    # Tampilkan tombol sesuai kondisi
+    revise_clicked        = False
+    discard_draft_clicked = False
+
+    if _has_final and _is_rejected and not _has_draft and not _in_revise_mode:
+        # Rejected, belum ada draft baru, belum dalam revise mode → tampilkan Revise Final
+        revise_clicked = st.button(
+            "✏️ Revise Final",
+            key="define_revise_btn",
+            help="Buka form untuk merevisi dan membuat draft baru."
+        )
+    elif _has_draft:
+        # Ada draft → tampilkan Discard Draft saja
+        discard_draft_clicked = st.button(
+            "🧹 Discard Draft",
+            key="define_discard_draft_btn",
+            help="Hapus draft ini dan kembali ke final terakhir."
+        )
 
     if revise_clicked:
+        st.session_state[_revise_mode_key] = True
         if final_on_disk:
             prefill_define_form_from_state(active_pid, final_on_disk)
-            st.session_state["define_draft"] = None
-            st.session_state["define_final"] = {
-                "status": "finalized",
-                "define_state": final_on_disk,
-                "critique": [],
-                "summary": reporting.build_define_summary_md(final_on_disk),
-                "message": "Final loaded (revise mode).",
-            }
-        else:
-            reset_define_form(active_pid)
+        st.session_state["define_draft"] = None
         st.rerun()
 
     if discard_draft_clicked:
         memory.delete_define_draft(active_pid)
         st.session_state["define_draft"] = None
+        st.session_state["define_final"] = None
+        st.session_state[_revise_mode_key] = False
+        # Reload final dari disk ke session
+        if final_on_disk:
+            st.session_state["define_final"] = {
+                "status": "finalized",
+                "define_state": final_on_disk,
+                "critique": [],
+                "summary": final_on_disk.get("summary_md", ""),
+                "message": "Reverted to final.",
+            }
+            prefill_define_form_from_state(active_pid, final_on_disk)
         st.rerun()
 
     # =========================
@@ -504,7 +643,7 @@ with left_col:
             ((_appr.get("reviewer") or {}).get("action") == "reject") or
             ((_appr.get("champion") or {}).get("action") == "reject")
         )
-        is_locked = _final_exists and not _rejected
+        is_locked = _has_final and not _in_revise_mode and not _has_draft
 
         st.subheader("Project Inputs")
 
@@ -545,8 +684,10 @@ with left_col:
             height=100,
         )
 
-        st.markdown("**VOC / VOB → CTQ / CTB (Tool I)**")
-        st.caption("Isi tabel di bawah. VOC = suara pelanggan, VOB = suara bisnis.")
+        _form_path = memory.load_project_meta(active_pid).get("path", "standard") if active_pid else "standard"
+        if _form_path == "standard":
+            st.markdown("**VOC / VOB → CTQ / CTB (Tool I)**")
+            st.caption("Isi tabel di bawah. VOC = suara pelanggan, VOB = suara bisnis.")
 
         # Locked hanya kalau final DAN sudah approved penuh
         _final_exists = bool(memory.load_define_final(active_pid))
@@ -568,62 +709,82 @@ with left_col:
                 {"Type": "VOB", "Voice": "", "Key Issue": "", "CTQ/CTB": ""},
             ]
 
-        voc_table = st.data_editor(
-            st.session_state[_voc_key],
-            num_rows="dynamic",
-            use_container_width=True,
-            key=f"define_voc_editor_{active_pid}",
-            column_config={
-                "Type": st.column_config.SelectboxColumn(
-                    "Type", options=["VOC", "VOB"], required=True
-                ),
-                "Voice": st.column_config.TextColumn("Voice (kutipan langsung)", width="large"),
-                "Key Issue": st.column_config.TextColumn("Key Issue / True Need"),
-                "CTQ/CTB": st.column_config.TextColumn("CTQ / CTB"),
-            },
-            disabled=is_locked,
-        )
-
-        key_issue = st.text_input(
-            "Key Issue / Context (optional)",
-            key="define_key_issue",
-        )
+        if _form_path == "standard":
+            voc_table = st.data_editor(
+                st.session_state[_voc_key],
+                num_rows="dynamic",
+                use_container_width=True,
+                key=f"define_voc_editor_{active_pid}",
+                column_config={
+                    "Type": st.column_config.SelectboxColumn(
+                        "Type", options=["VOC", "VOB"], required=True
+                    ),
+                    "Voice": st.column_config.TextColumn("Voice (kutipan langsung)", width="large"),
+                    "Key Issue": st.column_config.TextColumn("Key Issue / True Need"),
+                    "CTQ/CTB": st.column_config.TextColumn("CTQ / CTB"),
+                },
+                disabled=is_locked,
+            )
+            key_issue = st.text_input(
+                "Key Issue / Context (optional)",
+                key="define_key_issue",
+            )
+        else:
+            voc_table = []
+            key_issue = ""     
 
         st.divider()
 
         with st.expander("✅ DEFINE Gate Evidence (Stage Gate)", expanded=False):
+            # Status upload charter & benefit (read from session, tidak bisa diubah di sini)
+            _cu = st.session_state.get("define_charter_upload_data") or {}
+            _bu = st.session_state.get("define_benefit_upload_data") or {}
+            col_cu, col_bu = st.columns(2)
+            with col_cu:
+                if _cu.get("available"):
+                    st.success("✅ Charter: uploaded & extracted")
+                elif st.session_state.get(f"define_no_upload_reason_{active_pid}", "").strip():
+                    st.warning("⚠️ Charter: not uploaded (justification provided)")
+                else:
+                    st.error("❌ Charter: not uploaded")
+            with col_bu:
+                if _bu.get("available"):
+                    kpi_ok = any(
+                        str(r.get("baseline","")).strip() and str(r.get("target","")).strip()
+                        for r in (_bu.get("kpi_table") or []) if isinstance(r, dict)
+                    )
+                    if kpi_ok:
+                        st.success("✅ Benefit estimate: uploaded & KPI complete")
+                    else:
+                        st.warning("⚠️ Benefit estimate: uploaded but KPI incomplete")
+                elif st.session_state.get(f"define_no_upload_reason_{active_pid}", "").strip():
+                    st.warning("⚠️ Benefit: not uploaded (justification provided)")
+                else:
+                    st.error("❌ Benefit estimate: not uploaded")
 
+            st.divider()
 
             colg1, colg2 = st.columns(2)
-        with colg1:
-            charter_confirmed = st.checkbox(
-                "Project charter sudah diset up (confirmed)",
-                key="define_charter_confirmed",  
-            )
-            documentation_agreed = st.checkbox(
-                "Following documentation has been presented and agreed",
-                key="define_documentation_agreed",   
-            )
-            similar_project_exists = st.checkbox(
-                "Ada proyek sebelumnya dengan topik yang sama",
-                key="define_similar_project_exists",
-            )
-            similar_project_note = st.text_area(
-                "Catatan proyek sebelumnya (opsional, jika ada)",
-                key="define_similar_project_note",
-                height=80,
-            )
-        with colg2:
-            parallel_projects_risk = st.text_area(
-                "Apakah ada proyek lain yang bisa mempengaruhi proyek ini? (risiko/overlap)",
-                key="define_parallel_projects_risk",
-                height=80,
-            )
-            benefit_estimate = st.text_area(
-                "High-level benefit estimate (jenis benefit + order of magnitude)",
-                key="define_benefit_estimate",
-                height=80,
-            )
+            with colg1:
+                documentation_agreed = st.checkbox(
+                    "Dokumentasi berikut telah dipresentasikan dan disetujui",
+                    key="define_documentation_agreed",
+                )
+                similar_project_exists = st.checkbox(
+                    "Ada proyek sebelumnya dengan topik yang sama",
+                    key="define_similar_project_exists",
+                )
+                similar_project_note = st.text_area(
+                    "Catatan proyek sebelumnya (opsional)",
+                    key="define_similar_project_note",
+                    height=80,
+                )
+            with colg2:
+                parallel_projects_risk = st.text_area(
+                    "Apakah ada proyek lain yang bisa mempengaruhi proyek ini?",
+                    key="define_parallel_projects_risk",
+                    height=100,
+                )
 
         st.divider()
 
@@ -634,14 +795,92 @@ with left_col:
         )
 
         submitted = st.form_submit_button(
-            "⚡ Generate / Update Draft" if not is_locked else "🔒 Locked — Cannot Generate Draft",
+            "⚡ Generate / Update Draft" if not is_locked else "🔒 Terkunci — Tidak Bisa Generate Draft",
             type="primary",
             disabled=is_locked,
         )
+# ── Charter & Benefit Upload (standard path, OUTSIDE form) ──
+if _form_path == "standard" and not is_locked:
+    st.divider()
+    st.markdown("#### 📋 Project Charter & Benefit Estimate")
+    st.caption(
+        "Download template, isi secara offline, lalu upload kembali. "
+        "Agent akan membaca dan memvalidasi isi file."
+    )
+
+    # Download template
+    _tpl_bytes = generate_charter_benefit_template()
+    st.download_button(
+        label="⬇️ Download Template (Charter + Benefit)",
+        data=_tpl_bytes,
+        file_name="DMAIC_Charter_Benefit_Template.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="define_template_download_btn",
+    )
+
+    # Upload
+    _uploaded_charter_file = st.file_uploader(
+        "Upload completed template (.xlsx)",
+        type=["xlsx"],
+        key=f"define_charter_upload_{active_pid}",
+    )
+
+    if _uploaded_charter_file is not None:
+        _charter_data  = extract_charter_from_upload(_uploaded_charter_file)
+        _uploaded_charter_file.seek(0)
+        _benefit_data  = extract_benefit_from_upload(_uploaded_charter_file)
+        st.session_state["define_charter_upload_data"] = _charter_data
+        st.session_state["define_benefit_upload_data"] = _benefit_data
+
+        if _charter_data.get("available"):
+            st.success("✅ Charter extracted successfully.")
+            with st.expander("Preview Charter", expanded=False):
+                st.write(f"**Project Leader:** {_charter_data.get('project_leader','-')}")
+                st.write(f"**Champion:** {_charter_data.get('champion','-')}")
+                st.write(f"**Process Owner:** {_charter_data.get('process_owner','-')}")
+                st.write(f"**Controller:** {_charter_data.get('controller','-')}")
+                import pandas as pd
+                team = _charter_data.get("team_members") or []
+                if team:
+                    st.dataframe(pd.DataFrame(team), use_container_width=True, hide_index=True)
+                timeline = _charter_data.get("timeline") or {}
+                if timeline:
+                    tl_rows = [{"Milestone": k.replace("_"," ").title(), "Target": v}
+                               for k, v in timeline.items()]
+                    st.dataframe(pd.DataFrame(tl_rows), use_container_width=True, hide_index=True)
+        else:
+            st.warning(f"⚠️ Charter: {_charter_data.get('error','Gagal dibaca.')}")
+
+        if _benefit_data.get("available"):
+            st.success("✅ Benefit estimate extracted successfully.")
+            with st.expander("Preview Benefit Estimate", expanded=False):
+                kpi_rows = _benefit_data.get("kpi_table") or []
+                if kpi_rows:
+                    st.dataframe(pd.DataFrame(kpi_rows), use_container_width=True, hide_index=True)
+                else:
+                    st.caption("KPI table kosong.")
+        else:
+            st.warning(f"⚠️ Benefit: {_benefit_data.get('error','Gagal dibaca.')}")
+
+    # Justifikasi jika tidak upload
+    _has_upload = st.session_state.get("define_charter_upload_data") is not None
+    if not _has_upload:
+        st.caption("Belum upload? Berikan justifikasi:")
+        _charter_reason = st.text_area(
+            "Alasan belum upload Charter & Benefit template",
+            key=f"define_no_upload_reason_{active_pid}",
+            height=70,
+            placeholder="Contoh: Data masih dalam proses validasi dengan Finance, akan diupload sebelum approval.",
+        )
+    else:
+        _charter_reason = ""
 
 # OUTSIDE the form, but still can be anywhere (I put it after cols)
 if submitted:
     project_id = st.session_state.get("active_project_id", "").strip()
+    _charter_upload = st.session_state.get("define_charter_upload_data") or {}
+    _benefit_upload = st.session_state.get("define_benefit_upload_data") or {}
+    _no_upload_reason = st.session_state.get(f"define_no_upload_reason_{active_pid}", "")
     user_inputs = {
         "project_name": project_name,
         "industry": industry,
@@ -656,12 +895,14 @@ if submitted:
         ],
         "voc_table": voc_table if voc_table else [],
         "key_issue": key_issue,
-        "charter_confirmed": charter_confirmed,
         "documentation_agreed": documentation_agreed,
         "similar_project_exists": similar_project_exists,
         "similar_project_note": similar_project_note,
         "parallel_projects_risk": parallel_projects_risk,
-        "benefit_estimate": benefit_estimate,
+        "charter_data_uploaded":     _charter_upload,
+        "benefit_data_uploaded":     _benefit_upload,
+        "charter_no_upload_reason":  _no_upload_reason,
+        "benefit_no_upload_reason":  _no_upload_reason,
     }
 
     user_feedback = {"text": user_feedback_text} if user_feedback_text.strip() else {}
@@ -674,14 +915,15 @@ if submitted:
     st.session_state["define_draft"] = result
 
 # --- Revision Guidance (agent coaching) ---
-latest = None
+_current_result = st.session_state.get("define_draft") or st.session_state.get("define_final")
+latest = (_current_result or {}).get("define_state") if isinstance(_current_result, dict) else None
 
 if isinstance(latest, dict):
     coaching = (latest.get("coaching_md") or latest.get("insight_md") or "").strip()
     gate = latest.get("gate_result") or {}
     status = gate.get("status", "-")
 
-    st.markdown("### 🧭 Revision Guidance")
+    st.markdown("### 🧭 Agent Coaching")
     st.markdown(f"**Gate Status:** `{status}`")
 
     if coaching:
@@ -691,150 +933,166 @@ if isinstance(latest, dict):
     st.divider() 
 
     # ---------- Finalize (kept near form) ----------
-    if st.session_state.get("define_draft") and st.session_state["define_draft"].get("define_state"):
-        st.subheader("Finalize")
-        if st.button("✅ Finalize Draft (Lock Final)", key="define_finalize_btn"):
-            draft_state = st.session_state["define_draft"]["define_state"]
-            final_result = finalize_define_agent(
-                project_id=active_pid,
-                define_state=draft_state,
-                user_feedback=None,
-            )
-            st.session_state["define_final"] = final_result
-            st.session_state["define_draft"] = None
-            st.rerun()
+    
 
-with right_col:
-    # ---------- Report View ----------
+# ---------- Report View ----------
 
-    st.subheader("Report View")
+if not (res and res.get("define_state")):
+    with tab1:
+        st.info("Belum ada draft atau final. Generate draft atau muat final yang sudah ada.")
+else:
+    define_state = res["define_state"]
+    inputs = define_state.get("inputs") or {}
+    outs = define_state.get("outputs") or {}
 
-    import pandas as pd
-    import copy
-
-    view, res = _get_current_result()
-    if not (res and res.get("define_state")):
-        st.info("No draft or final yet. Generate a draft or load an existing final.")
+    # ---------- SAFE VALUES ----------
+    ctq_list = outs.get("ctq_list") or []
+    if isinstance(ctq_list, list):
+        ctq_text = ", ".join([str(x) for x in ctq_list if str(x).strip()])
+    elif isinstance(ctq_list, str):
+        ctq_text = ctq_list.strip()
     else:
-        define_state = res["define_state"]
-        inputs = define_state.get("inputs") or {}
-        outs = define_state.get("outputs") or {}
+        ctq_text = str(ctq_list).strip()
+    if not ctq_text:
+        ctq_text = "-"
 
-        # ---------- SAFE VALUES ----------
-        ctq_list = outs.get("ctq_list") or []
-        if isinstance(ctq_list, list):
-            ctq_text = ", ".join([str(x) for x in ctq_list if str(x).strip()])
-        elif isinstance(ctq_list, str):
-            ctq_text = ctq_list.strip()
+    # ---------- TAB 1 : SHORT REPORT ----------
+    with tab1:
+
+        # ----- Scope bullets -----
+        scope = outs.get("project_scope") or {}
+        scope_md = ""
+        if isinstance(scope, dict):
+            if scope.get("in_scope"):
+                scope_md += "**In Scope:**\n" + "\n".join([f"- {x}" for x in scope.get("in_scope", [])]) + "\n"
+            if scope.get("out_of_scope"):
+                scope_md += "\n**Out of Scope:**\n" + "\n".join([f"- {x}" for x in scope.get("out_of_scope", [])])
+        elif isinstance(scope, list):
+            scope_md = "\n".join([f"- {x}" for x in scope])
         else:
-            ctq_text = str(ctq_list).strip()
-        if not ctq_text:
-            ctq_text = "-"
+            scope_md = str(scope) if scope else "-"
 
-        # ---------- TABS (DEFINED ONCE) ----------
-        tab1, tab2 = st.tabs(
-            ["📄 Report", "📊 Tables"]
-        )
-
-        # ---------- TAB 1 : SHORT REPORT ----------
-        with tab1:
-
-# ----- Scope bullets -----
-            scope = outs.get("project_scope") or {}
-            scope_md = ""
-            if isinstance(scope, dict):
-                if scope.get("in_scope"):
-                    scope_md += "**In Scope:**\n" + "\n".join([f"- {x}" for x in scope.get("in_scope", [])]) + "\n"
-                if scope.get("out_of_scope"):
-                    scope_md += "\n**Out of Scope:**\n" + "\n".join([f"- {x}" for x in scope.get("out_of_scope", [])])
-            elif isinstance(scope, list):
-                scope_md = "\n".join([f"- {x}" for x in scope])
+        # ----- CTQ bullets -----
+        ctq_md = ""
+        ctqs = outs.get("ctq_list") or []
+        for c in ctqs:
+            if isinstance(c, dict):
+                ctq_md += f"- **{c.get('name','')}** ({c.get('metric','')} {c.get('unit','')}): {c.get('description','')}\n"
             else:
-                scope_md = str(scope) if scope else "-"
+                ctq_md += f"- {c}\n"
+        if not ctq_md.strip():
+            ctq_md = "- -"
 
-# ----- CTQ bullets -----
-            ctq_md = ""
-            ctqs = outs.get("ctq_list") or []
-            for c in ctqs:
-                if isinstance(c, dict):
-                    ctq_md += f"- **{c.get('name','')}** ({c.get('metric','')} {c.get('unit','')}): {c.get('description','')}\n"
-                else:
-                    ctq_md += f"- {c}\n"
-            if not ctq_md.strip():
-                ctq_md = "- -"  
+        _report_path = define_state.get("project_path", "standard")
 
-            short_md = f"""
-## DEFINE — {define_state.get('project_id','-')}
-- **Project Name**: {inputs.get('project_name','-')}
-- **Industry / Area / Theme**: {inputs.get('industry','-')} / {inputs.get('process_area','-')} / {inputs.get('pain_theme','-')}
+        if _report_path == "quick":
+            # ── A3-style report untuk Quick Improvement ──
+            xc = outs.get("x_categories") or {}
+            xc_md = "\n".join([f"- **{k}**: {v}" for k, v in xc.items()]) if xc else "-"
 
-### Business Case
-{outs.get('business_case') or '-'}
+            short_md = (
+                f"## 🟢 Quick Improvement — {define_state.get('project_id','-')}\n"
+                f"- **Project Name**: {inputs.get('project_name','-')}\n"
+                f"- **Industry / Area / Theme**: {inputs.get('industry','-')} / "
+                f"{inputs.get('process_area','-')} / {inputs.get('pain_theme','-')}\n\n"
+                f"### 1. Business Case\n"
+                f"{outs.get('business_case') or '-'}\n\n"
+                f"### 2. Problem\n"
+                f"{(outs.get('problem_statement') or inputs.get('problem_text') or '-').strip()}\n\n"
+                f"### 3. Goal\n"
+                f"{(outs.get('goal_statement') or inputs.get('goal_text') or '-').strip()}\n\n"
+                f"### 4. Probable Root Causes\n"
+                f"{xc_md}\n"
+            )
 
-### Problem
-{(outs.get('problem_statement') or inputs.get('problem_text') or '-').strip()}
+        else:
+            # ── Standard DMAIC report ──
+            short_md = (
+                f"## DEFINE — {define_state.get('project_id','-')}\n"
+                f"- **Project Name**: {inputs.get('project_name','-')}\n"
+                f"- **Industry / Area / Theme**: {inputs.get('industry','-')} / "
+                f"{inputs.get('process_area','-')} / {inputs.get('pain_theme','-')}\n\n"
+                f"### Business Case\n"
+                f"{outs.get('business_case') or '-'}\n\n"
+                f"### Problem\n"
+                f"{(outs.get('problem_statement') or inputs.get('problem_text') or '-').strip()}\n\n"
+                f"### Goal\n"
+                f"{(outs.get('goal_statement') or inputs.get('goal_text') or '-').strip()}\n\n"
+                f"### Scope\n"
+                f"{scope_md}\n\n"
+                f"### CTQ\n"
+                f"{ctq_md}\n\n"
+                f"### Y Variable\n"
+                f"- {outs.get('y_variable') or '-'}\n\n"
 
-### Goal
-{(outs.get('goal_statement') or inputs.get('goal_text') or '-').strip()}
+            )
 
-### Scope
-{scope_md}
+        st.markdown(short_md)
 
-### CTQ
-{ctq_md}
+        _coaching = (define_state.get("coaching_md") or define_state.get("insight_md") or "").strip()
+        if _coaching:
+            st.divider()
+            st.markdown("### 🧭 Agent Coaching")
+            st.markdown(_coaching)
 
-### Y Variable
-- {outs.get('y_variable') or '-'}
+    with tab2:
 
-### Risk & Type
-- **Risk Level**: {outs.get('risk_level') or '-'}
-- **Project Type**: {outs.get('project_type') or '-'}
+        _tab_path = define_state.get("project_path", "standard")
 
-### Agent Insight
-{(define_state.get('insight_md') or '-').strip()}
-"""
-            st.markdown(short_md)
+        if _tab_path == "quick":
+            # Quick path tables: Scope, Y Variable, Benefit Estimate
 
-        # ---------- TAB 2 : TABLES ----------
-        with tab2:
-        
-            # VOC/VOB table
-            import pandas as pd
-            # Ambil dari session state (lebih reliable dari inputs)
+            # --- Scope table ---
+            scope = outs.get("project_scope") or {}
+            in_scope  = scope.get("in_scope")    or [] if isinstance(scope, dict) else []
+            out_scope = scope.get("out_of_scope") or [] if isinstance(scope, dict) else []
+            if in_scope or out_scope:
+                st.markdown("### Project Scope")
+                max_len = max(len(in_scope), len(out_scope), 1)
+                scope_rows = []
+                for i in range(max_len):
+                    scope_rows.append({
+                        "In Scope":    in_scope[i]  if i < len(in_scope)  else "",
+                        "Out of Scope": out_scope[i] if i < len(out_scope) else "",
+                    })
+                st.dataframe(pd.DataFrame(scope_rows), use_container_width=True, hide_index=True)
+
+            # --- Y Variable ---
+            ctq = outs.get("ctq_list") or []
+            y_ctq = ctq[0] if ctq and isinstance(ctq[0], dict) else {}
+            if y_ctq:
+                st.markdown("### Y Variable (Success Metric)")
+                y_rows = [{
+                    "Name":        y_ctq.get("name", "-"),
+                    "Metric":      y_ctq.get("metric", "-"),
+                    "Unit":        y_ctq.get("unit", "-"),
+                    "Description": y_ctq.get("description", "-"),
+                }]
+                st.dataframe(pd.DataFrame(y_rows), use_container_width=True, hide_index=True)
+
+        else:
+            # Standard: tampilkan semua table seperti sebelumnya
             _voc_display_key = f"define_voc_table_{active_pid}"
-            # Prioritas: inputs dari state (paling akurat), lalu session state
             voc_tbl_display = inputs.get("voc_table") or st.session_state.get(_voc_display_key) or []
             if voc_tbl_display:
-                import pandas as pd
                 st.markdown("### Tool I — VOC/VOB → CTQ/CTB")
                 st.dataframe(pd.DataFrame(voc_tbl_display), use_container_width=True, hide_index=True)
-                             
-            import pandas as pd
-            # CTQ Table
+
             ctq = outs.get("ctq_list") or []
             if ctq:
                 st.markdown("### CTQ List")
-                rows = []
-                for c in ctq:
-                    if isinstance(c, dict):
-                        rows.append({
-                            "Name":        c.get("name",""),
-                            "Metric":      c.get("metric",""),
-                            "Unit":        c.get("unit",""),
-                            "Description": c.get("description",""),
-                        })
+                rows = [{"Name": c.get("name",""), "Metric": c.get("metric",""),
+                         "Unit": c.get("unit",""), "Description": c.get("description","")}
+                        for c in ctq if isinstance(c, dict)]
                 if rows:
                     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-            # SIPOC Table
             sipoc_data = outs.get("sipoc") or {}
             if sipoc_data:
                 st.markdown("### SIPOC")
                 sipoc_keys = ["Suppliers","Inputs","Process","Outputs","Customers"]
-                sipoc_lists = []
-                for k in sipoc_keys:
-                    val = sipoc_data.get(k) or sipoc_data.get(k.lower()) or []
-                    sipoc_lists.append(val if isinstance(val, list) else [str(val)] if val else [])
+                sipoc_lists = [sipoc_data.get(k) or sipoc_data.get(k.lower()) or [] for k in sipoc_keys]
+                sipoc_lists = [v if isinstance(v, list) else [str(v)] if v else [] for v in sipoc_lists]
                 max_len = max([len(x) for x in sipoc_lists], default=1)
                 sipoc_rows = []
                 for i in range(max_len):
@@ -844,175 +1102,219 @@ with right_col:
                     sipoc_rows.append(row)
                 st.dataframe(pd.DataFrame(sipoc_rows), use_container_width=True, hide_index=True)
 
-            # X Categories
-            xc = outs.get("x_categories") or {}
-            if xc:
-                st.markdown("### X Categories (6M)")
-                xc_rows = [{"Category": k, "Details": v if isinstance(v, str) else ", ".join(v) if isinstance(v, list) else str(v)} for k, v in xc.items()]
-                st.dataframe(pd.DataFrame(xc_rows), use_container_width=True, hide_index=True)
+    with tab3:
+        # Project Charter — dari upload atau dari LLM output
+        _charter_upload_data = st.session_state.get("define_charter_upload_data") or {}
+        charter = _charter_upload_data if _charter_upload_data.get("available") else (outs.get("project_charter") or {})
+        if charter and charter.get("available") is not False:
+            st.markdown("### 📋 Project Charter")
+            _res_rows = []
+            for role_label, key in [
+                ("Project Leader", "project_leader"),
+                ("Project Champion", "champion"),
+                ("Mentoring BB", "mentor_bb"),
+                ("Process Owner", "process_owner"),
+                ("Controller", "controller"),
+            ]:
+                val = charter.get(key, "TBD")
+                if val and val not in ("TBD", "nan", ""):
+                    _res_rows.append({"Role": role_label, "Name": val})
+            if _res_rows:
+                st.dataframe(pd.DataFrame(_res_rows), use_container_width=True, hide_index=True)
 
-            # Benefit Estimate
-            benefit = outs.get("benefit_estimate") or {}
-            if benefit:
-                st.markdown("### Benefit Estimate")
-                if benefit.get("benefit_potentials"):
-                    st.markdown(f"**Benefit Potentials:** {benefit['benefit_potentials']}")
-                if benefit.get("calculation_method"):
-                    st.markdown(f"**Calculation Method:** {benefit['calculation_method']}")
-                kpi_rows = benefit.get("kpi_table") or []
-                if kpi_rows:
-                    st.markdown("**KPI Table:**")
-                    st.dataframe(pd.DataFrame(kpi_rows), use_container_width=True, hide_index=True)
-                assumptions = benefit.get("assumptions") or []
-                if assumptions:
-                    st.markdown("**Assumptions:**")
-                    for a in assumptions:
-                        st.markdown(f"- {a}")
+            team = charter.get("team_members") or []
+            if team and isinstance(team[0], dict):
+                st.markdown("**Team Members:**")
+                st.dataframe(pd.DataFrame(team), use_container_width=True, hide_index=True)
 
+            timeline = charter.get("timeline") or {}
+            if timeline:
+                st.markdown("**Project Timeline:**")
+                tl_rows = [{"Milestone": k.replace("_", " ").title(), "Target": v}
+                           for k, v in timeline.items() if v]
+                if tl_rows:
+                    st.dataframe(pd.DataFrame(tl_rows), use_container_width=True, hide_index=True)
 
-st.divider()
+    with tab4:            # Benefit Estimate dari upload
+        _benefit_upload_data = st.session_state.get("define_benefit_upload_data") or {}
+        _benefit_source = _benefit_upload_data if _benefit_upload_data.get("available") else (outs.get("benefit_estimate") or {})
+        if _benefit_source and isinstance(_benefit_source, dict):
+            st.markdown("### 💰 Benefit Estimate")
+            if _benefit_source.get("benefit_potentials"):
+                st.markdown(f"**Benefit Potentials:** {_benefit_source['benefit_potentials']}")
+            if _benefit_source.get("calculation_method"):
+                st.markdown(f"**Calculation Method:** {_benefit_source['calculation_method']}")
+            kpi_rows = _benefit_source.get("kpi_table") or []
+            if kpi_rows:
+                st.markdown("**KPI Table:**")
+                st.dataframe(pd.DataFrame(kpi_rows), use_container_width=True, hide_index=True)
+            assumptions = _benefit_source.get("assumptions") or []
+            if assumptions:
+                st.markdown("**Assumptions:**")
+                for a in assumptions:
+                    st.markdown(f"- {a}")
+           
+with tab_input:
+    # ---------- Finalize + Downloads ----------
+    st.subheader("Finalize & Downloads")
 
-# ---------- Finalize + Downloads ----------
-st.subheader("Finalize & Downloads")
+    final_state = memory.load_define_final(active_pid) if active_pid else None
+    draft_state = memory.load_define_draft(active_pid) if active_pid else None
 
-final_state = memory.load_define_final(active_pid) if active_pid else None
-draft_state = memory.load_define_draft(active_pid) if active_pid else None
+    c1, c2, c3 = st.columns([1, 1, 1])
 
-c1, c2, c3 = st.columns([1, 1, 1])
+    with c1:
+        # Finalize: only if there is a draft AND no final yet (efficient, no double-finalize)
+        if draft_state:
+            if st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn"):
+                final_result = finalize_define_agent(
+                    project_id=active_pid,
+                    define_state=draft_state,
+                    user_feedback=None,
+                )
+                # update session view immediately
+                st.session_state["define_final"] = final_result
+                st.session_state["define_draft"] = None
+                st.session_state[_revise_mode_key] = False
+                memory.save_project_leader_name(active_pid, auth.get_current_display_name())
+                st.success("Finalized. Final tersimpan dan terkunci.")
+                st.rerun()
+        elif final_state:
+            st.button("✅ Finalized", key="define_finalized_badge_btn", disabled=True)
+        else:
+            st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn_disabled", disabled=True)
 
-with c1:
-    # Finalize: only if there is a draft AND no final yet (efficient, no double-finalize)
-    if draft_state:
-        if st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn"):
-            final_result = finalize_define_agent(
-                project_id=active_pid,
-                define_state=draft_state,
-                user_feedback=None,
-            )
-            # update session view immediately
-            st.session_state["define_final"] = final_result
-            st.session_state["define_draft"] = None
-            st.success("Finalized. Final is locked and stored.")
-            st.rerun()
-    elif final_state:
-        st.button("✅ Finalized", key="define_finalized_badge_btn", disabled=True)
-    else:
-        st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn_disabled", disabled=True)
+    with c2:
+        # Generate dari final kalau ada, kalau tidak dari draft
+        _word_source = final_state or draft_state
+        if _word_source:
+            _word_label = "🛠️ Generate Word (Final)" if final_state else "🛠️ Generate Word (Draft)"
+            if st.button(_word_label, key="define_generate_final_word_btn"):
+                import copy
+                _export_state = copy.deepcopy(_word_source)
 
-with c2:
-    # Generate dari final kalau ada, kalau tidak dari draft
-    _word_source = final_state or draft_state
-    if _word_source:
-        _word_label = "🛠️ Generate Word (Final)" if final_state else "🛠️ Generate Word (Draft)"
-        if st.button(_word_label, key="define_generate_final_word_btn"):
-            out_path = reporting.export_define_to_word(
-                _word_source,
-                path=f"{active_pid}_DEFINE_REPORT.docx"
-            )
-            st.session_state["define_last_docx_path"] = out_path
-            st.success("Word file generated.")
-    else:
-        st.button("🛠️ Generate Word", key="define_generate_final_word_btn_disabled", disabled=True)
+                # Inject charter/benefit dari session state jika ada
+                _cu = st.session_state.get("define_charter_upload_data") or {}
+                _bu = st.session_state.get("define_benefit_upload_data") or {}
+                if _cu.get("available") or _bu.get("available"):
+                    _export_inputs = _export_state.get("inputs") or {}
+                    if _cu.get("available"):
+                        _export_inputs["charter_data_uploaded"] = _cu
+                    if _bu.get("available"):
+                        _export_inputs["benefit_data_uploaded"] = _bu
+                    _export_state["inputs"] = _export_inputs
 
-with c3:
-    # Download ONLY if file exists
-    docx_path = st.session_state.get("define_last_docx_path") or f"{active_pid}_DEFINE_REPORT.docx"
-    if final_state:
+                _docx_fname = f"Project_{active_pid}_DEF_{'Final' if final_state else 'Draft'}.docx"
+                out_path = reporting.export_define_to_word(
+                    _export_state,
+                    path=_docx_fname
+                )
+                st.session_state["define_last_docx_path"] = out_path
+                st.success("Word file generated.")
+        else:
+            st.button("🛠️ Generate Word", key="define_generate_final_word_btn_disabled", disabled=True)
+
+    with c3:
+        _docx_fname_def = f"Project_{active_pid}_DEF_{'Final' if final_state else 'Draft'}.docx"
+        docx_path = st.session_state.get("define_last_docx_path") or _docx_fname_def
+        _label = "⬇️ Download Final Word Report" if final_state else "⬇️ Download Draft Word Report"
         try:
             with open(docx_path, "rb") as f:
                 doc_bytes = f.read()
             st.download_button(
-                label="⬇️ Download Final Word Report",
+                label=_label,
                 data=doc_bytes,
-                file_name=f"{active_pid}_DEFINE_REPORT.docx",
+                file_name=_docx_fname_def,
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="define_download_final_word_btn",
+                key="define_download_word_btn",
             )
         except FileNotFoundError:
-            st.button("⬇️ Download Final Word Report", key="define_download_final_word_btn_disabled", disabled=True)
+            st.button(_label, key="define_download_word_btn_disabled", disabled=True)
+
+    # ============================================
+    # GOVERNANCE PANEL
+    # ============================================
+    st.divider()
+    st.subheader("🏛️ Governance — Stage Gate Approval")
+
+    final_exists = memory.load_define_final(active_pid) if active_pid else None
+    approval_status = memory.get_phase_approval_status(active_pid, "define") if active_pid else {}
+
+    reviewer_action  = (approval_status.get("reviewer")  or {}).get("action")
+    champion_action  = (approval_status.get("champion")   or {}).get("action")
+    can_advance      = approval_status.get("can_advance", False)
+
+    if not final_exists:
+        st.info("Finalize DEFINE dulu sebelum bisa di-approve.")
     else:
-        st.button("⬇️ Download Final Word Report", key="define_download_final_word_btn_disabled2", disabled=True)
+        # Status display — hanya setelah finalized
+        col_r, col_c, col_adv = st.columns(3)
+
+        with col_r:
+            if reviewer_action == "approve":
+                st.success("✅ Reviewer: Approved")
+            elif reviewer_action == "reject":
+                st.error("❌ Reviewer: Rejected")
+            else:
+                st.warning("⏳ Reviewer: Pending")
+
+        with col_c:
+            if champion_action == "approve":
+                st.success("✅ Champion: Approved")
+            elif champion_action == "reject":
+                st.error("❌ Champion: Rejected")
+            else:
+                st.warning("⏳ Champion: Pending")
+
+        with col_adv:
+            if can_advance:
+                st.success("🚀 Gate: OPEN — Lanjut ke Measure")
+            else:
+                st.info("🔒 Gate: LOCKED")
+
+        # Approval actions
+        role = auth.get_current_role()
+        if role in ("reviewer", "champion"):
+            _role_action = (approval_status.get(role) or {}).get("action")
+            st.markdown(f"**Aksi kamu sebagai {role.title()}:**")
+            if _role_action == "approve":
+                st.success("✅ Kamu sudah **Approve** fase ini.")
+            elif _role_action == "reject":
+                st.error("❌ Kamu sudah **Reject** fase ini.")
+            note = st.text_area(
+                "Catatan (opsional)",
+                key=f"gov_note_{role}_define",
+                height=80,
+            )
+            col_app, col_rej = st.columns(2)
+            with col_app:
+                if st.button("✅ Approve", key=f"gov_approve_{role}_define",
+                             disabled=(_role_action is not None)):
+                    memory.save_approval(active_pid, "define", role, "approve", note, display_name=auth.get_current_display_name())
+                    audit.log_phase_event(active_pid, "define", f"approved_by_{role}")
+                    st.success("Approval disimpan.")
+                    st.rerun()
+            with col_rej:
+                if st.button("❌ Reject", key=f"gov_reject_{role}_define",
+                             disabled=(_role_action is not None)):
+                    memory.save_approval(active_pid, "define", role, "reject", note, display_name=auth.get_current_display_name())
+                    audit.log_phase_event(active_pid, "define", f"rejected_by_{role}")
+                    st.warning("Rejection disimpan.")
+                    st.rerun()
+        elif role == "project_leader":
+            if can_advance:
+                st.success("✅ Semua approval lengkap. Kamu bisa lanjut ke fase Measure.")
+            else:
+                st.info("Menunggu approval dari Reviewer dan Champion.")
 
 
-# ============================================
-# GOVERNANCE PANEL
-# ============================================
-st.divider()
-st.subheader("🏛️ Governance — Stage Gate Approval")
+    st.divider()
 
-final_exists = memory.load_define_final(active_pid) if active_pid else None
-approval_status = memory.get_phase_approval_status(active_pid, "define") if active_pid else {}
-
-reviewer_action  = (approval_status.get("reviewer")  or {}).get("action")
-champion_action  = (approval_status.get("champion")   or {}).get("action")
-can_advance      = approval_status.get("can_advance", False)
-
-# Status display
-col_r, col_c, col_adv = st.columns(3)
-
-with col_r:
-    if reviewer_action == "approve":
-        st.success("✅ Reviewer: Approved")
-    elif reviewer_action == "reject":
-        st.error("❌ Reviewer: Rejected")
+    # ---------- Audit ----------
+    st.subheader("🧾 Audit Log — DEFINE Phase")
+    events = audit.get_recent_events(project_id=active_pid, phase="Define", limit=30)
+    if events:
+        st.dataframe(events, width="stretch")
     else:
-        st.warning("⏳ Reviewer: Pending")
-
-with col_c:
-    if champion_action == "approve":
-        st.success("✅ Champion: Approved")
-    elif champion_action == "reject":
-        st.error("❌ Champion: Rejected")
-    else:
-        st.warning("⏳ Champion: Pending")
-
-with col_adv:
-    if can_advance:
-        st.success("🚀 Gate: OPEN — Lanjut ke Measure")
-    else:
-        st.info("🔒 Gate: LOCKED")
-
-# Approval actions (hanya tampil kalau ada final dan role sesuai)
-if final_exists:
-    role = auth.get_current_role()
-
-    if role in ("reviewer", "champion"):
-        st.markdown(f"**Aksi kamu sebagai {role.title()}:**")
-        note = st.text_area(
-            "Catatan (opsional)",
-            key=f"gov_note_{role}_define",
-            height=80,
-        )
-        col_app, col_rej = st.columns(2)
-        with col_app:
-            if st.button("✅ Approve", key=f"gov_approve_{role}_define"):
-                memory.save_approval(active_pid, "define", role, "approve", note)
-                audit.log_phase_event(active_pid, "define", f"approved_by_{role}")
-                st.success("Approval disimpan.")
-                st.rerun()
-        with col_rej:
-            if st.button("❌ Reject", key=f"gov_reject_{role}_define"):
-                memory.save_approval(active_pid, "define", role, "reject", note)
-                audit.log_phase_event(active_pid, "define", f"rejected_by_{role}")
-                st.warning("Rejection disimpan.")
-                st.rerun()
-
-    elif role == "project_leader":
-        if can_advance:
-            st.success("✅ Semua approval lengkap. Kamu bisa lanjut ke fase Measure.")
-        else:
-            st.info("Menunggu approval dari Reviewer dan Champion.")
-else:
-    st.info("Finalize DEFINE dulu sebelum bisa di-approve.")
-
-
-st.divider()
-
-# ---------- Audit ----------
-st.subheader("🧾 Audit Log — DEFINE Phase")
-events = audit.get_recent_events(project_id=active_pid, phase="Define", limit=30)
-if events:
-    st.dataframe(events, width="stretch")
-else:
-    st.write("No audit events found.")
+        st.write("Belum ada audit event.")
 

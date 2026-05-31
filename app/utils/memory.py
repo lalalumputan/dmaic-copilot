@@ -62,6 +62,13 @@ def _ensure_schema(con: sqlite3.Connection) -> None:
 
         CREATE INDEX IF NOT EXISTS idx_episodes_lookup
             ON global_episodes (phase, industry, pain_theme);
+                      
+        CREATE TABLE IF NOT EXISTS project_meta (
+            project_id   TEXT PRIMARY KEY,
+            path         TEXT NOT NULL DEFAULT 'standard',
+            payload      TEXT NOT NULL DEFAULT '{}',
+            updated_at   TEXT NOT NULL
+        );
     """)
 
 
@@ -188,6 +195,57 @@ def define_project_exists(project_id: str) -> bool:
         ).fetchone()
     return row is not None
 
+def save_project_meta(project_id: str, meta: Dict[str, Any]) -> None:
+    """
+    Simpan project-level metadata: path + classification result.
+    meta = {
+        "path": "standard" | "quick",
+        "classification": { ... result dari classification_agent ... },
+        "path_confirmed_by": "reviewer" | None,
+        "path_override": True | False,
+    }
+    """
+    with _db() as con:
+        con.execute(
+            """
+            INSERT INTO project_meta (project_id, path, payload, updated_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(project_id) DO UPDATE SET
+                path       = excluded.path,
+                payload    = excluded.payload,
+                updated_at = excluded.updated_at
+            """,
+            (
+                project_id,
+                meta.get("path", "standard"),
+                json.dumps(meta, ensure_ascii=False),
+                _now(),
+            ),
+        )
+
+
+def save_project_leader_name(project_id: str, display_name: str) -> None:
+    """Simpan display_name project leader ke project_meta."""
+    meta = load_project_meta(project_id)
+    meta["project_leader_name"] = display_name
+    save_project_meta(project_id, meta)
+
+
+def load_project_meta(project_id: str) -> Dict[str, Any]:
+    """
+    Load project metadata. Returns default jika belum ada.
+    """
+    with _db() as con:
+        row = con.execute(
+            "SELECT payload FROM project_meta WHERE project_id=?",
+            (project_id,),
+        ).fetchone()
+    if row is None:
+        return {"path": "standard", "classification": None, "path_override": False}
+    try:
+        return json.loads(row["payload"])
+    except Exception:
+        return {"path": "standard", "classification": None, "path_override": False}
 
 # ======================================================
 # DEFINE
@@ -328,6 +386,7 @@ def save_approval(
     role: str,
     action: str,          # 'approve' | 'reject'
     note: str = "",
+    display_name: str = "",
 ) -> None:
     """Simpan approval/rejection dari reviewer atau champion."""
     with _db() as con:
@@ -344,12 +403,13 @@ def save_approval(
                 phase,
                 f"approval_{role}",
                 json.dumps({
-                    "role":       role,
-                    "action":     action,
-                    "note":       note,
-                    "timestamp":  _now(),
-                    "project_id": project_id,
-                    "phase":      phase,
+                    "role":         role,
+                    "action":       action,
+                    "note":         note,
+                    "display_name": display_name,
+                    "timestamp":    _now(),
+                    "project_id":   project_id,
+                    "phase":        phase,
                 }, ensure_ascii=False),
                 _now(),
             ),
@@ -360,34 +420,86 @@ def load_approval(project_id: str, phase: str, role: str) -> Optional[Dict[str, 
     """Load approval untuk role tertentu di fase tertentu."""
     return _load_state(project_id, phase, f"approval_{role}")
 
+# Urutan fase untuk sequential gate
+_PHASES_ORDER = ["define", "measure", "analyze", "improve", "control"]
+
+
+def _prev_phase_can_advance(project_id: str, phase: str) -> bool:
+    """
+    Sequential gate helper: True jika fase sebelumnya sudah can_advance.
+    DEFINE selalu True (tidak ada fase sebelumnya).
+    """
+    idx = _PHASES_ORDER.index(phase)
+    if idx == 0:
+        return True
+    return get_phase_approval_status(project_id, _PHASES_ORDER[idx - 1]).get("can_advance", False)
+
 
 def get_phase_approval_status(project_id: str, phase: str) -> Dict[str, Any]:
     """
-    Return status approval lengkap untuk satu fase.
-    {
-        "reviewer":  {"action": "approve"|"reject"|None, "note": "...", "timestamp": "..."},
-        "champion":  {"action": "approve"|"reject"|None, "note": "...", "timestamp": "..."},
-        "can_advance": True|False
-    }
+    Sequential approval governance dengan aturan baru.
+
+    Berlaku untuk kedua path:
+      DEFINE   — Reviewer + Champion (gate awal project, tanpa dependensi fase sebelumnya)
+      CONTROL  — Standard: Reviewer + Champion | Quick: Champion only
+                 (gate penutup project, requires IMPROVE approved)
+
+    Standard path fase tengah (measure, analyze, improve):
+      Reviewer only, requires fase sebelumnya approved.
+
+    Quick path fase tengah (measure, analyze, improve):
+      Auto-advance, tapi hanya jika fase sebelumnya sudah approved.
     """
+    project_path = load_project_meta(project_id).get("path", "standard")
+
     reviewer = load_approval(project_id, phase, "reviewer") or {}
     champion = load_approval(project_id, phase, "champion") or {}
 
     reviewer_approved = reviewer.get("action") == "approve"
     champion_approved = champion.get("action") == "approve"
 
+    prev_ok = _prev_phase_can_advance(project_id, phase)
+
+    if phase == "define":
+        # Kedua role wajib; tidak ada sequential dependency
+        can_advance        = reviewer_approved and champion_approved
+        required_approvers = ["reviewer", "champion"]
+        auto_advance       = False
+    elif phase == "control":
+        if project_path == "quick":
+            can_advance        = prev_ok and champion_approved
+            required_approvers = ["champion"]
+        else:
+            can_advance        = prev_ok and reviewer_approved and champion_approved
+            required_approvers = ["reviewer", "champion"]
+        auto_advance = False
+    else:  # measure, analyze, improve
+        if project_path == "quick":
+            can_advance        = prev_ok   # auto, tapi tergantung fase sebelumnya
+            required_approvers = []
+            auto_advance       = True
+        else:
+            can_advance        = prev_ok and reviewer_approved
+            required_approvers = ["reviewer"]
+            auto_advance       = False
+
     return {
         "reviewer": {
-            "action":    reviewer.get("action"),
-            "note":      reviewer.get("note", ""),
-            "timestamp": reviewer.get("timestamp"),
+            "action":       reviewer.get("action"),
+            "note":         reviewer.get("note", ""),
+            "timestamp":    reviewer.get("timestamp"),
+            "display_name": reviewer.get("display_name", ""),
         },
         "champion": {
-            "action":    champion.get("action"),
-            "note":      champion.get("note", ""),
-            "timestamp": champion.get("timestamp"),
+            "action":       champion.get("action"),
+            "note":         champion.get("note", ""),
+            "timestamp":    champion.get("timestamp"),
+            "display_name": champion.get("display_name", ""),
         },
-        "can_advance": reviewer_approved and champion_approved,
+        "can_advance":        can_advance,
+        "required_approvers": required_approvers,
+        "auto_advance":       auto_advance,
+        "prev_approved":      prev_ok,
     }
 
 
@@ -395,3 +507,141 @@ def reset_approvals(project_id: str, phase: str) -> None:
     """Reset semua approval di fase ini (misal kalau draft direvisi ulang)."""
     for role in ("reviewer", "champion"):
         _delete_state(project_id, phase, f"approval_{role}")
+
+
+# ======================================================
+# ADMIN — PROJECT CLEANUP
+# ======================================================
+
+def delete_project_all_data(project_id: str) -> bool:
+    """
+    Admin-only: hapus semua data project dari semua tabel.
+    Tidak ada UI — hanya dipanggil dari admin_cleanup.py.
+    """
+    try:
+        with _db() as con:
+            con.execute("DELETE FROM phase_states WHERE project_id=?", (project_id,))
+            con.execute("DELETE FROM project_meta WHERE project_id=?", (project_id,))
+            # global_episodes tidak punya project_id — dibiarkan (cross-project knowledge)
+        return True
+    except Exception as e:
+        print(f"[delete_project] Error: {e}")
+        return False
+
+
+def copy_project(source_pid: str, dest_pid: str, reset_approvals: bool = True) -> dict:
+    """
+    Salin semua data project dari source_pid ke dest_pid.
+    Berguna untuk testing tanpa harus re-input data dari awal.
+
+    Args:
+        source_pid: Project ID sumber
+        dest_pid: Project ID tujuan (harus belum ada)
+        reset_approvals: Jika True, skip semua approval rows
+
+    Returns:
+        {"copied_rows": int, "skipped": list}  atau  {"error": str}
+    """
+    import json as _json
+    try:
+        with _db() as con:
+            # 1. Cek dest_pid belum ada
+            existing = con.execute(
+                "SELECT 1 FROM phase_states WHERE project_id=? LIMIT 1", (dest_pid,)
+            ).fetchone()
+            if existing:
+                return {"error": f"Project '{dest_pid}' sudah ada di database."}
+
+            # 2. Ambil semua phase_states dari source
+            rows = con.execute(
+                "SELECT phase, kind, payload FROM phase_states WHERE project_id=?",
+                (source_pid,)
+            ).fetchall()
+            if not rows:
+                return {"error": f"Project '{source_pid}' tidak ditemukan atau tidak ada data."}
+
+            skipped = []
+            copied = 0
+            for row in rows:
+                phase = row["phase"]
+                kind  = row["kind"]
+                payload_str = row["payload"]
+
+                # Skip approval rows jika reset_approvals=True
+                if reset_approvals and "approval" in kind:
+                    skipped.append(f"{phase}:{kind}")
+                    continue
+
+                # Update project_id di dalam payload JSON jika ada
+                try:
+                    payload = _json.loads(payload_str)
+                    if isinstance(payload, dict) and payload.get("project_id"):
+                        payload["project_id"] = dest_pid
+                        payload_str = _json.dumps(payload, ensure_ascii=False)
+                except Exception:
+                    pass  # bukan JSON valid, salin apa adanya
+
+                con.execute(
+                    """INSERT OR REPLACE INTO phase_states
+                       (project_id, phase, kind, payload, updated_at)
+                       VALUES (?, ?, ?, ?, datetime('now'))""",
+                    (dest_pid, phase, kind, payload_str)
+                )
+                copied += 1
+
+            # 3. Salin project_meta
+            meta_row = con.execute(
+                "SELECT path, payload FROM project_meta WHERE project_id=?",
+                (source_pid,)
+            ).fetchone()
+            if meta_row:
+                try:
+                    meta_payload = _json.loads(meta_row["payload"])
+                    meta_payload["copied_from"] = source_pid
+                    meta_payload_str = _json.dumps(meta_payload, ensure_ascii=False)
+                except Exception:
+                    meta_payload_str = meta_row["payload"]
+
+                con.execute(
+                    """INSERT OR REPLACE INTO project_meta
+                       (project_id, path, payload, updated_at)
+                       VALUES (?, ?, ?, datetime('now'))""",
+                    (dest_pid, meta_row["path"], meta_payload_str)
+                )
+
+        return {"copied_rows": copied, "skipped": skipped}
+
+    except Exception as e:
+        return {"error": f"Copy gagal: {e}"}
+
+
+def list_all_projects() -> list:
+    """Admin: list semua project dengan status per fase."""
+    with _db() as con:
+        rows = con.execute(
+            """
+            SELECT ps.project_id, pm.path,
+                   GROUP_CONCAT(ps.phase || ':' || ps.kind, ',') as states
+            FROM phase_states ps
+            LEFT JOIN project_meta pm ON ps.project_id = pm.project_id
+            GROUP BY ps.project_id
+            ORDER BY ps.project_id
+            """
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+def save_analyze_wip(project_id: str, inputs: dict) -> None:
+    """Save raw Analyze inputs WIP (no LLM, no gate) for persistence across reloads."""
+    _upsert_state(project_id, "analyze", "wip", inputs)
+
+def load_analyze_wip(project_id: str) -> dict:
+    """Load Analyze WIP inputs."""
+    return _load_state(project_id, "analyze", "wip") or {}
+
+def save_control_wip(project_id: str, inputs: dict) -> None:
+    """Save raw Control inputs WIP (no LLM, no gate) for persistence across reloads."""
+    _upsert_state(project_id, "control", "wip", inputs)
+
+def load_control_wip(project_id: str) -> dict:
+    """Load Control WIP inputs."""
+    return _load_state(project_id, "control", "wip") or {}

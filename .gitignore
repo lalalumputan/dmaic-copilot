@@ -31,3 +31,11 @@ migrate_to_sqlite.py
 *.docx
 make_sidebar_logo.py
 app/assets/sidebar_logo.png
+
+# Data, backups, temp & generated reports — NEVER commit
+data/
+Projects Database/
+backup_befgem/
+_arch_extract.txt
+docs/*.pdf
+claude.md
