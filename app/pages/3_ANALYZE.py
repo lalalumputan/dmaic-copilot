@@ -793,7 +793,18 @@ with tab_input:
         "&rarr; <b>Rencana Tindakan Lanjut</b></div></div>"
         "</div></div>"
     )
-    st.markdown(_rca_guide_html, unsafe_allow_html=True)
+    if _proj_path == "quick":
+        st.markdown(
+            "<div style='padding:8px 0;font-size:0.9rem;'>"
+            "<b>🟢 Quick Path — Fishbone 3M:</b> cukup kelompokkan penyebab ke "
+            "<b>Man &middot; Method &middot; Machine</b>, pilih root cause yang paling "
+            "berdampak, lalu isi langsung ke tabel Xn di Step 4. "
+            "<i>5-Why chain & verification plan formal tidak wajib di Quick Path.</i>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(_rca_guide_html, unsafe_allow_html=True)
 
     # ── Upload foto fishbone (offline) ──
     st.markdown("**📸 Upload foto hasil fishbone analysis (offline):**")
@@ -1005,221 +1016,228 @@ with tab_input:
 
     st.divider()
 
-    # ── Step 6: Verification Plan ──
-    st.markdown("### Step 6 — Verification Plan")
+    if _proj_path != "quick":
+        # ── Step 6: Verification Plan ──
+        st.markdown("### Step 6 — Verification Plan")
 
-    _pc_for_vplan = st.session_state.get(_pot_causes_key, [])
-    _n_causes = len([c for c in _pc_for_vplan if (c.get("description") or c.get("cause","")).strip()])
+        _pc_for_vplan = st.session_state.get(_pot_causes_key, [])
+        _n_causes = len([c for c in _pc_for_vplan if (c.get("description") or c.get("cause","")).strip()])
 
-    if _n_causes:
-        st.caption(f"Agent menyusun verification plan berdasarkan **{_n_causes} potential root cause** yang tersimpan di Step 4. Review dan sesuaikan sebelum ke Step 7.")
-    else:
-        st.caption("Isi dan simpan tabel Xn di Step 4 terlebih dahulu — verification plan dibuat berdasarkan causes tersebut.")
-
-    col_vp_gen, col_vp_save = st.columns([1,1])
-    with col_vp_gen:
-        if st.button("🤖 Generate Verification Plan", key=f"gen_vplan_{active_pid}",
-                     disabled=is_locked or not _n_causes):
-            if not _pc_for_vplan:
-                st.warning("Simpan causes di Step 4 terlebih dahulu.")
-            else:
-                with st.spinner("Agent menyusun verification plan berdasarkan Xn list dari Step 4..."):
-                    from app.agents.analyze_agent import (
-                        _build_verification_plan_llm,
-                        _extract_upstream_context,
-                    )
-                    _upstream_vp = _extract_upstream_context(define_final, measure_final)
-                    _new_vplan = _build_verification_plan_llm(_pc_for_vplan, _upstream_vp)
-                if _new_vplan:
-                    # Validasi: hanya simpan baris yang Xn-nya ada di Step 4
-                    _valid_xns = {c.get("xn","") for c in _pc_for_vplan}
-                    _filtered_vplan = [v for v in _new_vplan if v.get("xn","") in _valid_xns]
-                    # Jika agent miss beberapa Xn, fallback ke semua
-                    if not _filtered_vplan:
-                        _filtered_vplan = _new_vplan
-                    st.session_state[_vplan_key] = _filtered_vplan
-                    st.rerun()
-                else:
-                    st.error("Agent tidak menghasilkan verification plan. Cek koneksi LLM atau lengkapi isian Step 4.")
-
-    if _vplan_key not in st.session_state:
-        st.session_state[_vplan_key] = []
-
-    vplan = st.session_state.get(_vplan_key, [])
-    if vplan:
-        _vp_df = pd.DataFrame([{
-            "xn":                   v.get("xn",""),
-            "root_cause":           v.get("root_cause",""),
-            "input_measurement_x":  v.get("input_measurement_x",""),
-            "relation_to_y":        v.get("relation_to_y",""),
-            "verification_method":  v.get("verification_method",""),
-            "data_needed":          v.get("data_needed",""),
-        } for v in vplan])
-        _vp_edit = st.data_editor(
-            _vp_df,
-            num_rows="dynamic",
-            use_container_width=True,
-            key=f"vp_editor_{active_pid}",
-            disabled=is_locked,
-        )
-        with col_vp_save:
-            if st.button("💾 Simpan Vplan", key=f"vp_save_{active_pid}", disabled=is_locked):
-                if isinstance(_vp_edit, pd.DataFrame):
-                    st.session_state[_vplan_key] = _vp_edit.to_dict(orient="records")
-                st.success("Verification plan tersimpan.")
-    else:
-        st.info("Generate Verification Plan setelah potential causes tersedia.")
-
-    st.divider()
-
-    # ── Step 7: Verification Results (user fills after fieldwork) ──
-    st.markdown("### Step 7 — Verification Results")
-    st.caption("Diisi oleh Project Leader setelah melakukan verifikasi lapangan/data. Agent tidak mengisi bagian ini.")
-
-    # Seed logic: prioritas WIP → vplan → pot_causes → kosong
-    if _vresults_key not in st.session_state or not st.session_state.get(_vresults_key):
-        _wip_vr = memory.load_analyze_wip(active_pid)
-        _vr_from_wip = _wip_vr.get("verification_results", [])
-        if _vr_from_wip:
-            st.session_state[_vresults_key] = _vr_from_wip
+        if _n_causes:
+            st.caption(f"Agent menyusun verification plan berdasarkan **{_n_causes} potential root cause** yang tersimpan di Step 4. Review dan sesuaikan sebelum ke Step 7.")
         else:
-            # Seed dari vplan jika ada, else dari pot_causes
-            _vr_seed = []
-            _vr_src  = vplan or []
-            if not _vr_src:
-                _vr_src = [
-                    {"xn": c.get("xn",""), "root_cause": c.get("description","") or c.get("cause","")}
-                    for c in (st.session_state.get(_pot_causes_key) or [])
-                ]
-            for _v in _vr_src:
-                _vr_seed.append({
-                    "xn":                   _v.get("xn",""),
-                    "root_cause":           _v.get("root_cause","") or _v.get("cause","") or _v.get("description",""),
-                    "verification_result":  "",
-                    "impact_pct_of_target": "",
-                    "impact_level":         "medium",
-                    "is_root_cause":        False,
-                })
-            st.session_state[_vresults_key] = _vr_seed
+            st.caption("Isi dan simpan tabel Xn di Step 4 terlebih dahulu — verification plan dibuat berdasarkan causes tersebut.")
 
-    # Tombol sync dari vplan (jika vplan sudah di-generate setelah vresults)
-    _vr_top_c1, _vr_top_c2 = st.columns([2, 1])
-    with _vr_top_c2:
-        if vplan and not is_locked:
-            if st.button("🔄 Sync dari Verification Plan", key=f"vr_sync_{active_pid}",
-                         help="Reset baris Xn dari verification plan (isi kolom verification result tidak ikut terhapus)"):
-                _cur_vr = {r.get("xn",""): r for r in (st.session_state.get(_vresults_key) or [])}
-                _synced = []
-                for _v in vplan:
-                    _xn = _v.get("xn","")
-                    _existing = _cur_vr.get(_xn, {})
-                    _synced.append({
-                        "xn":                   _xn,
-                        "root_cause":           _v.get("root_cause",""),
-                        "verification_result":  _existing.get("verification_result",""),
-                        "impact_pct_of_target": _existing.get("impact_pct_of_target",""),
-                        "impact_level":         _existing.get("impact_level","medium"),
-                        "is_root_cause":        _existing.get("is_root_cause", False),
-                    })
-                st.session_state[_vresults_key] = _synced
-                st.rerun()
-
-    vresults = st.session_state.get(_vresults_key, [])
-
-    if vresults:
-        _vr_df = pd.DataFrame([{
-            "xn":                   r.get("xn",""),
-            "root_cause":           r.get("root_cause",""),
-            "verification_result":  r.get("verification_result",""),
-            "impact_pct_of_target": str(r.get("impact_pct_of_target","") or ""),
-            "impact_level":         r.get("impact_level","medium"),
-            "is_root_cause":        bool(r.get("is_root_cause", False)),
-        } for r in vresults])
-        _vr_edit = st.data_editor(
-            _vr_df,
-            num_rows="dynamic",
-            use_container_width=True,
-            key=f"vr_editor_{active_pid}",
-            disabled=is_locked,
-            column_config={
-                "xn":               st.column_config.TextColumn("Xn", width="small", disabled=True),
-                "root_cause":       st.column_config.TextColumn("Root Cause", width="large"),
-                "verification_result":    st.column_config.TextColumn("Verification Result", width="large"),
-                "impact_pct_of_target":   st.column_config.TextColumn("Impact % of Target Gap", width="medium"),
-                "impact_level":           st.column_config.SelectboxColumn("Impact Level", options=["high","medium","low"], width="small"),
-                "is_root_cause":          st.column_config.CheckboxColumn("Root Cause?", width="small"),
-            },
-        )
-        if st.button("💾 Simpan Verification Results", key=f"vr_save_{active_pid}", disabled=is_locked):
-            if isinstance(_vr_edit, pd.DataFrame):
-                _saved_vr = _vr_edit.to_dict(orient="records")
-                # Normalize is_root_cause → Python bool
-                for _r in _saved_vr:
-                    _rc = _r.get("is_root_cause", False)
-                    if isinstance(_rc, str):
-                        _r["is_root_cause"] = _rc.strip().lower() in ("true","yes","1","✅")
+        col_vp_gen, col_vp_save = st.columns([1,1])
+        with col_vp_gen:
+            if st.button("🤖 Generate Verification Plan", key=f"gen_vplan_{active_pid}",
+                         disabled=is_locked or not _n_causes):
+                if not _pc_for_vplan:
+                    st.warning("Simpan causes di Step 4 terlebih dahulu.")
+                else:
+                    with st.spinner("Agent menyusun verification plan berdasarkan Xn list dari Step 4..."):
+                        from app.agents.analyze_agent import (
+                            _build_verification_plan_llm,
+                            _extract_upstream_context,
+                        )
+                        _upstream_vp = _extract_upstream_context(define_final, measure_final)
+                        _new_vplan = _build_verification_plan_llm(_pc_for_vplan, _upstream_vp)
+                    if _new_vplan:
+                        # Validasi: hanya simpan baris yang Xn-nya ada di Step 4
+                        _valid_xns = {c.get("xn","") for c in _pc_for_vplan}
+                        _filtered_vplan = [v for v in _new_vplan if v.get("xn","") in _valid_xns]
+                        # Jika agent miss beberapa Xn, fallback ke semua
+                        if not _filtered_vplan:
+                            _filtered_vplan = _new_vplan
+                        st.session_state[_vplan_key] = _filtered_vplan
+                        st.rerun()
                     else:
-                        _r["is_root_cause"] = bool(_rc)
-                st.session_state[_vresults_key] = _saved_vr
-                _wip_vr2 = memory.load_analyze_wip(active_pid)
-                _wip_vr2["verification_results"] = _saved_vr
-                memory.save_analyze_wip(active_pid, _wip_vr2)
-                _confirmed_n = sum(1 for r in _saved_vr if r.get("is_root_cause"))
-                st.success(f"✅ Tersimpan — {_confirmed_n} root cause terkonfirmasi dari {len(_saved_vr)} cause.")
+                        st.error("Agent tidak menghasilkan verification plan. Cek koneksi LLM atau lengkapi isian Step 4.")
+
+        if _vplan_key not in st.session_state:
+            st.session_state[_vplan_key] = []
+
+        vplan = st.session_state.get(_vplan_key, [])
+        if vplan:
+            _vp_df = pd.DataFrame([{
+                "xn":                   v.get("xn",""),
+                "root_cause":           v.get("root_cause",""),
+                "input_measurement_x":  v.get("input_measurement_x",""),
+                "relation_to_y":        v.get("relation_to_y",""),
+                "verification_method":  v.get("verification_method",""),
+                "data_needed":          v.get("data_needed",""),
+            } for v in vplan])
+            _vp_edit = st.data_editor(
+                _vp_df,
+                num_rows="dynamic",
+                use_container_width=True,
+                key=f"vp_editor_{active_pid}",
+                disabled=is_locked,
+            )
+            with col_vp_save:
+                if st.button("💾 Simpan Vplan", key=f"vp_save_{active_pid}", disabled=is_locked):
+                    if isinstance(_vp_edit, pd.DataFrame):
+                        st.session_state[_vplan_key] = _vp_edit.to_dict(orient="records")
+                    st.success("Verification plan tersimpan.")
+        else:
+            st.info("Generate Verification Plan setelah potential causes tersedia.")
+
+        st.divider()
+
+        # ── Step 7: Verification Results (user fills after fieldwork) ──
+        st.markdown("### Step 7 — Verification Results")
+        st.caption("Diisi oleh Project Leader setelah melakukan verifikasi lapangan/data. Agent tidak mengisi bagian ini.")
+
+        # Seed logic: prioritas WIP → vplan → pot_causes → kosong
+        if _vresults_key not in st.session_state or not st.session_state.get(_vresults_key):
+            _wip_vr = memory.load_analyze_wip(active_pid)
+            _vr_from_wip = _wip_vr.get("verification_results", [])
+            if _vr_from_wip:
+                st.session_state[_vresults_key] = _vr_from_wip
+            else:
+                # Seed dari vplan jika ada, else dari pot_causes
+                _vr_seed = []
+                _vr_src  = vplan or []
+                if not _vr_src:
+                    _vr_src = [
+                        {"xn": c.get("xn",""), "root_cause": c.get("description","") or c.get("cause","")}
+                        for c in (st.session_state.get(_pot_causes_key) or [])
+                    ]
+                for _v in _vr_src:
+                    _vr_seed.append({
+                        "xn":                   _v.get("xn",""),
+                        "root_cause":           _v.get("root_cause","") or _v.get("cause","") or _v.get("description",""),
+                        "verification_result":  "",
+                        "impact_pct_of_target": "",
+                        "impact_level":         "medium",
+                        "is_root_cause":        False,
+                    })
+                st.session_state[_vresults_key] = _vr_seed
+
+        # Tombol sync dari vplan (jika vplan sudah di-generate setelah vresults)
+        _vr_top_c1, _vr_top_c2 = st.columns([2, 1])
+        with _vr_top_c2:
+            if vplan and not is_locked:
+                if st.button("🔄 Sync dari Verification Plan", key=f"vr_sync_{active_pid}",
+                             help="Reset baris Xn dari verification plan (isi kolom verification result tidak ikut terhapus)"):
+                    _cur_vr = {r.get("xn",""): r for r in (st.session_state.get(_vresults_key) or [])}
+                    _synced = []
+                    for _v in vplan:
+                        _xn = _v.get("xn","")
+                        _existing = _cur_vr.get(_xn, {})
+                        _synced.append({
+                            "xn":                   _xn,
+                            "root_cause":           _v.get("root_cause",""),
+                            "verification_result":  _existing.get("verification_result",""),
+                            "impact_pct_of_target": _existing.get("impact_pct_of_target",""),
+                            "impact_level":         _existing.get("impact_level","medium"),
+                            "is_root_cause":        _existing.get("is_root_cause", False),
+                        })
+                    st.session_state[_vresults_key] = _synced
+                    st.rerun()
+
+        vresults = st.session_state.get(_vresults_key, [])
+
+        if vresults:
+            _vr_df = pd.DataFrame([{
+                "xn":                   r.get("xn",""),
+                "root_cause":           r.get("root_cause",""),
+                "verification_result":  r.get("verification_result",""),
+                "impact_pct_of_target": str(r.get("impact_pct_of_target","") or ""),
+                "impact_level":         r.get("impact_level","medium"),
+                "is_root_cause":        bool(r.get("is_root_cause", False)),
+            } for r in vresults])
+            _vr_edit = st.data_editor(
+                _vr_df,
+                num_rows="dynamic",
+                use_container_width=True,
+                key=f"vr_editor_{active_pid}",
+                disabled=is_locked,
+                column_config={
+                    "xn":               st.column_config.TextColumn("Xn", width="small", disabled=True),
+                    "root_cause":       st.column_config.TextColumn("Root Cause", width="large"),
+                    "verification_result":    st.column_config.TextColumn("Verification Result", width="large"),
+                    "impact_pct_of_target":   st.column_config.TextColumn("Impact % of Target Gap", width="medium"),
+                    "impact_level":           st.column_config.SelectboxColumn("Impact Level", options=["high","medium","low"], width="small"),
+                    "is_root_cause":          st.column_config.CheckboxColumn("Root Cause?", width="small"),
+                },
+            )
+            if st.button("💾 Simpan Verification Results", key=f"vr_save_{active_pid}", disabled=is_locked):
+                if isinstance(_vr_edit, pd.DataFrame):
+                    _saved_vr = _vr_edit.to_dict(orient="records")
+                    # Normalize is_root_cause → Python bool
+                    for _r in _saved_vr:
+                        _rc = _r.get("is_root_cause", False)
+                        if isinstance(_rc, str):
+                            _r["is_root_cause"] = _rc.strip().lower() in ("true","yes","1","✅")
+                        else:
+                            _r["is_root_cause"] = bool(_rc)
+                    st.session_state[_vresults_key] = _saved_vr
+                    _wip_vr2 = memory.load_analyze_wip(active_pid)
+                    _wip_vr2["verification_results"] = _saved_vr
+                    memory.save_analyze_wip(active_pid, _wip_vr2)
+                    _confirmed_n = sum(1 for r in _saved_vr if r.get("is_root_cause"))
+                    st.success(f"✅ Tersimpan — {_confirmed_n} root cause terkonfirmasi dari {len(_saved_vr)} cause.")
+        else:
+            st.info("Tabel kosong — klik **➕ Tambah Baris** untuk mulai mengisi, atau generate Verification Plan di Step 6 terlebih dahulu.")
+
+        # ── Upload data pendukung verifikasi ──
+        st.markdown("**📎 Upload Data Pendukung Verifikasi (opsional)**")
+        st.caption("Upload foto gemba, data sheet, atau file lain sebagai bukti verifikasi. Tidak harus ada — isi jika tersedia.")
+
+        _vr_uploads_key = f"analyze_vr_uploads_{active_pid}"
+        if _vr_uploads_key not in st.session_state:
+            _wip_upld = memory.load_analyze_wip(active_pid)
+            st.session_state[_vr_uploads_key] = _wip_upld.get("vr_uploads", [])
+
+        _vr_files = st.file_uploader(
+            "Upload foto/data verifikasi",
+            type=["png","jpg","jpeg","pdf","xlsx","csv"],
+            accept_multiple_files=True,
+            key=f"vr_file_uploader_{active_pid}",
+            disabled=is_locked,
+        )
+        if _vr_files:
+            import base64 as _b64
+            _new_uploads = []
+            for _f in _vr_files:
+                _bytes = _f.read()
+                _new_uploads.append({
+                    "name": _f.name,
+                    "type": _f.type,
+                    "b64":  _b64.b64encode(_bytes).decode("utf-8"),
+                })
+            st.session_state[_vr_uploads_key] = _new_uploads
+            _wip_u = memory.load_analyze_wip(active_pid)
+            _wip_u["vr_uploads"] = _new_uploads
+            memory.save_analyze_wip(active_pid, _wip_u)
+            # Preview images
+            for _upld in _new_uploads:
+                if _upld["type"].startswith("image/"):
+                    try:
+                        st.image(_b64.b64decode(_upld["b64"]), caption=_upld["name"], width=400)
+                    except Exception:
+                        pass
+                else:
+                    st.caption(f"📎 {_upld['name']}")
+        elif st.session_state.get(_vr_uploads_key):
+            import base64 as _b64
+            st.caption(f"📎 {len(st.session_state[_vr_uploads_key])} file tersimpan:")
+            for _upld in st.session_state[_vr_uploads_key]:
+                if _upld.get("type","").startswith("image/"):
+                    try:
+                        st.image(_b64.b64decode(_upld["b64"]), caption=_upld["name"], width=400)
+                    except Exception:
+                        pass
+                else:
+                    st.caption(f"📎 {_upld['name']}")
+
     else:
-        st.info("Tabel kosong — klik **➕ Tambah Baris** untuk mulai mengisi, atau generate Verification Plan di Step 6 terlebih dahulu.")
-
-    # ── Upload data pendukung verifikasi ──
-    st.markdown("**📎 Upload Data Pendukung Verifikasi (opsional)**")
-    st.caption("Upload foto gemba, data sheet, atau file lain sebagai bukti verifikasi. Tidak harus ada — isi jika tersedia.")
-
-    _vr_uploads_key = f"analyze_vr_uploads_{active_pid}"
-    if _vr_uploads_key not in st.session_state:
-        _wip_upld = memory.load_analyze_wip(active_pid)
-        st.session_state[_vr_uploads_key] = _wip_upld.get("vr_uploads", [])
-
-    _vr_files = st.file_uploader(
-        "Upload foto/data verifikasi",
-        type=["png","jpg","jpeg","pdf","xlsx","csv"],
-        accept_multiple_files=True,
-        key=f"vr_file_uploader_{active_pid}",
-        disabled=is_locked,
-    )
-    if _vr_files:
-        import base64 as _b64
-        _new_uploads = []
-        for _f in _vr_files:
-            _bytes = _f.read()
-            _new_uploads.append({
-                "name": _f.name,
-                "type": _f.type,
-                "b64":  _b64.b64encode(_bytes).decode("utf-8"),
-            })
-        st.session_state[_vr_uploads_key] = _new_uploads
-        _wip_u = memory.load_analyze_wip(active_pid)
-        _wip_u["vr_uploads"] = _new_uploads
-        memory.save_analyze_wip(active_pid, _wip_u)
-        # Preview images
-        for _upld in _new_uploads:
-            if _upld["type"].startswith("image/"):
-                try:
-                    st.image(_b64.b64decode(_upld["b64"]), caption=_upld["name"], width=400)
-                except Exception:
-                    pass
-            else:
-                st.caption(f"📎 {_upld['name']}")
-    elif st.session_state.get(_vr_uploads_key):
-        import base64 as _b64
-        st.caption(f"📎 {len(st.session_state[_vr_uploads_key])} file tersimpan:")
-        for _upld in st.session_state[_vr_uploads_key]:
-            if _upld.get("type","").startswith("image/"):
-                try:
-                    st.image(_b64.b64decode(_upld["b64"]), caption=_upld["name"], width=400)
-                except Exception:
-                    pass
-            else:
-                st.caption(f"📎 {_upld['name']}")
-
+        st.info(
+            "⚡ **Quick Path** — Verification Plan & Verification Results formal "
+            "tidak wajib. Cukup tandai root cause yang sudah dikonfirmasi langsung di "
+            "tabel Xn (Step 4) dan lanjut ke fase Improve."
+        )
     st.divider()
 
     # ── Input Form (observations + submit) ──

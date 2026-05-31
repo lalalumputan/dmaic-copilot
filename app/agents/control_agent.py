@@ -418,15 +418,18 @@ def _control_gate_evaluate(
         failed.append("A1_no_monitoring_reaction_plan")
         actions.append("Buat monitoring & reaction plan dengan KPI, frequency, owner, dan RC tracing template.")
 
+    # A2: control plan — Quick path skip (advisory), Standard wajib
     control_plan = outputs.get("control_plan") or []
-    if not control_plan:
+    if not control_plan and enforce_b_rules:
         failed.append("A2_no_control_plan")
         actions.append("Buat control plan per CTQ: metric, spec limit, control method, owner.")
 
+    # A3: handover protocol — Quick path skip (advisory), Standard wajib
     handover = outputs.get("handover_protocol") or {}
     if not handover:
-        failed.append("A3_no_handover_protocol")
-        actions.append("Buat handover protocol dan upload confirmation sheet yang ditandatangani Process Owner.")
+        if enforce_b_rules:
+            failed.append("A3_no_handover_protocol")
+            actions.append("Buat handover protocol dan upload confirmation sheet yang ditandatangani Process Owner.")
     else:
         ho_confirmed = bool(handover.get("handover_confirmed")
                             or handover.get("confirmation_sheet_name"))
@@ -473,6 +476,7 @@ def _build_control_coaching_llm(
     outputs: dict,
     upstream: dict,
     user_inputs: dict,
+    project_path: str = "standard",
 ) -> str:
     failed      = gate.get("failed_rules") or []
     conditional = gate.get("conditional_rules") or []
@@ -481,6 +485,9 @@ def _build_control_coaching_llm(
 
     prompt = f"""
 You are a Lean Six Sigma Master Black Belt coaching a project leader on the Control phase.
+
+Execution path: {"Quick Improvement" if project_path == "quick" else "Standard DMAIC"}
+{"Note: This is a Quick Improvement project — coaching must be concise, focus on critical gaps only (A-rules). Do NOT require a formal Control Plan per CTQ or a full Handover Protocol (B-rule items skipped in Quick path); control chart + monitoring schedule are sufficient." if project_path == "quick" else ""}
 
 Gate Status: {status}
 Failed rules: {json.dumps(failed)}
@@ -730,7 +737,7 @@ def run_control_agent(
     # Coaching — LLM only on FAIL/WEAK_PASS
     gate_status = gate.get("status","")
     if gate_status in ("FAIL","WEAK_PASS"):
-        coaching_md = _build_control_coaching_llm(gate, outputs, upstream, user_inputs)
+        coaching_md = _build_control_coaching_llm(gate, outputs, upstream, user_inputs, project_path=project_path)
     else:
         coaching_md = "✅ Gate PASS — monitoring plan, control plan, and handover protocol complete."
 
