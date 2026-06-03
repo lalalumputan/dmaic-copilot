@@ -16,7 +16,8 @@ from app.agents.measure_agent import (
 from app.utils import memory, reporting, audit
 from app.utils import auth
 from app.utils import charts as _charts
-from app.utils.ui_helpers import render_sidebar_header
+from app.utils import llm_engine
+from app.utils.ui_helpers import render_sidebar_header, render_tab_quicknav, render_phase_end_date
 
 # ============================================
 # Helpers
@@ -94,6 +95,43 @@ def _seed_operational_definitions_from_define(define_final: dict) -> list:
             "decision_criteria": "Lower/Upper is better",
         },
     ]
+
+
+def _render_chart_img_eval(d) -> None:
+    """Render hasil ekstraksi agent dari gambar chart (dict terstruktur)."""
+    if not isinstance(d, dict) or not d:
+        return
+    if d.get("error"):
+        st.warning(d["error"])
+        return
+    _pc = str(d.get("problem_confirmed", "")).strip().lower()
+    _icon = "🔴" if _pc == "ya" else ("🟢" if _pc == "tidak" else "⚪")
+    _lbl = {"ya": "Problem CONFIRMED dari chart",
+            "tidak": "Problem TIDAK terkonfirmasi"}.get(_pc, "Konfirmasi belum jelas")
+    st.markdown(f"**Konfirmasi Problem:** {_icon} {_lbl}")
+    if d.get("confirmation_reason"):
+        st.caption(d["confirmation_reason"])
+
+    q = d.get("quartiles") or {}
+    _rows = []
+    if d.get("metric_name"):
+        _unit = f" ({d['unit']})" if d.get("unit") else ""
+        _rows.append(("Metric", f"{d.get('metric_name', '')}{_unit}"))
+    if d.get("average"):
+        _rows.append(("Average", d["average"]))
+    if isinstance(q, dict) and (q.get("q1") or q.get("median") or q.get("q3")):
+        _rows.append(("Quartile (Q1 / Median / Q3)",
+                      f"{q.get('q1', '-')} / {q.get('median', '-')} / {q.get('q3', '-')}"))
+    if d.get("vs_target"):
+        _rows.append(("Vs Target", d["vs_target"]))
+    if d.get("trend"):
+        _rows.append(("Trend", d["trend"]))
+    if _rows:
+        st.table(pd.DataFrame(_rows, columns=["Figur (estimasi visual)", "Nilai"]))
+    if d.get("narrative"):
+        st.markdown(d["narrative"])
+    if d.get("readability_note"):
+        st.caption(f"_{d['readability_note']}_")
 
 
 # ============================================
@@ -265,6 +303,7 @@ if active_pid:
 else:
     st.sidebar.warning("Belum ada project aktif.")
     st.sidebar.caption("Kembali ke **Main** untuk memilih project.")
+st.sidebar.divider()
 
 # ============================================
 # Gate: no active project
@@ -305,6 +344,22 @@ if active_pid and loaded_pid != active_pid:
             "measure_state": measure_final_disk,
             "summary": measure_final_disk.get("summary_md", ""),
             "message": "Auto-loaded FINAL from disk",
+        }
+
+# Fallback: pastikan draft/final Measure tetap ter-load dari disk walau _loaded_pid
+# sudah diset page lain (key _loaded_pid dipakai bersama antar page) → mencegah tab kosong.
+if active_pid and not st.session_state.get("measure_draft") and not st.session_state.get("measure_final"):
+    _md_disk = memory.load_measure_draft(active_pid)
+    _mf_disk = memory.load_measure_final(active_pid)
+    if _md_disk:
+        st.session_state["measure_draft"] = {
+            "status": "draft", "measure_state": _md_disk,
+            "summary": _md_disk.get("summary_md", ""), "message": "Loaded DRAFT from disk",
+        }
+    if _mf_disk:
+        st.session_state["measure_final"] = {
+            "status": "finalized", "measure_state": _mf_disk,
+            "summary": _mf_disk.get("summary_md", ""), "message": "Loaded FINAL from disk",
         }
 
 # Ensure define_final_state loaded
@@ -364,13 +419,9 @@ with h2:
 view, res = _get_current_result()
 measure_state = res["measure_state"] if (res and res.get("measure_state")) else None
 
-tab_input, tab_report, tab_tables, tab_perf, tab_msa = st.tabs([
-    "✏️ Input",
-    "📄 Report",
-    "📊 Tabel Detail",
-    "📈 Performance",
-    "🔍 MSA",
-])
+_TAB_LABELS = ["✏️ Input", "📄 Report", "📊 Tabel Detail", "📈 Performance", "🔍 MSA"]
+tab_input, tab_report, tab_tables, tab_perf, tab_msa = st.tabs(_TAB_LABELS)
+render_tab_quicknav(_TAB_LABELS)
 
 # ─── Shared state variables ───
 seed          = _seed_measure_inputs_from_define(active_pid, define_final)
@@ -453,8 +504,10 @@ with tab_input:
         if not _voc_tbl and not _ctq_lc:
             st.caption("VOC/VOB dan CTQ tidak ditemukan di DEFINE output.")
 
-    st.divider()
-    st.markdown("### Step 2 — Output Measurement Selection")
+    # Step 2 hanya untuk Standard path
+    if _proj_path == "standard":
+        st.divider()
+        st.markdown("### Step 2 — Output Measurement Selection")
 
 
     # ── CTQ → Measurement Candidates (Standard path, OUTSIDE form) ──
@@ -580,7 +633,6 @@ with tab_input:
 
     # ── Operational Definition Table (OUTSIDE form — Streamlit constraint) ──
     if _proj_path == "standard":
-        st.divider()
         st.markdown("### Step 3 — Operational Definition")
         st.caption("Klik 'Propose' untuk mendapatkan usulan dari agent. Edit langsung di tabel, lalu klik 'Simpan Perubahan'.")
 
@@ -612,11 +664,14 @@ with tab_input:
                 proposals = _propose_operational_definitions_llm(
                     _sel_now, define_ctx_opdef, _proj_path
                 )
-                # Merge: jangan timpa baris yang sudah diisi user
+                # Merge: jangan timpa baris yang sudah diisi user.
+                # Field hasil seed (metric_name + unit) TIDAK dihitung sebagai
+                # "sudah diisi user" — kalau dihitung, proposal agent akan dibuang.
+                _SEED_ONLY = {"metric_name", "unit"}
                 existing = {
                     r.get("metric_name", ""): r
                     for r in (st.session_state.get(_opdef_key) or [])
-                    if isinstance(r, dict) and any(str(v).strip() for k, v in r.items() if k != "metric_name")
+                    if isinstance(r, dict) and any(str(v).strip() for k, v in r.items() if k not in _SEED_ONLY)
                 }
                 merged = []
                 for p in proposals:
@@ -626,9 +681,19 @@ with tab_input:
                 st.session_state[_opdef_proposed_key] = True
             st.success("✅ Proposal tersedia. Edit di tabel lalu klik Simpan Perubahan.")
 
-        # Seed fallback jika belum ada sama sekali
+        # Seed/hydrate jika belum ada di session:
+        #   1) work-in-progress tersimpan (Simpan Perubahan sebelumnya)
+        #   2) op-defs dari draft/final yang sudah di-Generate
+        #   3) seed kosong dari selected measurements / define
         if not st.session_state.get(_opdef_key):
-            if _sel_now:
+            _wip_ops = (memory.load_measure_wip(active_pid) or {}).get("operational_definitions") or []
+            _saved_md = memory.load_measure_draft(active_pid) or memory.load_measure_final(active_pid) or {}
+            _saved_ops = (_saved_md.get("outputs") or {}).get("operational_definitions") or []
+            if _wip_ops:
+                st.session_state[_opdef_key] = _wip_ops
+            elif _saved_ops:
+                st.session_state[_opdef_key] = _saved_ops
+            elif _sel_now:
                 st.session_state[_opdef_key] = [
                     {
                         "metric_name":       m.get("measurement_name", ""),
@@ -672,96 +737,119 @@ with tab_input:
                 st.session_state[_opdef_key] = op_defs_edited.to_dict(orient="records")
             elif isinstance(op_defs_edited, list):
                 st.session_state[_opdef_key] = op_defs_edited
+            # Persist durable agar bertahan saat reload (tanpa harus Generate)
+            _wip = memory.load_measure_wip(active_pid) or {}
+            _wip["operational_definitions"] = st.session_state.get(_opdef_key, [])
+            _wip["measurement_system_analysis"] = st.session_state.get(f"measure_msa_{active_pid}", {})
+            memory.save_measure_wip(active_pid, _wip)
             st.success("✅ Perubahan tersimpan.")
 
         op_defs = st.session_state.get(_opdef_key, [])
     else:
         op_defs = []
 
-    st.divider()
-    st.markdown("### Step 4 — Measurement System Analysis (MSA)")
-    st.caption("Diisi oleh Project Leader. Agent akan memvalidasi completeness, bukan mengisi.")
+    if _proj_path == "standard":
+        st.divider()
+        st.markdown("### Step 4 — Measurement System Analysis (MSA)")
+        st.caption("Diisi oleh Project Leader. Agent akan memvalidasi completeness, bukan mengisi. "
+                   "Edit kolom **Isian** di tabel. Untuk aspek berisi daftar, pisahkan item dengan tanda `;`.")
 
-    _msa_key = f"measure_msa_{active_pid}"
-    if _msa_key not in st.session_state:
-        _saved_msa = {}
-        _saved = memory.load_measure_draft(active_pid) or memory.load_measure_final(active_pid) or {}
-        _saved_msa = (_saved.get("outputs") or {}).get("measurement_system_analysis") or {}
-        st.session_state[_msa_key] = _saved_msa
+        # Definisi baris MSA: (key, tipe, label Aspek, Petunjuk/Contoh)
+        #   tipe "text" → satu nilai teks; tipe "list" → banyak item dipisah ';'
+        _MSA_ROWS = [
+            ("approach",                 "text", "Pendekatan pengukuran",
+             "Contoh: Data diambil dari ERP SAP modul AR, extract bulanan oleh tim Finance."),
+            ("error_sources",            "list", "Sumber error potensial",
+             "Pisahkan dengan ;. Contoh: Salah input manual; System downtime menyebabkan data gap"),
+            ("cross_checks",             "list", "Cross-check yang dilakukan",
+             "Pisahkan dengan ;. Contoh: Reconcile dengan bank statement bulanan"),
+            ("improvement_steps",        "list", "Langkah perbaikan yang dilakukan",
+             "Pisahkan dengan ;. Contoh: Script data cleaning dijalankan sebelum extract"),
+            ("alternative_data_sources", "list", "Sumber data alternatif (jika ada)",
+             "Pisahkan dengan ;. Contoh: Laporan AR aging manual dari Finance"),
+            ("data_quality_rating",      "enum", "Self-assessment kualitas data",
+             "Pilih salah satu: good / fair / poor"),
+            ("data_quality_rationale",   "text", "Alasan rating kualitas data",
+             "Contoh: Data lengkap 12 bulan, tidak ada gap, sudah direconcile dengan Finance."),
+        ]
 
-    _msa = st.session_state[_msa_key]
+        def _msa_value_to_cell(val, typ: str) -> str:
+            if typ == "list":
+                return "; ".join(val or []) if isinstance(val, list) else str(val or "")
+            return str(val or "")
 
-    _msa_approach = st.text_area(
-        "Measurement approach",
-        value=_msa.get("approach", ""),
-        height=80,
-        key=f"msa_approach_{active_pid}",
-        disabled=is_locked,
-        placeholder="Contoh: Data diambil dari ERP SAP modul AR, extract bulanan oleh Finance team.",
-    )
+        def _parse_msa_editor(edited) -> dict:
+            """Tabel editor (Aspek/Petunjuk/Isian) → dict MSA terstruktur."""
+            if isinstance(edited, pd.DataFrame):
+                by_label = {
+                    str(r.get("Aspek", "")): str(r.get("Isian", "") or "")
+                    for r in edited.to_dict(orient="records")
+                }
+            else:
+                by_label = {}
+            out = {}
+            for (key, typ, label, _hint) in _MSA_ROWS:
+                raw = by_label.get(label, "")
+                if typ == "list":
+                    out[key] = [x.strip() for x in raw.split(";") if x.strip()]
+                elif typ == "enum":
+                    v = raw.strip().lower()
+                    out[key] = v if v in ("good", "fair", "poor") else ""
+                else:
+                    out[key] = raw.strip()
+            return out
 
-    _msa_error_src = st.text_area(
-        "Possible error sources",
-        value="\n".join(_msa.get("error_sources") or []),
-        height=80,
-        key=f"msa_error_src_{active_pid}",
-        disabled=is_locked,
-        placeholder="Satu per baris. Contoh: Manual entry error\nSystem downtime causing data gap",
-    )
+        _msa_key = f"measure_msa_{active_pid}"
+        if _msa_key not in st.session_state:
+            # Hydrate: work-in-progress → draft/final → kosong
+            _wip_msa = (memory.load_measure_wip(active_pid) or {}).get("measurement_system_analysis") or {}
+            _saved = memory.load_measure_draft(active_pid) or memory.load_measure_final(active_pid) or {}
+            _saved_msa = (_saved.get("outputs") or {}).get("measurement_system_analysis") or {}
+            st.session_state[_msa_key] = _wip_msa or _saved_msa or {}
 
-    _msa_cross = st.text_area(
-        "Cross-checks performed",
-        value="\n".join(_msa.get("cross_checks") or []),
-        height=80,
-        key=f"msa_cross_{active_pid}",
-        disabled=is_locked,
-        placeholder="Satu per baris. Contoh: Reconcile dengan bank statement bulanan",
-    )
+        _msa = st.session_state[_msa_key]
 
-    _msa_impr = st.text_area(
-        "Improvement steps undertaken",
-        value="\n".join(_msa.get("improvement_steps") or []),
-        height=80,
-        key=f"msa_impr_{active_pid}",
-        disabled=is_locked,
-        placeholder="Satu per baris. Contoh: Data cleaning script dijalankan sebelum extract",
-    )
+        # DataFrame dibangun SEKALI dan disimpan stabil — mencegah edit "hilang" saat rerun.
+        _msa_df_key = f"measure_msa_df_{active_pid}"
+        if _msa_df_key not in st.session_state:
+            st.session_state[_msa_df_key] = pd.DataFrame(
+                [
+                    {
+                        "Aspek":             label,
+                        "Petunjuk / Contoh": hint,
+                        "Isian":             _msa_value_to_cell(_msa.get(key, ""), typ),
+                    }
+                    for (key, typ, label, hint) in _MSA_ROWS
+                ],
+                columns=["Aspek", "Petunjuk / Contoh", "Isian"],
+            )
 
-    _msa_alt = st.text_area(
-        "Alternative data sources (jika ada)",
-        value="\n".join(_msa.get("alternative_data_sources") or []),
-        height=60,
-        key=f"msa_alt_{active_pid}",
-        disabled=is_locked,
-        placeholder="Satu per baris. Contoh: Manual AR aging report dari Finance",
-    )
+        _msa_edited = st.data_editor(
+            st.session_state[_msa_df_key],
+            num_rows="fixed",
+            use_container_width=True,
+            hide_index=True,
+            key=f"measure_msa_editor_{active_pid}",
+            disabled=is_locked or ["Aspek", "Petunjuk / Contoh"],
+            column_config={
+                "Aspek":             st.column_config.TextColumn("Aspek", width="medium"),
+                "Petunjuk / Contoh": st.column_config.TextColumn("Petunjuk / Contoh", width="large"),
+                "Isian":             st.column_config.TextColumn("Isian", width="large"),
+            },
+        )
 
-    _msa_dq = st.selectbox(
-        "Data quality self-assessment",
-        options=["", "good", "fair", "poor"],
-        index=["", "good", "fair", "poor"].index(_msa.get("data_quality_rating", "") or ""),
-        key=f"msa_dq_{active_pid}",
-        disabled=is_locked,
-    )
-
-    _msa_dq_rat = st.text_input(
-        "Rationale for data quality rating",
-        value=_msa.get("data_quality_rationale", ""),
-        key=f"msa_dq_rat_{active_pid}",
-        disabled=is_locked,
-        placeholder="Contoh: Data lengkap 12 bulan, tidak ada gap, sudah direconcile dengan Finance.",
-    )
-
-    # Update session state saat user mengedit
-    st.session_state[_msa_key] = {
-        "approach":                _msa_approach,
-        "error_sources":           [x.strip() for x in _msa_error_src.splitlines() if x.strip()],
-        "cross_checks":            [x.strip() for x in _msa_cross.splitlines() if x.strip()],
-        "improvement_steps":       [x.strip() for x in _msa_impr.splitlines() if x.strip()],
-        "alternative_data_sources":[x.strip() for x in _msa_alt.splitlines() if x.strip()],
-        "data_quality_rating":     _msa_dq,
-        "data_quality_rationale":  _msa_dq_rat,
-    }
+        _save_msa_clicked = st.button(
+            "💾 Simpan MSA",
+            key=f"msa_save_btn_{active_pid}",
+            disabled=is_locked,
+        )
+        if _save_msa_clicked:
+            st.session_state[_msa_key] = _parse_msa_editor(_msa_edited)
+            _wip = memory.load_measure_wip(active_pid) or {}
+            _wip["operational_definitions"] = st.session_state.get(_opdef_key, [])
+            _wip["measurement_system_analysis"] = st.session_state[_msa_key]
+            memory.save_measure_wip(active_pid, _wip)
+            st.success("✅ MSA tersimpan.")
 
     # ── Dataset Upload (OUTSIDE form — Streamlit constraint) ──
     st.divider()
@@ -774,6 +862,8 @@ with tab_input:
     )
 
     baseline_df = st.session_state.get("measure_baseline_df")
+    if st.session_state.get("measure_baseline_pid") != active_pid:
+        baseline_df = None  # dataset milik project lain → jangan dipakai
     if uploaded is not None:
         try:
             if uploaded.name.lower().endswith(".csv"):
@@ -782,31 +872,164 @@ with tab_input:
                 baseline_df = pd.read_excel(uploaded)
             st.session_state["measure_baseline_df"]   = baseline_df
             st.session_state["measure_uploaded_name"] = uploaded.name
+            st.session_state["measure_baseline_pid"]  = active_pid
+            # Persist durable ke wip agar bertahan walau belum Generate
+            try:
+                _wd = memory.load_measure_wip(active_pid) or {}
+                _wd["baseline_csv"]  = baseline_df.to_csv(index=False)
+                _wd["baseline_name"] = uploaded.name
+                memory.save_measure_wip(active_pid, _wd)
+            except Exception:
+                pass
             st.success(f"✅ {uploaded.name} — {baseline_df.shape[0]:,} rows, {baseline_df.shape[1]} columns")
         except Exception as e:
             st.error(f"Gagal membaca file: {e}")
             baseline_df = None
             st.session_state["measure_baseline_df"]   = None
             st.session_state["measure_uploaded_name"] = None
+    elif baseline_df is None:
+        # Tidak ada upload baru → restore dataset dari wip (jika ada)
+        _wd_ds = memory.load_measure_wip(active_pid) or {}
+        _csv = _wd_ds.get("baseline_csv")
+        if _csv:
+            try:
+                import io as _io_ds
+                baseline_df = pd.read_csv(_io_ds.StringIO(_csv))
+                st.session_state["measure_baseline_df"]   = baseline_df
+                st.session_state["measure_uploaded_name"] = _wd_ds.get("baseline_name", "")
+                st.session_state["measure_baseline_pid"]  = active_pid
+            except Exception:
+                baseline_df = None
 
     cols = list(baseline_df.columns.astype(str)) if isinstance(baseline_df, pd.DataFrame) else []
     if cols:
         st.caption(f"File: `{st.session_state.get('measure_uploaded_name','')}` | {len(baseline_df)} rows")
-        y_col    = st.selectbox("Y column (untuk baseline metrics)", options=[""] + cols,
-                                index=0, key=f"measure_y_col_{active_pid}", disabled=is_locked)
-        date_col = st.selectbox("Date/time column (untuk time series)", options=[""] + cols,
-                                index=0, key=f"measure_date_col_{active_pid}", disabled=is_locked)
+
+        # Hydrate pilihan kolom dari wip (hanya jika valid terhadap kolom dataset)
+        _ycol_k = f"measure_y_col_{active_pid}"
+        _dcol_k = f"measure_date_col_{active_pid}"
+        _seg_k  = f"measure_seg_cols_{active_pid}"
+        _wd_cols = memory.load_measure_wip(active_pid) or {}
+        if _ycol_k not in st.session_state and _wd_cols.get("baseline_y_col") in cols:
+            st.session_state[_ycol_k] = _wd_cols["baseline_y_col"]
+        if _dcol_k not in st.session_state and _wd_cols.get("baseline_date_col") in cols:
+            st.session_state[_dcol_k] = _wd_cols["baseline_date_col"]
+        if _seg_k not in st.session_state and isinstance(_wd_cols.get("baseline_seg_cols"), list):
+            _seg_valid = [c for c in _wd_cols["baseline_seg_cols"] if c in cols]
+            if _seg_valid:
+                st.session_state[_seg_k] = _seg_valid
+
+        _opts = [""] + cols
+        y_col    = st.selectbox("Y column (untuk baseline metrics)", options=_opts,
+                                index=0, key=_ycol_k, disabled=is_locked)
+        date_col = st.selectbox("Date/time column (untuk time series)", options=_opts,
+                                index=0, key=_dcol_k, disabled=is_locked)
         seg_cols = st.multiselect(
             "Segment columns (opsional)", options=cols,
             default=[c for c in ["site", "product", "shift"] if c in cols],
-            key=f"measure_seg_cols_{active_pid}", disabled=is_locked,
+            key=_seg_k, disabled=is_locked,
         )
+
+        # Persist pilihan kolom ke wip saat berubah
+        try:
+            _wd2 = memory.load_measure_wip(active_pid) or {}
+            if (_wd2.get("baseline_y_col") != y_col
+                    or _wd2.get("baseline_date_col") != (date_col or "")
+                    or _wd2.get("baseline_seg_cols") != (seg_cols or [])):
+                _wd2["baseline_y_col"]    = y_col
+                _wd2["baseline_date_col"] = date_col or ""
+                _wd2["baseline_seg_cols"] = seg_cols or []
+                memory.save_measure_wip(active_pid, _wd2)
+        except Exception:
+            pass
     else:
         y_col    = ""
         date_col = None
         seg_cols = []
 
- 
+    # ── Upload Gambar Chart (opsional, pelengkap dataset) ──
+    st.divider()
+    st.markdown("#### 🖼️ Upload Gambar Chart (opsional)")
+    st.caption("Upload screenshot/gambar grafik performa. Agent akan mengevaluasi secara kualitatif, "
+               "dan gambar tampil di tab Performance. Bisa berdampingan dengan dataset di atas.")
+
+    _img_b64_key  = f"measure_chart_img_b64_{active_pid}"
+    _img_mime_key = f"measure_chart_img_mime_{active_pid}"
+    _img_name_key = f"measure_chart_img_name_{active_pid}"
+    _img_eval_key = f"measure_chart_img_eval_{active_pid}"
+
+    # Hydrate dari work-in-progress saat reload
+    if _img_b64_key not in st.session_state:
+        _wip_img = memory.load_measure_wip(active_pid) or {}
+        st.session_state[_img_b64_key]  = _wip_img.get("chart_image_b64", "")
+        st.session_state[_img_mime_key] = _wip_img.get("chart_image_mime", "")
+        st.session_state[_img_name_key] = _wip_img.get("chart_image_name", "")
+        st.session_state[_img_eval_key] = _wip_img.get("chart_image_eval", "")
+
+    _chart_img_up = st.file_uploader(
+        "Upload gambar chart (PNG/JPG)",
+        type=["png", "jpg", "jpeg"],
+        key=f"measure_chart_img_uploader_{active_pid}",
+        disabled=is_locked,
+    )
+    if _chart_img_up is not None:
+        import base64 as _b64up
+        _b64str = _b64up.b64encode(_chart_img_up.getvalue()).decode("ascii")
+        if _b64str != st.session_state.get(_img_b64_key):
+            # Gambar baru → simpan + reset evaluasi lama
+            st.session_state[_img_b64_key]  = _b64str
+            st.session_state[_img_mime_key] = _chart_img_up.type or "image/png"
+            st.session_state[_img_name_key] = _chart_img_up.name
+            st.session_state[_img_eval_key] = ""
+            _wip = memory.load_measure_wip(active_pid) or {}
+            _wip["chart_image_b64"]  = _b64str
+            _wip["chart_image_mime"] = st.session_state[_img_mime_key]
+            _wip["chart_image_name"] = _chart_img_up.name
+            _wip["chart_image_eval"] = ""
+            memory.save_measure_wip(active_pid, _wip)
+
+    if st.session_state.get(_img_b64_key):
+        import base64 as _b64sh
+        st.image(_b64sh.b64decode(st.session_state[_img_b64_key]),
+                 caption=st.session_state.get(_img_name_key, "chart"), width=360)
+        _ce1, _ce2 = st.columns([2, 2])
+        with _ce1:
+            _eval_clicked = st.button(
+                "🔍 Evaluasi Gambar oleh Agent",
+                key=f"measure_chart_img_eval_btn_{active_pid}",
+                disabled=is_locked,
+            )
+        with _ce2:
+            if st.button("🗑️ Hapus Gambar", key=f"measure_chart_img_del_btn_{active_pid}",
+                         disabled=is_locked):
+                for _k in (_img_b64_key, _img_mime_key, _img_name_key, _img_eval_key):
+                    st.session_state[_k] = ""
+                _wip = memory.load_measure_wip(active_pid) or {}
+                for _wk in ("chart_image_b64", "chart_image_mime", "chart_image_name", "chart_image_eval"):
+                    _wip.pop(_wk, None)
+                memory.save_measure_wip(active_pid, _wip)
+                st.rerun()
+
+        if _eval_clicked:
+            with st.spinner("Agent membaca & mengevaluasi gambar..."):
+                _img_ctx = (
+                    f"Problem: {_safe_get(define_final, 'outputs', 'problem_statement') or ''}\n"
+                    f"Goal: {_safe_get(define_final, 'outputs', 'goal_statement') or ''}"
+                )
+                _eval_obj = llm_engine.evaluate_chart_image(
+                    _b64sh.b64decode(st.session_state[_img_b64_key]),
+                    st.session_state.get(_img_mime_key, "image/png"),
+                    _img_ctx,
+                )
+            st.session_state[_img_eval_key] = _eval_obj
+            _wip = memory.load_measure_wip(active_pid) or {}
+            _wip["chart_image_eval"] = _eval_obj
+            memory.save_measure_wip(active_pid, _wip)
+            st.success("✅ Evaluasi gambar selesai. Lihat juga di tab Performance.")
+
+        if st.session_state.get(_img_eval_key):
+            _render_chart_img_eval(st.session_state[_img_eval_key])
+
     st.divider()
 
 
@@ -884,7 +1107,27 @@ with tab_input:
         _opdef_key_read = f"measure_operational_defs_{active_pid}" if _proj_path == "standard" else None
         op_defs_submit = st.session_state.get(_opdef_key_read, []) if _opdef_key_read else []
 
+        # Ambil MSA terbaru langsung dari editor (tanpa harus klik Simpan MSA dulu).
+        # Step 4 (MSA) hanya ada di Standard path; di Quick kirim {}.
+        if _proj_path == "standard":
+            _msa_submit = _parse_msa_editor(_msa_edited)
+            st.session_state[f"measure_msa_{active_pid}"] = _msa_submit
+        else:
+            _msa_submit = {}
+        # Baseline dari gambar chart (jika sudah dievaluasi) — dipakai agent
+        # untuk konfirmasi problem & baseline saat tidak ada dataset.
+        _chart_img_baseline = st.session_state.get(f"measure_chart_img_eval_{active_pid}")
+        if not isinstance(_chart_img_baseline, dict):
+            _chart_img_baseline = {}
+
+        # Sinkronkan work-in-progress agar konsisten saat reload
+        _wip_sync = memory.load_measure_wip(active_pid) or {}
+        _wip_sync["operational_definitions"] = op_defs_submit or []
+        _wip_sync["measurement_system_analysis"] = _msa_submit
+        memory.save_measure_wip(active_pid, _wip_sync)
+
         user_inputs = {
+            "chart_image_baseline":          _chart_img_baseline,
             "project_name":                  seed.get("project_name") or active_pid,
             "industry":                      industry,
             "process_area":                  process_area,
@@ -896,7 +1139,7 @@ with tab_input:
             "lsl":                           (lsl_input.strip() or None),
             "usl":                           (usl_input.strip() or None),
             "operational_definitions":       op_defs_submit or [],
-            "measurement_system_analysis": st.session_state.get(_msa_key, {}),
+            "measurement_system_analysis": _msa_submit,
             "scaffolding_level":             "guided",
             "y_column_name":                 y_col or "",
             "date_column":                   (date_col or None),
@@ -1034,6 +1277,13 @@ with tab_report:
 
         st.divider()
 
+        # ── Baseline dari gambar chart (estimasi visual) ──
+        _rep_cib = outs.get("chart_image_baseline") or {}
+        if isinstance(_rep_cib, dict) and _rep_cib and not _rep_cib.get("error"):
+            st.markdown("### 🖼️ Baseline dari Gambar Chart (estimasi visual)")
+            _render_chart_img_eval(_rep_cib)
+            st.divider()
+
         # ── Measure Conclusion ──
         concl = outs.get("measure_conclusion") or {}
         if concl:
@@ -1052,7 +1302,9 @@ with tab_report:
 
 # ── TAB 2: Tables ──
 with tab_tables:
-    if not measure_state:
+    if _proj_path == "quick":
+        st.info("📋 Tab **Tabel Detail** tidak berlaku untuk **Quick path** — Operational Definitions di-skip (B-rule). Lihat tab Report & Performance.")
+    elif not measure_state:
         st.info("Generate draft untuk melihat tabel.")
     else:
         outs = measure_state.get("outputs") or {}
@@ -1171,9 +1423,33 @@ with tab_perf:
                 use_container_width=True, hide_index=True
             )
 
+    # ── Gambar chart yang diupload user (pelengkap; muncul walau belum ada draft) ──
+    _pi_b64_key  = f"measure_chart_img_b64_{active_pid}"
+    _pi_name_key = f"measure_chart_img_name_{active_pid}"
+    _pi_eval_key = f"measure_chart_img_eval_{active_pid}"
+    _pi_wip = memory.load_measure_wip(active_pid) or {}
+    _pi_b64 = st.session_state.get(_pi_b64_key) or _pi_wip.get("chart_image_b64", "")
+    if _pi_b64:
+        import base64 as _b64perf
+        st.divider()
+        st.markdown("#### 🖼️ Gambar Chart (diupload)")
+        st.image(
+            _b64perf.b64decode(_pi_b64),
+            caption=st.session_state.get(_pi_name_key) or _pi_wip.get("chart_image_name", "chart"),
+            use_container_width=True,
+        )
+        _pi_eval = st.session_state.get(_pi_eval_key) or _pi_wip.get("chart_image_eval", "")
+        if isinstance(_pi_eval, dict) and _pi_eval:
+            st.markdown("**Evaluasi Agent (dari gambar):**")
+            _render_chart_img_eval(_pi_eval)
+        else:
+            st.caption("Belum dievaluasi. Klik '🔍 Evaluasi Gambar oleh Agent' di Step 5 (tab Input).")
+
 # ── TAB 4: MSA & Data Quality ──
 with tab_msa:
-    if not measure_state:
+    if _proj_path == "quick":
+        st.info("🔍 Tab **MSA** tidak berlaku untuk **Quick path** — Measurement System Analysis di-skip (B-rule).")
+    elif not measure_state:
         st.info("Generate draft untuk melihat MSA dan data quality.")
     else:
         outs = measure_state.get("outputs") or {}
@@ -1181,7 +1457,7 @@ with tab_msa:
         # MSA structured
         msa = outs.get("measurement_system_analysis") or {}
         st.markdown("#### 🔬 Measurement System Analysis")
-        if msa:
+        if isinstance(msa, dict) and msa:
             st.write(f"**Approach:** {msa.get('approach', '—')}")
 
             err_src = msa.get("error_sources") or []
@@ -1275,7 +1551,12 @@ with tab_input:
 
     with c1:
         if _has_draft_now:
-            finalize_disabled = (gate_status_now == "FAIL")
+            # Standard: wajib fase sebelumnya di-approve approver. Quick: tidak perlu approval.
+            _prev_block = (_proj_path != "quick") and (not _appr_status.get("prev_approved", False))
+            # Standard: wajib isi tanggal aktual selesai fase sebelum finalize.
+            _has_end = render_phase_end_date(active_pid, "measure", disabled=is_locked)
+            _no_actual_end = (_proj_path != "quick") and not _has_end
+            finalize_disabled = (gate_status_now == "FAIL") or _prev_block or _no_actual_end
             if st.button("✅ Finalize (Lock Final)", key="measure_finalize_btn", disabled=finalize_disabled):
                 draft_state = _draft_wrapper["measure_state"]
                 final_result = finalize_measure_agent(
@@ -1293,7 +1574,11 @@ with tab_input:
                     st.success("Finalized. Final tersimpan.")
                     st.rerun()
             if gate_status_now == "FAIL":
-                st.caption("⚠️ Finalize diblokir: Gate FAIL. Perbaiki A-rules dulu.")
+                st.caption("⚠️ Finalize diblokir: Gate FAIL. Perbaiki item wajib dulu.")
+            elif _prev_block:
+                st.caption("⚠️ Finalize diblokir: fase sebelumnya (DEFINE) belum di-approve oleh approver (jalur Standard).")
+            elif _no_actual_end:
+                st.caption("⚠️ Finalize diblokir: isi **Tanggal aktual selesai fase** dulu.")
         elif _has_final:
             st.button("✅ Finalized", key="measure_finalized_badge_btn", disabled=True)
         else:
@@ -1359,6 +1644,18 @@ with tab_input:
     elif auto_advance:
         if _prev_approved:
             st.success("🚀 Measure gate **auto-advance** — tidak perlu approval. Lanjut ke Analyze.")
+            with st.expander("↩️ Revisi Measure (buka kembali untuk diedit)", expanded=False):
+                st.warning(
+                    "Quick path tidak punya approver. Klik tombol di bawah untuk **membuka kembali** "
+                    "fase Measure yang sudah final. Gate menuju Analyze akan terkunci lagi hingga "
+                    "Measure di-finalize ulang."
+                )
+                if st.button("↩️ Buka Revisi Measure", key="me_auto_revise_btn"):
+                    st.session_state[_revise_mode_key] = True
+                    st.session_state["measure_draft"]  = None
+                    audit.log_phase_event(active_pid, "measure", "revise_opened_auto_advance")
+                    st.success("Fase Measure dibuka untuk revisi.")
+                    st.rerun()
         else:
             st.warning("⏳ Gate terkunci — DEFINE belum disetujui. Selesaikan approval DEFINE terlebih dahulu.")
     else:

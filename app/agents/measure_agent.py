@@ -729,9 +729,8 @@ def _measure_gate_evaluate(outputs: dict, user_inputs: dict, enforce_b_rules: bo
     if not op_defs:
         if enforce_b_rules:
             failed.append("B1_operational_definitions_missing")
-        else:
-            conditional.append("B1_operational_definitions_missing")
-        actions.append("Tambah minimal 1 baris operational definition untuk Y.")
+            actions.append("Tambah minimal 1 baris operational definition untuk Y.")
+        # Quick path: operational definitions di-skip — tidak ditandai sebagai evidence kurang.
     else:
         high_missing = [i for i in op_issues if isinstance(i, dict) and i.get("severity") == "high"]
         if high_missing and enforce_b_rules:
@@ -741,7 +740,7 @@ def _measure_gate_evaluate(outputs: dict, user_inputs: dict, enforce_b_rules: bo
     if not (isinstance(mplan, list) and len(mplan) > 0):
         if enforce_b_rules:
             conditional.append("B2_measurement_plan_missing")
-        actions.append("Tambah minimal 1 item measurement plan.")
+            actions.append("Tambah minimal 1 item measurement plan.")
 
     if prof.get("available") is True:
         if prof.get("rows", 0) <= 0:
@@ -753,7 +752,7 @@ def _measure_gate_evaluate(outputs: dict, user_inputs: dict, enforce_b_rules: bo
         if not (summary and isinstance(summary, dict) and summary.get("available") is not False):
             if enforce_b_rules:
                 conditional.append("B3_baseline_descriptives_missing")
-            actions.append("Pilih Y column yang sesuai untuk menghitung baseline.")
+                actions.append("Pilih Y column yang sesuai untuk menghitung baseline.")
 
         comp = (dq.get("completeness") or {}).get("columns_with_missing_over_5pct") or []
         if comp:
@@ -765,8 +764,13 @@ def _measure_gate_evaluate(outputs: dict, user_inputs: dict, enforce_b_rules: bo
             risks.append("Consistency issues: duplicate rows / negative values.")
             actions.append("Bersihkan data sebelum finalize.")
     else:
-        risks.append("Dataset belum diupload — baseline tidak bisa dikonfirmasi.")
-        actions.append("Upload minimal 1 extract data untuk baseline.")
+        # Tidak ada dataset. Bila ada baseline dari gambar chart (estimasi visual),
+        # jangan nag. Untuk standard tanpa keduanya, baru ingatkan upload data.
+        _cib = user_inputs.get("chart_image_baseline") or {}
+        _has_img_baseline = isinstance(_cib, dict) and bool(_cib) and not _cib.get("error")
+        if not _has_img_baseline and enforce_b_rules:
+            risks.append("Dataset belum diupload — baseline tidak bisa dikonfirmasi.")
+            actions.append("Upload minimal 1 extract data untuk baseline.")
 
     if failed:
         status = "FAIL"
@@ -846,7 +850,11 @@ Provide coaching as MBB:
 def _rule_based_measure_conclusion(outputs: Dict[str, Any], define_final: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     perf = outputs.get("process_performance_summary") or {}
     summary = perf.get("summary") if isinstance(perf, dict) else None
-    target = _parse_goal_target(define_final)
+    # Pakai target yang sudah diresolve (UTAMAKAN Target Reference dari input user),
+    # fallback ke parse goal Define.
+    target = (perf.get("target_info") if isinstance(perf, dict) else None) or {}
+    if not target.get("available"):
+        target = _parse_goal_target(define_final)
     basis = []
     validated = "unknown"
 
@@ -858,13 +866,35 @@ def _rule_based_measure_conclusion(outputs: Dict[str, Any], define_final: Option
         if target.get("available") and isinstance(mean, (int, float)):
             tv = target.get("value")
             td = target.get("direction", "<=")
-            basis.append(f"Define goal target: {td} {tv}.")
-            if td == "<=":
-                validated = "true" if mean > tv else "false"
-            else:
-                validated = "true" if mean < tv else "false"
+            _src = target.get("source_text", "")
+            basis.append(f"Target: {td} {tv}" + (f" — {_src}" if _src else "") + ".")
+            try:
+                tv = float(tv)
+                if td == "<=":
+                    validated = "true" if mean > tv else "false"
+                else:
+                    validated = "true" if mean < tv else "false"
+            except Exception:
+                validated = "unknown"
     else:
-        basis.append("No baseline available.")
+        cib = outputs.get("chart_image_baseline") or {}
+        if isinstance(cib, dict) and cib and not cib.get("error"):
+            pc = str(cib.get("problem_confirmed", "")).strip().lower()
+            validated = "true" if pc == "ya" else ("false" if pc == "tidak" else "unknown")
+            if cib.get("average"):
+                basis.append(f"Baseline (estimasi visual dari gambar chart): average {cib['average']}.")
+            q = cib.get("quartiles") or {}
+            if isinstance(q, dict) and q.get("median"):
+                basis.append(
+                    f"Quartile Q1/Median/Q3 (estimasi visual): "
+                    f"{q.get('q1','-')}/{q.get('median','-')}/{q.get('q3','-')}."
+                )
+            if cib.get("vs_target"):
+                basis.append(f"Vs target (estimasi visual): {cib['vs_target']}.")
+            if cib.get("confirmation_reason"):
+                basis.append(cib["confirmation_reason"])
+        else:
+            basis.append("No baseline available.")
 
     return {
         "problem_validated": validated,
@@ -1087,10 +1117,10 @@ Return JSON:
 """
     raw = llm(prompt)
     parsed = extract_json_from_llm(raw) or {}
-    # MSA dari user input, bukan LLM
-    user_msa = user_inputs.get("measurement_system_analysis") or {}
-    if user_msa:
-        parsed["measurement_system_analysis"] = user_msa
+    # MSA dari user input, bukan LLM. Selalu pastikan dict (hindari placeholder
+    # string "USE_USER_INPUT" dari template LLM tertinggal saat MSA kosong).
+    user_msa = user_inputs.get("measurement_system_analysis")
+    parsed["measurement_system_analysis"] = user_msa if isinstance(user_msa, dict) else {}
 
     if isinstance(parsed, dict):
         parsed["data_quality_results"] = dq_results
@@ -1169,18 +1199,21 @@ def run_measure_agent(
     segment_cols = user_inputs.get("segment_columns") or []
     baseline_results = _compute_baseline_descriptives(baseline_df, y_col=y_col, segment_cols=segment_cols, date_col=date_col)
 
-    # Parse target dari define_final
-    goal_target = _parse_goal_target(define_final)
-    if not goal_target.get("available") and user_inputs.get("target_value"):
+    # Target untuk chart: UTAMAKAN target yang diisi user (Target Reference di form Measure),
+    # baru fallback ke target hasil parse dari goal Define.
+    goal_target = {}
+    if user_inputs.get("target_value") not in (None, ""):
         try:
             goal_target = {
                 "available": True,
                 "value": float(user_inputs["target_value"]),
                 "direction": user_inputs.get("target_direction", ">="),
-                "source_text": "Input manual dari user",
+                "source_text": "Target Reference (input manual di Measure)",
             }
         except Exception:
-            pass
+            goal_target = {}
+    if not goal_target.get("available"):
+        goal_target = _parse_goal_target(define_final)
 
     if isinstance(baseline_results, dict):
         baseline_results["target_info"] = goal_target
@@ -1245,14 +1278,18 @@ def run_measure_agent(
             define_context=define_context,
             project_path=project_path,
         )
+    elif project_path == "quick":
+        _coaching = "✅ Measure selesai — Y variable terkonfirmasi & baseline terbaca dari data. Cek **Measure Conclusion** untuk status problem vs target."
     else:
-        _coaching = "✅ Gate PASS — measurement plan, operational definitions, and baseline are complete."
+        _coaching = "✅ Measure selesai — measurement plan, operational definition, dan baseline sudah lengkap. Cek **Measure Conclusion** untuk status problem vs target."
 
     draft_state["coaching_md"] = _coaching
     draft_state["insight_md"] = _coaching
 
     outs = draft_state.get("outputs") or {}
     outs["_gate"] = gate
+    _cib = user_inputs.get("chart_image_baseline")
+    outs["chart_image_baseline"] = _cib if isinstance(_cib, dict) else {}
     outs["measure_conclusion"] = _rule_based_measure_conclusion(outs, define_final if isinstance(define_final, dict) else None)
     draft_state["outputs"] = outs
     draft_state["routing"] = {"policy": gate.get("policy"), "status": gate.get("status")}
@@ -1289,7 +1326,7 @@ def finalize_measure_agent(
     if gate.get("status") == "FAIL":
         return {
             "status": "blocked",
-            "reason": "MEASURE gate FAIL — selesaikan A-rules sebelum finalize.",
+            "reason": "Measure belum bisa di-finalize — masih ada item wajib yang perlu diperbaiki.",
             "gate": gate,
             "measure_state": measure_state,
             "word_path": None,

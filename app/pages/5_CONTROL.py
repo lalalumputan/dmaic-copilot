@@ -7,7 +7,7 @@ import pandas as pd
 
 from app.agents.control_agent import run_control_agent, finalize_control_agent
 from app.utils import memory, reporting, audit, auth
-from app.utils.ui_helpers import render_sidebar_header
+from app.utils.ui_helpers import render_sidebar_header, render_tab_quicknav, render_phase_end_date
 
 # ============================================
 # Helpers
@@ -148,7 +148,7 @@ if active_pid:
             st.sidebar.info("🔒 Gate LOCKED")
 else:
     st.sidebar.warning("Belum ada project aktif.")
-
+st.sidebar.divider()
 # ============================================
 # Gate checks
 # ============================================
@@ -279,14 +279,12 @@ if _get_current_result()[0] == "none" and active_pid:
 view, res = _get_current_result()
 control_state = res["control_state"] if (res and res.get("control_state")) else None
 
-tab_input, tab_report, tab_improved, tab_monitoring, tab_control_plan, tab_handover = st.tabs([
-    "✏️ Input",
-    "📄 Report",
-    "📈 Improved Performance",
-    "📊 Monitoring & Reaction",
-    "📋 Control Plan",
-    "🤝 Handover",
-])
+_TAB_LABELS = [
+    "✏️ Input", "📄 Report", "📈 Improved Performance",
+    "📊 Monitoring & Reaction", "📋 Control Plan", "🤝 Handover",
+]
+tab_input, tab_report, tab_improved, tab_monitoring, tab_control_plan, tab_handover = st.tabs(_TAB_LABELS)
+render_tab_quicknav(_TAB_LABELS)
 
 # ============================================
 # TAB: INPUT
@@ -322,8 +320,16 @@ with tab_input:
     target_info = (mea_outs.get("process_performance_summary") or {}).get("target_info") or {}
 
     _y_var    = mea_outs.get("y_variable_confirmed") or def_outs.get("y_variable") or "-"
-    _solution = (imp_outs.get("selected_solution") or {}).get("solution","") or "-"
+    # Improve menyimpan 'selected_solutions' (LIST). Join untuk ringkasan.
+    _sel_sols = imp_outs.get("selected_solutions") or []
+    _solution = "; ".join(
+        str(s.get("solution", "")).strip() for s in _sel_sols
+        if isinstance(s, dict) and str(s.get("solution", "")).strip()
+    ) or "-"
     _baseline = perf_sum.get("mean")
+    if _baseline is None:
+        _cib = mea_outs.get("chart_image_baseline") or {}
+        _baseline = _cib.get("average") if isinstance(_cib, dict) else None
     _target   = target_info.get("value")
     _tdir     = target_info.get("direction","<=")
 
@@ -340,75 +346,94 @@ with tab_input:
 
     rca_table = ana_outs.get("root_cause_summary_table") or []
     confirmed_rc = [r for r in rca_table if "Yes" in str(r.get("is_root_cause",""))]
-    with st.expander("📊 Confirmed Root Causes & Improve Summary", expanded=False):
-        if confirmed_rc:
-            st.dataframe(pd.DataFrame(confirmed_rc), use_container_width=True, hide_index=True)
-        should_be = imp_outs.get("should_be_process","")
-        if should_be:
-            st.markdown(f"**Should-be process:** {should_be}")
 
-    st.divider()
+    # Root cause terkait (dari Analyze) — tampil DULU
+    if confirmed_rc:
+        st.markdown("**🎯 Confirmed Root Causes terkait (dari Analyze):**")
+        st.dataframe(pd.DataFrame([{
+            "Xn":         r.get("xn", ""),
+            "Root Cause": r.get("root_cause", ""),
+        } for r in confirmed_rc]), use_container_width=True, hide_index=True)
 
-    # ── Step 2: Monitoring & Reaction Plan ──
-    st.markdown("### Step 2 — Monitoring & Reaction Plan")
-    st.caption("Agent propose monitoring plan per KPI termasuk RC tracing template. Review dan edit.")
-
-    col_mon_propose, col_mon_save = st.columns([1,1])
-    with col_mon_propose:
-        if st.button("🤖 Generate Monitoring Plan", key=f"mon_gen_{active_pid}", disabled=is_locked):
-            st.session_state.pop(_mon_key, None)
-            st.rerun()
-
-    if _mon_key not in st.session_state and not is_locked:
-        with st.spinner("Agent menyusun monitoring & reaction plan..."):
-            from app.agents.control_agent import _build_monitoring_reaction_plan_llm, _extract_upstream_context
-            _upstream_ctrl = _extract_upstream_context(define_final, measure_final, analyze_final, improve_final)
-            st.session_state[_mon_key] = _build_monitoring_reaction_plan_llm(_upstream_ctrl, {})
-
-    _mon_list = st.session_state.get(_mon_key, [])
-    if _mon_list:
-        # Display main monitoring table
-        _mon_df = pd.DataFrame([{
-            "KPI":           m.get("kpi",""),
-            "Target":        m.get("target_value",""),
-            "Frequency":     m.get("measurement_frequency",""),
-            "Who Collects":  m.get("who_collects",""),
-            "Who Analyzes":  m.get("who_analyzes",""),
-            "Who Reports":   m.get("who_sends_report",""),
-            "Who Acts":      m.get("who_takes_action",""),
-            "Threshold":     m.get("deviation_threshold",""),
-        } for m in _mon_list])
-        st.dataframe(_mon_df, use_container_width=True, hide_index=True)
-
-        # Reaction steps per KPI
-        st.markdown("**Reaction Plan (Penelusuran Root Cause):**")
-        for m in _mon_list:
-            with st.expander(f"🔁 Reaction Plan: {m.get('kpi','')}", expanded=False):
-                st.caption(f"Pemicu: {m.get('deviation_threshold','')}")
-                react_steps = m.get("reaction_steps") or []
-                for step in react_steps:
-                    _q = step.get("question","")
-                    _rc = step.get("rc_ref","")
-                    _label = f"Langkah {step.get('step','')}"
-                    if _q or _rc:
-                        _label += f" ({' · '.join([x for x in [_rc, _q] if x])})"
-                    st.markdown(f"**{_label}:** {step.get('check','')}")
-                    st.markdown(f"  - Jika YA → {step.get('if_yes','')}")
-                    st.markdown(f"  - Jika TIDAK → {step.get('if_no','')}")
-                _esc = m.get("escalation_actions") or []
-                if _esc:
-                    st.markdown("**Jika solusi gagal / semua RC sudah dicek → Eskalasi:**")
-                    for _a in _esc:
-                        st.markdown(f"  - {_a}")
-                st.caption(m.get("control_chart_note",""))
-
-        with col_mon_save:
-            if st.button("💾 Konfirmasi Monitoring Plan", key=f"mon_save_{active_pid}", disabled=is_locked):
-                st.success("Monitoring plan dikonfirmasi.")
+    # Solusi yang diimplementasi (dari Improve) — setelah root cause
+    if _sel_sols:
+        st.markdown("**💡 Solusi yang diimplementasi (dari Improve):**")
+        st.dataframe(pd.DataFrame([{
+            "Solution": s.get("solution", ""),
+            "CTQ/CTB":  s.get("ctq_ctb_impacted", ""),
+            "Catatan":  s.get("comments", ""),
+        } for s in _sel_sols if isinstance(s, dict)]), use_container_width=True, hide_index=True)
     else:
-        st.info("Klik 'Generate Monitoring Plan' untuk mendapatkan usulan dari agent.")
+        st.info("Belum ada selected solution dari fase Improve.")
+
+    _should_be = imp_outs.get("should_be_process", "")
+    if _should_be:
+        with st.expander("🔄 Should-be process (dari Improve)", expanded=False):
+            st.markdown(_should_be)
 
     st.divider()
+
+    if _proj_path != "quick":
+        # ── Step 2: Monitoring & Reaction Plan ──
+        st.markdown("### Step 2 — Monitoring & Reaction Plan")
+        st.caption("Agent propose monitoring plan per KPI termasuk RC tracing template. Review dan edit.")
+
+        col_mon_propose, col_mon_save = st.columns([1,1])
+        with col_mon_propose:
+            if st.button("🤖 Generate Monitoring Plan", key=f"mon_gen_{active_pid}", disabled=is_locked):
+                st.session_state.pop(_mon_key, None)
+                st.rerun()
+
+        if _mon_key not in st.session_state and not is_locked:
+            with st.spinner("Agent menyusun monitoring & reaction plan..."):
+                from app.agents.control_agent import _build_monitoring_reaction_plan_llm, _extract_upstream_context
+                _upstream_ctrl = _extract_upstream_context(define_final, measure_final, analyze_final, improve_final)
+                st.session_state[_mon_key] = _build_monitoring_reaction_plan_llm(_upstream_ctrl, {})
+
+        _mon_list = st.session_state.get(_mon_key, [])
+        if _mon_list:
+            # Display main monitoring table
+            _mon_df = pd.DataFrame([{
+                "KPI":           m.get("kpi",""),
+                "Target":        m.get("target_value",""),
+                "Frequency":     m.get("measurement_frequency",""),
+                "Who Collects":  m.get("who_collects",""),
+                "Who Analyzes":  m.get("who_analyzes",""),
+                "Who Reports":   m.get("who_sends_report",""),
+                "Who Acts":      m.get("who_takes_action",""),
+                "Threshold":     m.get("deviation_threshold",""),
+            } for m in _mon_list])
+            st.dataframe(_mon_df, use_container_width=True, hide_index=True)
+
+            # Reaction steps per KPI
+            st.markdown("**Reaction Plan (Penelusuran Root Cause):**")
+            for m in _mon_list:
+                with st.expander(f"🔁 Reaction Plan: {m.get('kpi','')}", expanded=False):
+                    st.caption(f"Pemicu: {m.get('deviation_threshold','')}")
+                    react_steps = m.get("reaction_steps") or []
+                    for step in react_steps:
+                        _q = step.get("question","")
+                        _rc = step.get("rc_ref","")
+                        _label = f"Langkah {step.get('step','')}"
+                        if _q or _rc:
+                            _label += f" ({' · '.join([x for x in [_rc, _q] if x])})"
+                        st.markdown(f"**{_label}:** {step.get('check','')}")
+                        st.markdown(f"  - Jika YA → {step.get('if_yes','')}")
+                        st.markdown(f"  - Jika TIDAK → {step.get('if_no','')}")
+                    _esc = m.get("escalation_actions") or []
+                    if _esc:
+                        st.markdown("**Jika solusi gagal / semua RC sudah dicek → Eskalasi:**")
+                        for _a in _esc:
+                            st.markdown(f"  - {_a}")
+                    st.caption(m.get("control_chart_note",""))
+
+            with col_mon_save:
+                if st.button("💾 Konfirmasi Monitoring Plan", key=f"mon_save_{active_pid}", disabled=is_locked):
+                    st.success("Monitoring plan dikonfirmasi.")
+        else:
+            st.info("Klik 'Generate Monitoring Plan' untuk mendapatkan usulan dari agent.")
+
+        st.divider()
 
     if _proj_path != "quick":
         # ── Step 3: Control Plan ──
@@ -1130,7 +1155,9 @@ with tab_improved:
 
 # ── TAB 3: Monitoring & Reaction Plan ──
 with tab_monitoring:
-    if not control_state:
+    if _proj_path == "quick":
+        st.info("📊 Tab **Monitoring & Reaction** tidak berlaku untuk **Quick path** — Step 2 di-skip.")
+    elif not control_state:
         st.info("Generate draft untuk melihat monitoring plan.")
     else:
         outs = control_state.get("outputs") or {}
@@ -1185,7 +1212,9 @@ with tab_monitoring:
 
 # ── TAB 4: Control Plan ──
 with tab_control_plan:
-    if not control_state:
+    if _proj_path == "quick":
+        st.info("📋 Tab **Control Plan** tidak berlaku untuk **Quick path** — control plan per CTQ formal di-skip (B-rule).")
+    elif not control_state:
         st.info("Generate draft untuk melihat control plan.")
     else:
         outs = control_state.get("outputs") or {}
@@ -1198,7 +1227,9 @@ with tab_control_plan:
 
 # ── TAB 5: Handover Protocol ──
 with tab_handover:
-    if not control_state:
+    if _proj_path == "quick":
+        st.info("🤝 Tab **Handover** tidak berlaku untuk **Quick path** — handover protocol formal di-skip (B-rule).")
+    elif not control_state:
         st.info("Generate draft untuk melihat handover protocol.")
     else:
         outs     = control_state.get("outputs") or {}
@@ -1294,7 +1325,14 @@ with tab_input:
     c1, c2, c3 = st.columns([1,1,1])
     with c1:
         if _has_draft_now:
-            fin_disabled = (_gate_status_now == "FAIL") and not _appr_status.get("can_advance", False)
+            # Standard: wajib fase sebelumnya di-approve approver. Quick: tidak perlu approval.
+            _prev_block = (_proj_path != "quick") and (not _appr_status.get("prev_approved", False))
+            # Standard: wajib isi tanggal aktual selesai fase sebelum finalize.
+            _has_end = render_phase_end_date(active_pid, "control", disabled=is_locked)
+            _no_actual_end = (_proj_path != "quick") and not _has_end
+            fin_disabled = _prev_block or _no_actual_end or (
+                (_gate_status_now == "FAIL") and not _appr_status.get("can_advance", False)
+            )
             if st.button("✅ Finalize (Lock Final)", key="control_finalize_btn", disabled=fin_disabled):
                 draft_state  = _draft_wrapper["control_state"]
                 final_result = finalize_control_agent(active_pid, draft_state)
@@ -1306,7 +1344,11 @@ with tab_input:
                     st.session_state[_revise_key]     = False
                     st.success("🎉 DMAIC project COMPLETE — Control finalized.")
                     st.rerun()
-            if fin_disabled:
+            if _prev_block:
+                st.caption("⚠️ Finalize diblokir: fase sebelumnya (IMPROVE) belum di-approve oleh approver (jalur Standard).")
+            elif _no_actual_end:
+                st.caption("⚠️ Finalize diblokir: isi **Tanggal aktual selesai fase** dulu.")
+            elif fin_disabled:
                 st.caption("⚠️ Finalize diblokir: Gate FAIL.")
         elif _has_final:
             st.button("✅ Finalized", key="control_finalized_badge", disabled=True)

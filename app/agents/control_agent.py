@@ -87,20 +87,41 @@ def _extract_upstream_context(
     rca_table = ana_outs.get("root_cause_summary_table") or []
     confirmed_rc = [r for r in rca_table if "Yes" in str(r.get("is_root_cause",""))]
 
-    selected = imp_outs.get("selected_solution") or {}
+    # Improve menyimpan 'selected_solutions' (LIST). Fallback ke key lama 'selected_solution' (dict).
+    selected_list = imp_outs.get("selected_solutions") or []
+    if not selected_list and isinstance(imp_outs.get("selected_solution"), dict):
+        _s_old = imp_outs.get("selected_solution") or {}
+        if _s_old.get("solution"):
+            selected_list = [_s_old]
+    _solution_str = "; ".join(
+        str(s.get("solution", "")).strip() for s in selected_list
+        if isinstance(s, dict) and str(s.get("solution", "")).strip()
+    )
+    _ctq_impacts = [
+        s.get("ctq_ctb_impacted", "") for s in selected_list
+        if isinstance(s, dict) and str(s.get("ctq_ctb_impacted", "")).strip()
+    ]
     comm_plan = imp_outs.get("communication_plan") or []
+
+    # Baseline dari dataset; fallback ke estimasi visual gambar chart (quick path)
+    _baseline_mean = perf_sum.get("mean")
+    if _baseline_mean is None:
+        _cib = mea_outs.get("chart_image_baseline") or {}
+        if isinstance(_cib, dict) and _cib.get("average"):
+            _baseline_mean = _cib.get("average")
 
     return {
         "problem_statement":   def_outs.get("problem_statement") or def_ins.get("problem_text") or "",
         "goal_statement":      def_outs.get("goal_statement")    or def_ins.get("goal_text")    or "",
         "y_variable":          mea_outs.get("y_variable_confirmed") or def_outs.get("y_variable") or "",
         "ctq_list":            def_outs.get("ctq_list") or [],
-        "baseline_mean":       perf_sum.get("mean"),
+        "baseline_mean":       _baseline_mean,
         "baseline_target":     target,
         "confirmed_root_causes": confirmed_rc,
         "rca_summary_table":   rca_table,
-        "selected_solution":   selected.get("solution",""),
-        "solution_ctq_impact": selected.get("ctq_ctb_impacted") or [],
+        "selected_solution":   _solution_str,
+        "selected_solutions":  selected_list,
+        "solution_ctq_impact": _ctq_impacts,
         "should_be_process":   imp_outs.get("should_be_process",""),
         "implementation_plan": imp_outs.get("implementation_plan") or [],
         "pilot_plan":          imp_outs.get("pilot_plan") or {},
@@ -412,9 +433,9 @@ def _control_gate_evaluate(
     conditional = []
     actions     = []
 
-    # A-rules (always enforced)
+    # Monitoring & Reaction Plan: Standard wajib; Quick path skip (Step 2 disembunyikan)
     mon_plan = outputs.get("monitoring_reaction_plan") or []
-    if not mon_plan:
+    if not mon_plan and enforce_b_rules:
         failed.append("A1_no_monitoring_reaction_plan")
         actions.append("Buat monitoring & reaction plan dengan KPI, frequency, owner, dan RC tracing template.")
 
@@ -487,7 +508,8 @@ def _build_control_coaching_llm(
 You are a Lean Six Sigma Master Black Belt coaching a project leader on the Control phase.
 
 Execution path: {"Quick Improvement" if project_path == "quick" else "Standard DMAIC"}
-{"Note: This is a Quick Improvement project — coaching must be concise, focus on critical gaps only (A-rules). Do NOT require a formal Control Plan per CTQ or a full Handover Protocol (B-rule items skipped in Quick path); control chart + monitoring schedule are sufficient." if project_path == "quick" else ""}
+{"Note: This is a Quick Improvement project — coaching must be concise, focus only on the truly critical/mandatory gaps. Do NOT require a formal Control Plan per CTQ or a full Handover Protocol (these formal deliverables are simplified in the Quick path); control chart + monitoring schedule are sufficient." if project_path == "quick" else ""}
+IMPORTANT: write for a non-technical project leader. Use plain business language. NEVER mention internal rule codes or terms like "A-rules", "B-rules", or codes such as "A1_...".
 
 Gate Status: {status}
 Failed rules: {json.dumps(failed)}
@@ -518,6 +540,144 @@ Max 300 words, markdown with ### headings. Start directly.
     for a in actions[:6]:
         lines.append(f"- {a}")
     return "\n".join(lines)
+
+
+def _build_control_results_md_llm(
+    upstream: dict,
+    outputs: dict,
+    user_inputs: dict,
+    project_path: str = "standard",
+) -> dict:
+    """
+    CRITICAL (kedua path): evaluasi APAKAH hasil implementasi mencapai target,
+    apakah akan SUSTAIN (dari data & tren), dan apakah tujuan tercapai secara logis.
+    Bukan checklist. Mengembalikan {"md": <markdown>, "has_red": bool}.
+    """
+    target_info = upstream.get("baseline_target") or {}
+    tval = target_info.get("value")
+    tdir = target_info.get("direction", "<=")
+    baseline = upstream.get("baseline_mean")
+
+    # Kumpulkan nilai post-implementasi (numerik)
+    vals = []
+    for v in (user_inputs.get("control_values") or []):
+        try:
+            vals.append(float(v))
+        except Exception:
+            continue
+
+    cc      = outputs.get("control_chart") or {}
+    has_img = bool((outputs.get("control_chart_image") or {}).get("b64"))
+
+    # Tidak ada bukti data sama sekali → tidak ada yang bisa dievaluasi
+    if not vals and not has_img and not cc.get("available"):
+        return {"md": "", "has_red": False}
+
+    post_mean = None
+    trend = None
+    if vals:
+        post_mean = round(sum(vals) / len(vals), 4)
+        if len(vals) >= 4:
+            _h = len(vals) // 2
+            _first  = sum(vals[:_h]) / _h
+            _second = sum(vals[_h:]) / (len(vals) - _h)
+            trend = "naik" if _second > _first else ("turun" if _second < _first else "stabil")
+
+    _data = {
+        "post_implementation_n":     len(vals),
+        "post_implementation_mean":  post_mean,
+        "post_min":                  (min(vals) if vals else None),
+        "post_max":                  (max(vals) if vals else None),
+        "trend_first_half_to_second_half": trend,
+        "baseline_mean":             baseline,
+        "target_value":              tval,
+        "target_direction":          tdir,
+        "control_chart_available":   cc.get("available", False),
+        "control_chart_note":        cc.get("note", ""),
+        "uploaded_chart_image":      has_img,
+    }
+
+    prompt = f"""
+You are a Lean Six Sigma Master Black Belt evaluating the CONTROL phase. Your job is NOT to check boxes —
+CRITICALLY ASSESS the implementation RESULTS against the goal.
+
+Context:
+- Problem: "{upstream.get('problem_statement','')}"
+- Goal: "{upstream.get('goal_statement','')}"
+- Solution implemented: "{upstream.get('selected_solution','')}"
+- Y Variable: "{upstream.get('y_variable','')}"
+- Baseline (before improvement): {baseline}
+- Target: {tdir} {tval}
+
+Post-implementation data (estimasi visual jika hanya gambar yang diupload):
+{json.dumps(_data, ensure_ascii=False, indent=2)}
+
+Evaluate THREE things explicitly:
+1. **Target achievement** — does the post-implementation level MEET the target ({tdir} {tval})? State the margin (seberapa jauh di atas/bawah target).
+2. **Sustainability** — based on the DATA & TREND (stabil? in-control? cenderung kembali memburuk / drift?), apakah perbaikan kemungkinan SUSTAIN atau berisiko balik ke baseline?
+3. **Logical goal attainment** — apakah secara LOGIKA dan TREN tujuan benar-benar tercapai?
+
+Overall verdict:
+- 🟢 Target tercapai & kemungkinan sustain.
+- 🟡 Tercapai tapi rapuh / data belum cukup untuk yakin sustain.
+- 🔴 Target belum tercapai / tren menunjukkan akan kembali memburuk.
+
+Rules:
+- Critical reasoner, NOT a checklister. Jika hasil solid, katakan 🟢 dengan jelas (jangan mengada-ada).
+- Untuk 🟡/🔴, beri langkah konkret (kumpulkan lebih banyak data, perketat control, dsb.).
+- Jangan beri angka presisi yang tidak didukung data; jika hanya gambar, sebut "estimasi visual".
+- Output Bahasa Indonesia, markdown. Mulai dengan heading "### 📈 Evaluasi Hasil & Sustainability". Maks ~250 kata.
+""".strip()
+
+    # Bila ada gambar chart yang diupload → BACA gambarnya via vision (gpt-4o).
+    _ccimg   = outputs.get("control_chart_image") or {}
+    _img_b64 = _ccimg.get("b64") or ""
+    md = ""
+    try:
+        if _img_b64:
+            import base64 as _b64c
+            _img_bytes = _b64c.b64decode(_img_b64)
+            _mime = _ccimg.get("type") or "image/png"
+            _vision_prompt = (
+                prompt
+                + "\n\nGambar chart performa setelah implementasi TERLAMPIR. BACA chart tersebut "
+                "(level rata-rata vs target, tren naik/turun/stabil, ada lonjakan/outlier, stabilitas) "
+                "dan jadikan dasar utama evaluasi. Angka boleh berupa estimasi visual."
+            )
+            md = (llm_engine.evaluate_image_md(_img_bytes, _mime, _vision_prompt) or "").strip()
+        else:
+            raw = llm(prompt)
+            if raw and len(raw.strip()) > 60:
+                md = raw.strip()
+    except Exception:
+        md = ""
+
+    if not md or md.startswith("⚠️ Gagal"):
+        # Fallback deterministik
+        _hit = None
+        if post_mean is not None and tval is not None:
+            try:
+                _hit = (post_mean <= float(tval)) if tdir == "<=" else (post_mean >= float(tval))
+            except Exception:
+                _hit = None
+        lines = ["### 📈 Evaluasi Hasil & Sustainability"]
+        if post_mean is not None:
+            lines.append(f"- Rata-rata post-implementasi: **{post_mean}** (target {tdir} {tval}).")
+            if _hit is True:
+                lines.append("- 🟢 Target tampak tercapai. Pantau tren untuk memastikan sustain.")
+            elif _hit is False:
+                lines.append("- 🔴 Target belum tercapai berdasarkan data. Perlu tindakan lanjutan.")
+        if trend:
+            lines.append(f"- Tren (paruh awal → akhir): **{trend}**.")
+        lines.append("- Pastikan data cukup & proses in-control sebelum menutup proyek.")
+        md = "\n".join(lines)
+
+    has_red = "🔴" in md
+    if has_red:
+        md += ("\n\n> ⚠️ **Catatan:** indikasi target belum tercapai / berisiko tidak sustain. "
+               "Pertimbangkan tindakan lanjutan & tambahan data sebelum menutup proyek.")
+
+    return {"md": md, "has_red": has_red}
 
 
 # ======================================================
@@ -734,12 +894,26 @@ def run_control_agent(
         enforce_b_rules=gate_mode["enforce_b_rules"],
     )
 
-    # Coaching — LLM only on FAIL/WEAK_PASS
+    # Evaluasi HASIL & SUSTAINABILITY — CRITICAL, selalu jalan bila ada data post-implementasi
+    # (quick & standard, termasuk saat gate PASS). Bukan checklist; tidak memblokir gate.
+    _results   = _build_control_results_md_llm(upstream=upstream, outputs=outputs,
+                                               user_inputs=user_inputs, project_path=project_path)
+    results_md = _results.get("md", "")
+
+    # Coaching gate — LLM only on FAIL/WEAK_PASS
     gate_status = gate.get("status","")
     if gate_status in ("FAIL","WEAK_PASS"):
         coaching_md = _build_control_coaching_llm(gate, outputs, upstream, user_inputs, project_path=project_path)
     else:
-        coaching_md = "✅ Gate PASS — monitoring plan, control plan, and handover protocol complete."
+        coaching_md = ""
+
+    # Evaluasi hasil selalu di atas; tanpa footer "Gate PASS" yang redundant
+    if results_md and coaching_md:
+        coaching_md = f"{results_md}\n\n---\n\n{coaching_md}"
+    elif results_md:
+        coaching_md = results_md
+    elif not coaching_md:
+        coaching_md = "✅ Gate PASS — control mechanisms complete."
 
     control_state = {
         "schema_version": CONTROL_SCHEMA,
@@ -790,7 +964,7 @@ def finalize_control_agent(
     if gate.get("status") == "FAIL":
         return {
             "status":        "blocked",
-            "reason":        "CONTROL gate FAIL — selesaikan A-rules sebelum finalize.",
+            "reason":        "Control belum bisa di-finalize — masih ada item wajib yang perlu diperbaiki.",
             "gate":          gate,
             "control_state": control_state,
             "word_path":     None,

@@ -86,15 +86,20 @@ def _smart_check(text: str) -> Dict[str, Any]:
                  or bool(re.search(r"\d+(\.\d+)?", t)) \
                  or bool(re.search(r"\b(increase|decrease|reduce|improve)\b", t))
 
-    # Time-bound: detect month names + year, quarters, ranges, explicit dates, or time keywords
+    # Time-bound: detect month names (EN + ID), standalone year, quarters, ranges,
+    # explicit dates, or time keywords. Bahasa Indonesia is fully supported so a goal
+    # like "...pada akhir Desember 2018" is correctly recognized as time-bound.
     timebound = bool(re.search(
         r"\b("
-        r"q[1-4]|quarter|"
-        r"bulan|month|minggu|week|tahun|year|"
-        r"jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|sep(tember)?|oct(ober)?|nov(ember)?|dec(ember)?|"
+        r"q[1-4]|quarter|kuartal|triwulan|semester|"
+        r"bulan\w*|month\w*|mingg\w*|week\w*|tahun\w*|year\w*|"
+        # Month names — English + Bahasa Indonesia
+        r"jan(uari|uary)?|feb(ruari|ruary)?|mar(et|ch)?|apr(il)?|mei|may|jun(i|e)?|jul(i|y)?|"
+        r"agu(stus)?|aug(ust)?|sep(tember)?|okt(ober)?|oct(ober)?|nov(ember)?|des(ember)?|dec(ember)?|"
         r"by\s+\d{4}|"
         r"\d{4}\s*[-–—]\s*\d{4}|"
-        r"\d{4}-\d{2}-\d{2}"
+        r"\d{4}-\d{2}-\d{2}|"
+        r"(19|20)\d{2}"          # standalone year, e.g. "akhir 2018"
         r")\b", t
     ))
 
@@ -361,7 +366,7 @@ def evaluate_define_gate(
 
     # Short agent summary
     if status == "FAILED":
-        agent_summary = "DEFINE gate FAILED. Perbaiki item kritis (A-rules) sebelum melanjutkan."
+        agent_summary = "Define belum lolos gate. Perbaiki item kritis yang masih kurang sebelum melanjutkan."
     elif status == "CONDITIONAL":
         agent_summary = "DEFINE gate CONDITIONAL. Boleh finalize, tetapi selesaikan kondisi yang dicatat untuk mengurangi risiko."
     else:
@@ -635,7 +640,8 @@ Execution path: {"Quick Improvement" if project_path == "quick" else "Standard D
 Gate Status: {status}
 Failed rules: {json.dumps(failed)}
 Conditional rules: {json.dumps(conditional)}
-{"Note: This is a Quick Improvement project — coaching should be concise, focus on critical gaps only (A-rules), and avoid requiring full Standard DMAIC rigor for B-rule items." if project_path == "quick" else ""}
+{"Note: This is a Quick Improvement project — coaching should be concise, focus only on the truly critical/mandatory gaps, and avoid requiring the heavier formal deliverables that are simplified in the Quick path." if project_path == "quick" else ""}
+IMPORTANT: write for a non-technical project leader. Use plain business language. NEVER mention internal rule codes or terms like "A-rules", "B-rules", or codes such as "A1_...".
 
 Project leader's original inputs:
 - Problem (raw): "{problem_text}"
@@ -648,27 +654,42 @@ System-generated outputs:
 - Goal Statement: "{goal_statement}"
 - CTQs identified ({len(ctq_list)}): {ctq_summary}
 
-Provide coaching as an MBB to the project leader. Rules:
+Provide PRACTICAL coaching as an MBB to the project leader. Hard rules:
+
 0. Write the ENTIRE coaching in Bahasa Indonesia. Keep Lean Six Sigma / DMAIC terminology in English
    (e.g. CTQ, CTB, VOC, VOB, SIPOC, baseline, Cp, Cpk, gate, root cause, charter). Do NOT translate these terms.
-1. ALWAYS quote the user's exact text (problem/goal), then point out specifically what is missing
-2. Give concrete improvement examples — not generic instructions
-3. Address critical items (A-rules) first, in order of priority
-4. For mirror validation: if A1b rules are flagged, quote BOTH the problem AND goal verbatim, 
-   then explain specifically which metric in the problem is not reflected in the goal.
-   Give a corrected goal example using the exact metric from the problem.
-5. For CONDITIONAL: also note what is already strong
-7. Professional tone — write as an MBB coaching a project leader, not as an error list
-8. Format: markdown with ### headings and bullet points
-9. Maximum 350 words. Start directly with coaching content — no preamble.
-10. For VOC/CTQ coaching: 
-   - If a VOC voice clearly points to a different CTQ than what was written, say so explicitly
-   - Quote the VOC entry verbatim, then explain what CTQ it should generate
-   - Example: 'Your VOC entry "[exact voice text]" points to a delivery/quality issue, 
-     but the CTQ listed is "[ctq name]" which measures cost — these are inconsistent'
-   - If VOC entries are vague (no Key Issue filled), coach the user to be more specific
-11. For mirror validation: quote BOTH problem AND goal verbatim, then point to the specific 
-   metric in problem that is absent or changed in goal. Provide a corrected goal example.
+
+1. SCOPE LOCK — coach ONLY on items that literally appear in "Failed rules" or "Conditional rules" above.
+   - DO NOT invent new requirements. If something is NOT in those two lists, do NOT raise it.
+   - In particular: do NOT demand a financial/monetary target in the goal, do NOT demand mirror
+     validation, and do NOT demand VOC/CTQ changes UNLESS the corresponding rule
+     (A1b_* for mirror, A4_* for VOC/CTQ) is actually present in the lists.
+   - The goal is to get the project leader UNBLOCKED with the fewest essential fixes — not to pursue perfection.
+   - A Define goal only needs to be SMART (measurable target + deadline) AND mirror the problem.
+     NEVER ask HOW the goal will be achieved (no audit process, training, solutions, action steps) —
+     that is the Improve phase, NOT a Define deliverable. Do NOT lengthen the goal with implementation detail.
+   - If the user's goal already matches a previously suggested version and is SMART + mirrors the problem,
+     declare it sufficient. Do NOT fabricate new objections to keep it failing.
+
+2. Structure the output into at most two sections, and OMIT a section entirely if it would be empty:
+
+   ### 🔴 Wajib diperbaiki (memblokir gate)
+   - One bullet per rule in "Failed rules" ONLY (these are the A-rules that block finalize).
+   - For each: quote the user's exact problem/goal text, say specifically what is missing, and give
+     ONE concrete corrected example tied to that specific rule. Keep it minimal and copy-paste ready.
+
+   ### 🟡 Saran opsional (tidak memblokir gate)
+   - One short bullet per rule in "Conditional rules" ONLY. Frame as optional refinement, clearly
+     state it does NOT block finalize. No long lectures.
+
+3. If "Failed rules" is EMPTY: do NOT say the phase failed. Open with a brief line that the gate is not
+   blocked and the leader may finalize, then list only the optional suggestions (if any).
+
+4. Mirror validation (A1b_*) and VOC/CTQ consistency (A4_*) belong under the OPTIONAL section when flagged,
+   never as blockers.
+
+5. Tone: supportive MBB, not an error list. Be concise and actionable.
+6. Format: markdown with ### headings and bullet points. Maximum 220 words. Start directly — no preamble.
 """.strip()
 
     try:
@@ -944,8 +965,20 @@ Few-shot examples (if any):
         parsed = {"llm_raw": raw}
 
     # --- Build canonical schema ---
+    # Charter dianggap "confirmed" bila ada salah satu sinyal nyata dari UI:
+    #   (1) flag eksplisit charter_confirmed (state lama),
+    #   (2) checkbox persetujuan/sign-off (documentation_agreed), atau
+    #   (3) charter ter-upload & berhasil di-extract (charter_data_uploaded.available).
+    _charter_uploaded_ok = (
+        isinstance(user_inputs.get("charter_data_uploaded"), dict)
+        and bool(user_inputs.get("charter_data_uploaded", {}).get("available"))
+    )
     gate_evidence = {
-        "charter_confirmed": bool(user_inputs.get("charter_confirmed")),
+        "charter_confirmed": bool(
+            user_inputs.get("charter_confirmed")
+            or user_inputs.get("documentation_agreed")
+            or _charter_uploaded_ok
+        ),
         "similar_project_exists": bool(user_inputs.get("similar_project_exists")) if user_inputs.get("similar_project_exists") is not None else None,
         "similar_project_note": (user_inputs.get("similar_project_note") or "").strip(),
         "parallel_projects_risk": (user_inputs.get("parallel_projects_risk") or "").strip(),

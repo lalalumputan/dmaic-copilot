@@ -418,7 +418,7 @@ def _write_approval_panel(doc: Document, pid: str, phase: str):
 
 
 def _write_cover(doc: Document, project_name: str, generated_for_phase: str,
-                 is_draft: bool = False):
+                 is_draft: bool = False, project_path: Optional[str] = None):
     p   = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run("DMAIC PROJECT REPORT")
@@ -436,6 +436,21 @@ def _write_cover(doc: Document, project_name: str, generated_for_phase: str,
         f"Generated: {datetime.datetime.now().strftime('%d %B %Y')}"
         f"  |  Up to: {generated_for_phase.upper()} Phase"
     ).font.size = Pt(10)
+
+    # Execution-path badge — distinguishes Standard vs Quick on every phase report
+    _path = "quick" if str(project_path or "standard").strip().lower() == "quick" else "standard"
+    if _path == "quick":
+        _badge_text  = "Jalur Eksekusi: QUICK IMPROVEMENT — jalur ramping (A-rules saja)"
+        _badge_color = RGBColor(0x06, 0x5F, 0x46)   # green
+    else:
+        _badge_text  = "Jalur Eksekusi: STANDARD DMAIC — rigor penuh (A-rules + B-rules)"
+        _badge_color = RGBColor(0x03, 0x69, 0xA1)   # blue
+    p_path = doc.add_paragraph()
+    p_path.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r_path = p_path.add_run(_badge_text)
+    r_path.bold = True
+    r_path.font.size = Pt(11)
+    r_path.font.color.rgb = _badge_color
 
     if is_draft:
         doc.add_paragraph()
@@ -506,6 +521,21 @@ def _load_phase_state(pid: str, phase: str) -> Optional[Dict]:
     except Exception:
         pass
     return None
+
+
+def _resolve_project_path(pid: str) -> str:
+    """Return the execution path ("standard" | "quick") for a project.
+
+    Falls back to "standard" when metadata is missing/unreadable so the report
+    always carries a path label.
+    """
+    try:
+        from app.utils import memory as _mem
+        meta = _mem.load_project_meta(pid) if pid else {}
+        path = str((meta or {}).get("path", "standard")).strip().lower()
+        return "quick" if path == "quick" else "standard"
+    except Exception:
+        return "standard"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -588,6 +618,27 @@ def _write_define_section(doc: Document, define_state: Dict, pid: str):
             ]
             if tl_rows:
                 _doc_styled_table(doc, ["Milestone", "Target Date"], tl_rows)
+
+    # ── Ending Dates per Fase (Planned vs Actual) ─────────────────────────
+    try:
+        from app.utils import memory as _mem_tl
+        _actual_tl = _mem_tl.load_project_timeline(pid) or {}
+    except Exception:
+        _actual_tl = {}
+    _planned_tl = (charter.get("timeline") if isinstance(charter, dict) else {}) or {}
+    _ph_rows = [
+        ("Define",  "define_end",  "define"),
+        ("Measure", "measure_end", "measure"),
+        ("Analyze", "analyze_end", "analyze"),
+        ("Improve", "improve_end", "improve"),
+        ("Control", "control_end", "control"),
+    ]
+    if any((_actual_tl.get(_ak) or _planned_tl.get(_pk)) for _, _pk, _ak in _ph_rows):
+        _doc_heading(doc, _sn.h("Ending Dates per Fase (Planned vs Actual)"))
+        _doc_styled_table(doc, ["Fase", "Planned End", "Actual End"], [
+            [_lbl, str(_planned_tl.get(_pk) or "-"), str(_actual_tl.get(_ak) or "-")]
+            for _lbl, _pk, _ak in _ph_rows
+        ])
 
     # ── Scope ─────────────────────────────────────────────────────────────
     scope_in  = n["scope_in"]
@@ -825,6 +876,46 @@ def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
             p_c.add_run("Performance Commentary: ").bold = True
             p_c.add_run(commentary)
 
+    # ── Gambar Chart Performa yang diupload (+ evaluasi agent) ─────────────
+    try:
+        from app.utils import memory as _mem_ci
+        _ci_wip = _mem_ci.load_measure_wip(pid) or {}
+    except Exception:
+        _ci_wip = {}
+    _ci_b64 = _ci_wip.get("chart_image_b64", "")
+    if _ci_b64:
+        _doc_heading(doc, _sn.h("Gambar Chart Performa (diupload)"))
+        if _ci_wip.get("chart_image_name"):
+            _doc_kv(doc, "File", _ci_wip.get("chart_image_name"))
+        try:
+            import base64 as _b64ci, io as _ioci
+            doc.add_picture(_ioci.BytesIO(_b64ci.b64decode(_ci_b64)), width=Inches(5.5))
+            doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        except Exception:
+            _doc_body(doc, "(Gambar tidak dapat ditampilkan)")
+
+        _cib = outputs.get("chart_image_baseline") or {}
+        if isinstance(_cib, dict) and _cib and not _cib.get("error"):
+            _pc = str(_cib.get("problem_confirmed", "")).strip().lower()
+            _conf = {"ya": "Problem CONFIRMED dari chart",
+                     "tidak": "Problem TIDAK terkonfirmasi"}.get(_pc, "Konfirmasi belum jelas")
+            _doc_kv(doc, "Konfirmasi Problem", _conf)
+            if _cib.get("confirmation_reason"):
+                _doc_body(doc, _cib["confirmation_reason"])
+            _q = _cib.get("quartiles") or {}
+            _cib_rows = []
+            if _cib.get("average"):
+                _cib_rows.append(["Average (estimasi visual)", str(_cib["average"])])
+            if isinstance(_q, dict) and _q.get("median"):
+                _cib_rows.append(["Quartile Q1/Median/Q3",
+                                  f"{_q.get('q1','-')} / {_q.get('median','-')} / {_q.get('q3','-')}"])
+            if _cib.get("vs_target"):
+                _cib_rows.append(["Vs Target", str(_cib["vs_target"])])
+            if _cib.get("trend"):
+                _cib_rows.append(["Trend", str(_cib["trend"])])
+            if _cib_rows:
+                _doc_styled_table(doc, ["Figur (estimasi visual)", "Nilai"], _cib_rows)
+
     # ── Data Quality Results ───────────────────────────────────────────────
     dq = outputs.get("data_quality_results") or {}
     if dq.get("available"):
@@ -887,12 +978,51 @@ def _write_measure_section(doc: Document, measure_state: Dict, pid: str):
                 _doc_bullet(doc, b)
 
 
+def _render_dot_png(dot_code: str):
+    """Render Graphviz DOT → PNG bytes. Return None bila graphviz / binary 'dot' tidak tersedia."""
+    if not dot_code or not str(dot_code).strip():
+        return None
+    try:
+        from app.utils.ui_helpers import compact_dot as _compact_dot
+        dot_code = _compact_dot(dot_code)
+    except Exception:
+        pass
+    # Naikkan DPI agar gambar tajam saat diskalakan ke lebar halaman Word
+    dot_code = str(dot_code)
+    try:
+        import re as _re_dpi
+        if "dpi=" not in dot_code:
+            dot_code = _re_dpi.sub(r'(digraph\b[^{]*\{)',
+                                   r'\1\n    graph [dpi=150];', dot_code, count=1)
+    except Exception:
+        pass
+    try:
+        import graphviz
+        return graphviz.Source(str(dot_code)).pipe(format="png")
+    except Exception:
+        # Binary 'dot' mungkin belum di PATH proses ini → cari lokasi umum (Windows) lalu retry
+        try:
+            import os, shutil
+            if shutil.which("dot") is None:
+                for _bin in (r"C:\Program Files\Graphviz\bin",
+                             r"C:\Program Files (x86)\Graphviz\bin"):
+                    if os.path.isfile(os.path.join(_bin, "dot.exe")):
+                        os.environ["PATH"] = _bin + os.pathsep + os.environ.get("PATH", "")
+                        break
+            import graphviz
+            return graphviz.Source(str(dot_code)).pipe(format="png")
+        except Exception:
+            return None
+
+
 def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
     inputs   = analyze_state.get("inputs")  or {}
     outputs  = analyze_state.get("outputs") or {}
     gate     = analyze_state.get("gate")    or {}
     upstream = analyze_state.get("upstream") or {}
     _is_draft = analyze_state.get("status", "") != "final"
+    _path     = _resolve_project_path(pid)
+    _is_quick = (_path == "quick")
 
     _doc_phase_header(doc, "ANALYZE PHASE", is_draft=_is_draft)
     doc.add_paragraph()
@@ -906,6 +1036,27 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
 
     _sn = _SecNum()
 
+    # ── Confirmed Root Cause (dari Gemba) — Quick path saja ────────────────
+    if _is_quick:
+        _vr_q = outputs.get("verification_results") or []
+        _conf_q = [
+            r for r in _vr_q
+            if isinstance(r, dict) and str(r.get("is_root_cause", "")).strip().lower()
+            not in ("false", "", "none", "0", "❌ no", "❌")
+        ]
+        if _conf_q:
+            _doc_heading(doc, _sn.h("Confirmed Root Cause (dari Gemba)"))
+            _p_note = doc.add_paragraph()
+            _p_note.add_run(
+                "Root cause terverifikasi langsung di gemba; framing hipotesis:"
+            ).italic = True
+            _p_note.runs[0].font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
+            for r in _conf_q:
+                _rc  = r.get("root_cause") or r.get("cause") or r.get("description") or ""
+                _hyp = r.get("hypothesis") or f"Target tidak tercapai karena {_rc}"
+                _doc_bullet(doc, f"{r.get('xn', '')} — {_hyp}")
+            doc.add_paragraph()
+
     # ── Process Map ────────────────────────────────────────────────────────
     pm_steps = outputs.get("process_map_steps") or []
     pm_rows = []
@@ -916,7 +1067,7 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
                 s.get("responsible", ""), s.get("input", ""),
                 s.get("output", ""), s.get("notes", ""),
             ])
-    if pm_rows:
+    if pm_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Process Map"))
         _doc_styled_table(doc,
                           ["Step #", "Step Name", "Responsible",
@@ -928,6 +1079,58 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
         if pm_check.get("problem_area_steps"):
             _doc_kv(doc, "Problem Area Steps", ", ".join(pm_check["problem_area_steps"]))
 
+    # ── Gambar Process Map (foto) & Swimlane (di-generate) + Foto Fishbone ──
+    try:
+        from app.utils import memory as _mem_az
+        _az_wip = _mem_az.load_analyze_wip(pid) or {}
+    except Exception:
+        _az_wip = {}
+
+    # Foto process map (Opsi A / upload)
+    _pm_photo = _az_wip.get("pm_image_b64", "") or outputs.get("process_map_image_b64", "")
+    if _pm_photo:
+        _doc_heading(doc, _sn.h("Process Map (Foto / Upload)"))
+        try:
+            import base64 as _b_pm, io as _io_pm
+            doc.add_picture(_io_pm.BytesIO(_b_pm.b64decode(_pm_photo)), width=Inches(5.8))
+            doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        except Exception:
+            _doc_body(doc, "(Gambar tidak dapat ditampilkan)")
+
+    # Swimlane di-generate (DOT) — render PNG bila graphviz tersedia
+    _pm_dot = (_az_wip.get("pm_linked_dot_code") or _az_wip.get("pm_dot_code")
+               or outputs.get("pm_linked_dot_code") or outputs.get("pm_dot_code") or "")
+    if str(_pm_dot).strip():
+        _doc_heading(doc, _sn.h("Swimlane Process Map (di-generate)"))
+        _png = _render_dot_png(_pm_dot)
+        if _png:
+            try:
+                import io as _io_dot
+                doc.add_picture(_io_dot.BytesIO(_png), width=Inches(6.2))
+                doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+            except Exception:
+                _doc_body(doc, "(Diagram tidak dapat di-embed)")
+        else:
+            # graphviz tak tersedia → ekstrak daftar langkah dari DOT agar konten tetap masuk
+            import re as _re_dot
+            _labels = _re_dot.findall(r'\[label="([^"]*)"', str(_pm_dot))
+            if _labels:
+                doc.add_paragraph().add_run("Langkah proses (dari diagram):").bold = True
+                for _lb in _labels:
+                    _doc_bullet(doc, _lb)
+            _doc_body(doc, "ℹ️ Diagram swimlane interaktif ada di aplikasi. Untuk meng-embed gambarnya ke Word, install Graphviz (binary 'dot').")
+
+    # Foto fishbone
+    _fb_photo = _az_wip.get("fb_photo_b64", "")
+    if _fb_photo:
+        _doc_heading(doc, _sn.h("Fishbone (Foto Hasil Analisis)"))
+        try:
+            import base64 as _b_fb, io as _io_fb
+            doc.add_picture(_io_fb.BytesIO(_b_fb.b64decode(_fb_photo)), width=Inches(5.8))
+            doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        except Exception:
+            _doc_body(doc, "(Gambar tidak dapat ditampilkan)")
+
     # ── Fishbone Diagram (6M) ──────────────────────────────────────────────
     fishbone = outputs.get("fishbone_inputs") or {}
     fb_rows = []
@@ -937,7 +1140,7 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
                 fb_rows.append([cat, str(c)])
         elif causes:
             fb_rows.append([cat, str(causes)])
-    if fb_rows:
+    if fb_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Fishbone Diagram (6M)"))
         _doc_styled_table(doc, ["Category (6M)", "Potential Cause"], fb_rows)
         fb_check = outputs.get("fishbone_check") or {}
@@ -951,7 +1154,7 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
         if isinstance(c, dict):
             pc_rows.append([c.get("xn", ""), c.get("cause", ""),
                             c.get("source", ""), c.get("direct_effect_on_y", "")])
-    if pc_rows:
+    if pc_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Potential Causes (Xn List)"))
         _doc_styled_table(doc, ["Xn", "Cause", "Source", "Direct Effect on Y"], pc_rows)
 
@@ -965,7 +1168,7 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
                 v.get("input_measurement_x", ""), v.get("relation_to_y", ""),
                 v.get("verification_method", ""), v.get("data_needed", ""),
             ])
-    if vp_rows:
+    if vp_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Verification Plan"))
         _doc_styled_table(doc,
                           ["Xn", "Root Cause", "Input Measurement X",
@@ -986,7 +1189,7 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
                 r.get("impact_level", ""),
                 "✅ Yes" if is_rc_vr else "❌ No",
             ])
-    if vr_rows:
+    if vr_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Verification Results"))
         p_vr_note = doc.add_paragraph()
         p_vr_note.add_run(
@@ -998,9 +1201,30 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
                            "Impact % of Target Gap", "Impact Level", "Root Cause?"],
                           vr_rows, header_color="0f5132")
 
+    # Bukti verifikasi root cause (file/foto upload di Step 7) — di bawah Verification Results
+    _vr_uploads = _az_wip.get("vr_uploads") or []
+    _vr_imgs = [u for u in _vr_uploads
+                if isinstance(u, dict) and str(u.get("type", "")).startswith("image/") and u.get("b64")]
+    _vr_other = [u for u in _vr_uploads
+                 if isinstance(u, dict) and not str(u.get("type", "")).startswith("image/")]
+    if (_vr_imgs or _vr_other) and not _is_quick:
+        p_be = doc.add_paragraph()
+        p_be.add_run("Bukti Verifikasi Root Cause:").bold = True
+        for _u in _vr_imgs:
+            if _u.get("name"):
+                _doc_kv(doc, "File", _u["name"])
+            try:
+                import base64 as _b_vr, io as _io_vr
+                doc.add_picture(_io_vr.BytesIO(_b_vr.b64decode(_u["b64"])), width=Inches(5.8))
+                doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+            except Exception:
+                _doc_body(doc, f"(Gambar {_u.get('name','')} tidak dapat ditampilkan)")
+        for _u in _vr_other:
+            _doc_kv(doc, "Lampiran", f"{_u.get('name','')} ({_u.get('type','')})")
+
     # ── Detailed Verification Analysis (Agent-generated) ───────────────────
     analyses = outputs.get("verification_analysis") or []
-    if analyses:
+    if analyses and not _is_quick:
         _doc_heading(doc, _sn.h("Detailed Verification Analysis"))
         for a in analyses:
             if not isinstance(a, dict):
@@ -1042,7 +1266,7 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
                 r.get("is_root_cause", ""), r.get("impact", ""),
                 r.get("comment", ""),
             ])
-    if rca_rows:
+    if rca_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Root Cause Summary Table"))
         _doc_styled_table(doc,
                           ["Xn", "Root Cause", "Confirmed?", "Impact", "Comment on KPI"],
@@ -1055,6 +1279,7 @@ def _write_improve_section(doc: Document, improve_state: Dict, pid: str):
     gate     = improve_state.get("gate")    or {}
     upstream = improve_state.get("upstream") or {}
     _is_draft = improve_state.get("status", "") != "final"
+    _is_quick = (_resolve_project_path(pid) == "quick")
 
     _doc_phase_header(doc, "IMPROVE PHASE", is_draft=_is_draft)
     doc.add_paragraph()
@@ -1085,7 +1310,7 @@ def _write_improve_section(doc: Document, improve_state: Dict, pid: str):
         if isinstance(m, dict):
             mc_rows.append([m.get("criterion", ""), m.get("category", ""),
                             m.get("rationale", "")])
-    if mc_rows:
+    if mc_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Solution Must Criteria"))
         _doc_styled_table(doc, ["Criterion", "Category", "Rationale"], mc_rows)
 
@@ -1131,13 +1356,31 @@ def _write_improve_section(doc: Document, improve_state: Dict, pid: str):
         or outputs.get("improved_process_map_summary")
         or ""
     )
-    if not _is_blank(_future_text):
+    _fs_dot = outputs.get("improved_process_map_dot", "") or ""
+    if (not _is_blank(_future_text) or str(_fs_dot).strip()) and not _is_quick:
         _doc_heading(doc, _sn.h("Future State / Should-Be Process"))
-        _doc_body(doc, _future_text)
+        if not _is_blank(_future_text):
+            _doc_body(doc, _future_text)
+        if str(_fs_dot).strip():
+            _fs_png = _render_dot_png(_fs_dot)
+            if _fs_png:
+                try:
+                    import io as _io_fs
+                    doc.add_picture(_io_fs.BytesIO(_fs_png), width=Inches(6.2))
+                    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                except Exception:
+                    pass
+            else:
+                import re as _re_fs
+                _fs_labels = _re_fs.findall(r'\[label="([^"]*)"', str(_fs_dot))
+                if _fs_labels:
+                    doc.add_paragraph().add_run("Langkah future state (dari diagram):").bold = True
+                    for _lb in _fs_labels:
+                        _doc_bullet(doc, _lb)
 
     # ── Pilot Plan ─────────────────────────────────────────────────────────
     pilot = outputs.get("pilot_plan") or {}
-    if pilot and isinstance(pilot, dict) and not _is_blank(pilot):
+    if pilot and isinstance(pilot, dict) and not _is_blank(pilot) and not _is_quick:
         _doc_heading(doc, _sn.h("Pilot Plan"))
         pilot_rows = [
             ["Scope",            pilot.get("scope", "")],
@@ -1179,7 +1422,7 @@ def _write_improve_section(doc: Document, improve_state: Dict, pid: str):
                 c.get("who_informs", ""), c.get("channel", ""),
                 c.get("due_date", ""), c.get("status", "pending"),
             ])
-    if comm_rows:
+    if comm_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Communication Plan"))
         _doc_styled_table(doc,
                           ["Who Informed", "About What", "Who Informs",
@@ -1201,6 +1444,24 @@ def _write_improve_section(doc: Document, improve_state: Dict, pid: str):
         _doc_styled_table(doc, ["Solution", "Status", "Notes"], status_rows,
                           header_color="374151")
 
+    # ── Bukti / Hasil Implementasi (uploaded) ──────────────────────────────
+    try:
+        from app.utils import memory as _mem_ir
+        _ir = _mem_ir.load_improve_wip(pid) or {}
+    except Exception:
+        _ir = {}
+    _ir_b64 = _ir.get("implementation_result_b64", "")
+    if _ir_b64:
+        _doc_heading(doc, _sn.h("Bukti / Hasil Implementasi"))
+        _doc_kv(doc, "File", _ir.get("implementation_result_name", "bukti"))
+        if str(_ir.get("implementation_result_mime", "")).startswith("image/"):
+            try:
+                import base64 as _b64ir2, io as _io_ir
+                from docx.shared import Inches as _Inches_ir
+                doc.add_picture(_io_ir.BytesIO(_b64ir2.b64decode(_ir_b64)), width=_Inches_ir(5.5))
+            except Exception:
+                pass
+
     # ── Risks & Assumptions ────────────────────────────────────────────────
     risks = outputs.get("risks_and_assumptions") or []
     if risks:
@@ -1215,6 +1476,7 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
     gate     = control_state.get("gate")    or {}
     upstream = control_state.get("upstream") or {}
     _is_draft = control_state.get("status", "") != "final"
+    _is_quick = (_resolve_project_path(pid) == "quick")
 
     _doc_phase_header(doc, "CONTROL PHASE", is_draft=_is_draft)
     doc.add_paragraph()
@@ -1230,7 +1492,7 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
 
     # ── Monitoring & Reaction Plan ─────────────────────────────────────────
     mon_plan = outputs.get("monitoring_reaction_plan") or []
-    if mon_plan:
+    if mon_plan and not _is_quick:
         _doc_heading(doc, _sn.h("Monitoring & Reaction Plan"))
         mon_rows = []
         for m in mon_plan:
@@ -1298,7 +1560,7 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
                 c.get("sample_size", ""), c.get("owner", ""),
                 c.get("recording_system", ""),
             ])
-    if cp_rows:
+    if cp_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Control Plan per CTQ"))
         _doc_styled_table(doc,
                           ["CTQ", "Metric", "Spec Limit", "Control Method",
@@ -1307,7 +1569,7 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
 
     # ── Handover Protocol ──────────────────────────────────────────────────
     handover = outputs.get("handover_protocol") or {}
-    if handover and not _is_blank(handover):
+    if handover and not _is_blank(handover) and not _is_quick:
         _doc_heading(doc, _sn.h("Handover Protocol"))
         status_rows = [
             ["Should-be process set up",
@@ -1339,6 +1601,15 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
         if handover.get("confirmation_sheet_name"):
             _doc_kv(doc, "Handover Confirmation Sheet (signed Process Owner)",
                     handover["confirmation_sheet_name"])
+            _conf_b64  = handover.get("confirmation_sheet_b64", "")
+            _conf_type = handover.get("confirmation_sheet_type", "")
+            if _conf_b64 and str(_conf_type).startswith("image/"):
+                try:
+                    import base64 as _b_hc, io as _io_hc
+                    doc.add_picture(_io_hc.BytesIO(_b_hc.b64decode(_conf_b64)), width=Inches(5.5))
+                    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                except Exception:
+                    pass
 
         # ── Backward-compat: draft lama (training_plan / open_issues list) ──
         training = handover.get("training_plan") or []
@@ -1383,10 +1654,20 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
         _doc_kv(doc, "Benefit Type",      benefit.get("benefit_type"))
         _doc_kv(doc, "Validated by",      benefit.get("validated_by"))
         _doc_kv(doc, "Validation Date",   benefit.get("validation_date"))
-        if benefit.get("approval_sheet_name"):
-            _doc_kv(doc, "Benefit Approval Sheet", benefit.get("approval_sheet_name"))
-        if benefit.get("tracking_sheet_name"):
-            _doc_kv(doc, "Benefit Tracking Sheet", benefit.get("tracking_sheet_name"))
+        for _slot, _lbl in [("approval", "Benefit Approval Sheet"),
+                            ("tracking", "Benefit Tracking Sheet")]:
+            _bs_name = benefit.get(f"{_slot}_sheet_name", "")
+            _bs_b64  = benefit.get(f"{_slot}_sheet_b64", "")
+            _bs_type = benefit.get(f"{_slot}_sheet_type", "")
+            if _bs_name:
+                _doc_kv(doc, _lbl, _bs_name)
+            if _bs_b64 and str(_bs_type).startswith("image/"):
+                try:
+                    import base64 as _b_bs, io as _io_bs
+                    doc.add_picture(_io_bs.BytesIO(_b_bs.b64decode(_bs_b64)), width=Inches(5.5))
+                    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                except Exception:
+                    pass
 
     # ── Control Chart ──────────────────────────────────────────────────────
     cc = outputs.get("control_chart") or {}
@@ -1473,7 +1754,7 @@ def export_define_to_word(define_state: Dict[str, Any],
 
     doc = Document()
     _doc_setup(doc)
-    _write_cover(doc, project_name, "Define", is_draft)
+    _write_cover(doc, project_name, "Define", is_draft, _resolve_project_path(pid))
 
     _write_define_section(doc, define_state, pid)
 
@@ -1495,7 +1776,7 @@ def export_measure_to_word(measure_state: Dict[str, Any],
 
     doc = Document()
     _doc_setup(doc)
-    _write_cover(doc, project_name, "Measure", is_draft)
+    _write_cover(doc, project_name, "Measure", is_draft, _resolve_project_path(pid))
 
     if define_state:
         _write_define_section(doc, define_state, pid)
@@ -1521,7 +1802,7 @@ def export_analyze_to_word(analyze_state: Dict[str, Any],
 
     doc = Document()
     _doc_setup(doc)
-    _write_cover(doc, project_name, "Analyze", is_draft)
+    _write_cover(doc, project_name, "Analyze", is_draft, _resolve_project_path(pid))
 
     if define_state:
         _write_define_section(doc, define_state, pid)
@@ -1552,7 +1833,7 @@ def export_improve_to_word(improve_state: Dict[str, Any],
 
     doc = Document()
     _doc_setup(doc)
-    _write_cover(doc, project_name, "Improve", is_draft)
+    _write_cover(doc, project_name, "Improve", is_draft, _resolve_project_path(pid))
 
     if define_state:
         _write_define_section(doc, define_state, pid)
@@ -1588,7 +1869,7 @@ def export_control_to_word(control_state: Dict[str, Any],
 
     doc = Document()
     _doc_setup(doc)
-    _write_cover(doc, project_name, "Control", is_draft)
+    _write_cover(doc, project_name, "Control", is_draft, _resolve_project_path(pid))
 
     if define_state:
         _write_define_section(doc, define_state, pid)

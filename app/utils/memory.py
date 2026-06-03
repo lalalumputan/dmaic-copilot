@@ -247,6 +247,19 @@ def load_project_meta(project_id: str) -> Dict[str, Any]:
     except Exception:
         return {"path": "standard", "classification": None, "path_override": False}
 
+
+# ======================================================
+# PROJECT TIMELINE (tanggal aktual selesai tiap fase)
+# ======================================================
+
+def save_project_timeline(project_id: str, timeline: Dict[str, Any]) -> None:
+    """timeline = {"define": "YYYY-MM-DD", "measure": ..., ...} (tanggal aktual selesai fase)."""
+    _upsert_state(project_id, "project", "timeline_actual", timeline or {})
+
+def load_project_timeline(project_id: str) -> Dict[str, Any]:
+    return _load_state(project_id, "project", "timeline_actual") or {}
+
+
 # ======================================================
 # DEFINE
 # ======================================================
@@ -291,6 +304,13 @@ def load_measure_final(project_id: str) -> Optional[Dict[str, Any]]:
 
 def delete_measure_draft(project_id: str) -> None:
     _delete_state(project_id, "measure", "draft")
+
+def save_measure_wip(project_id: str, state: Dict[str, Any]) -> None:
+    """Work-in-progress Measure inputs (op-defs + MSA) — durable tanpa harus Generate."""
+    _upsert_state(project_id, "measure", "wip", state)
+
+def load_measure_wip(project_id: str) -> Optional[Dict[str, Any]]:
+    return _load_state(project_id, "measure", "wip")
 
 def save_measure_episode(project_id: str, state: Dict[str, Any], feedback=None) -> None:
     _save_episode("measure", state)
@@ -340,6 +360,13 @@ def save_improve_final(project_id: str, state: Dict[str, Any]) -> None:
 
 def load_improve_final(project_id: str) -> Optional[Dict[str, Any]]:
     return _load_state(project_id, "improve", "final")
+
+def save_improve_wip(project_id: str, state: Dict[str, Any]) -> None:
+    """Work-in-progress Improve (mis. bukti hasil implementasi) — durable."""
+    _upsert_state(project_id, "improve", "wip", state)
+
+def load_improve_wip(project_id: str) -> Dict[str, Any]:
+    return _load_state(project_id, "improve", "wip") or {}
 
 def delete_improve_draft(project_id: str) -> None:
     _delete_state(project_id, "improve", "draft")
@@ -440,9 +467,9 @@ def get_phase_approval_status(project_id: str, phase: str) -> Dict[str, Any]:
     Sequential approval governance dengan aturan baru.
 
     Berlaku untuk kedua path:
-      DEFINE   — Reviewer + Champion (gate awal project, tanpa dependensi fase sebelumnya)
-      CONTROL  — Standard: Reviewer + Champion | Quick: Champion only
-                 (gate penutup project, requires IMPROVE approved)
+      DEFINE   — Reviewer saja (gate awal project, tanpa dependensi fase sebelumnya).
+                 Champion TIDAK wajib di Define — Champion hanya mandatory di Control.
+      CONTROL  — Reviewer + Champion (kedua path; gate penutup project, requires IMPROVE approved)
 
     Standard path fase tengah (measure, analyze, improve):
       Reviewer only, requires fase sebelumnya approved.
@@ -461,18 +488,15 @@ def get_phase_approval_status(project_id: str, phase: str) -> Dict[str, Any]:
     prev_ok = _prev_phase_can_advance(project_id, phase)
 
     if phase == "define":
-        # Kedua role wajib; tidak ada sequential dependency
-        can_advance        = reviewer_approved and champion_approved
-        required_approvers = ["reviewer", "champion"]
+        # Reviewer saja; Champion hanya mandatory di CONTROL. Tanpa sequential dependency.
+        can_advance        = reviewer_approved
+        required_approvers = ["reviewer"]
         auto_advance       = False
     elif phase == "control":
-        if project_path == "quick":
-            can_advance        = prev_ok and champion_approved
-            required_approvers = ["champion"]
-        else:
-            can_advance        = prev_ok and reviewer_approved and champion_approved
-            required_approvers = ["reviewer", "champion"]
-        auto_advance = False
+        # Reviewer + Champion wajib untuk KEDUA path (gate penutup project)
+        can_advance        = prev_ok and reviewer_approved and champion_approved
+        required_approvers = ["reviewer", "champion"]
+        auto_advance       = False
     else:  # measure, analyze, improve
         if project_path == "quick":
             can_advance        = prev_ok   # auto, tapi tergantung fase sebelumnya

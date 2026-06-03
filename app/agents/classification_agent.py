@@ -148,8 +148,8 @@ def run_classification_agent(inputs: Dict[str, Any]) -> Dict[str, Any]:
         confidence = "high" if total >= 13 else "medium"
         overall_reasoning = (
             f"Total complexity score is {total}/{MAX_SCORE}. "
-            "The problem warrants full Standard DMAIC execution. "
-            "All deliverables and B-rule gates are required."
+            "The problem warrants full Standard DMAIC execution — "
+            "all formal deliverables are required."
         )
     else:
         # Borderline: default to standard, flag ambiguity

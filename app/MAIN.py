@@ -357,7 +357,7 @@ with tab_dash:
     elif role == "champion":
         _champ_items = []
         for _pid in _all_recap_pids:
-            for _cphase in ["define", "control"]:
+            for _cphase in ["control"]:
                 if memory._load_state(_pid, _cphase, "final"):
                     _appr = memory.get_phase_approval_status(_pid, _cphase)
                     if (
@@ -595,9 +595,9 @@ with tab_dash:
 
                 is_active  = (active_pid == pid)
 
-                # Path-aware approval display:
-                # Quick  → Rev = Define reviewer | Champ = Improve champion
-                # Standard → Rev = Define reviewer | Champ = Define champion
+                # Approval display:
+                # Rev   = Define reviewer (gate awal)
+                # Champ = Control champion (Champion hanya mandatory di Control)
                 try:
                     _pid_meta = memory.load_project_meta(pid)
                     _pid_path = _pid_meta.get("path", "standard")
@@ -607,8 +607,9 @@ with tab_dash:
 
                 appr_def  = memory.get_phase_approval_status(pid, "define")
                 rev_action   = (appr_def.get("reviewer") or {}).get("action")
-                # Champion sekarang hanya di DEFINE dan CONTROL — tampilkan DEFINE champion di tabel
-                champ_action = (appr_def.get("champion") or {}).get("action")
+                # Champion sekarang HANYA mandatory di CONTROL — tampilkan CONTROL champion di tabel
+                appr_ctrl    = memory.get_phase_approval_status(pid, "control")
+                champ_action = (appr_ctrl.get("champion") or {}).get("action")
 
                 row = st.columns([2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 

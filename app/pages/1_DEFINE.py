@@ -5,7 +5,7 @@ import app.agents.define_agent as _da
 from app.agents.define_agent import run_define_agent, finalize_define_agent
 from app.utils import data_processing as dp, memory, audit, reporting, llm_engine
 from app.utils import auth
-from app.utils.ui_helpers import render_sidebar_header
+from app.utils.ui_helpers import render_sidebar_header, render_tab_quicknav, render_phase_end_date
 from app.utils.charter_template import (
     generate_charter_benefit_template,
     extract_charter_from_upload,
@@ -436,13 +436,20 @@ if active_pid:
     # Governance ringkas untuk fase ini
     appr = memory.get_phase_approval_status(active_pid, "define")
     rev  = (appr.get("reviewer") or {}).get("action") or "pending"
-    chmp = (appr.get("champion") or {}).get("action") or "pending"
     rev_icon  = "✅" if rev  == "approve" else ("❌" if rev  == "reject" else "⏳")
-    chmp_icon = "✅" if chmp == "approve" else ("❌" if chmp == "reject" else "⏳")
-    st.sidebar.markdown(
-        f"**Define Gate:**  \n"
-        f"{rev_icon} Reviewer  |  {chmp_icon} Champion"
-    )
+    # Champion hanya mandatory di Control — Define Gate cukup Reviewer
+    if "champion" in appr.get("required_approvers", []):
+        chmp = (appr.get("champion") or {}).get("action") or "pending"
+        chmp_icon = "✅" if chmp == "approve" else ("❌" if chmp == "reject" else "⏳")
+        st.sidebar.markdown(
+            f"**Define Gate:**  \n"
+            f"{rev_icon} Reviewer  |  {chmp_icon} Champion"
+        )
+    else:
+        st.sidebar.markdown(
+            f"**Define Gate:**  \n"
+            f"{rev_icon} Reviewer"
+        )
     if appr.get("can_advance"):
         st.sidebar.success("🚀 Gate OPEN")
     else:
@@ -450,7 +457,7 @@ if active_pid:
 else:
     st.sidebar.warning("Belum ada project aktif.")
     st.sidebar.caption("Kembali ke **Main** untuk memilih project.")
-
+st.sidebar.divider()
 # ==========================
 # GATE: empty page until project chosen
 # ==========================
@@ -497,6 +504,25 @@ if active_pid and loaded_pid != active_pid:
         # Prefill form dari final (read-only di UI)
         if not draft_state_disk:
             prefill_define_form_from_state(active_pid, final_state_disk)
+
+# Fallback: pastikan draft/final Define tetap ter-load dari disk walau _loaded_pid
+# sudah diset page lain (key _loaded_pid dipakai bersama Measure) → mencegah tab kosong.
+if active_pid and not st.session_state.get("define_draft") and not st.session_state.get("define_final"):
+    _dd_disk = memory.load_define_draft(active_pid)
+    _df_disk = memory.load_define_final(active_pid)
+    if _dd_disk:
+        st.session_state["define_draft"] = {
+            "status": "draft", "define_state": _dd_disk,
+            "summary": _dd_disk.get("summary_md", ""), "message": "Loaded DRAFT from disk",
+        }
+        prefill_define_form_from_state(active_pid, _dd_disk)
+    if _df_disk:
+        st.session_state["define_final"] = {
+            "status": "finalized", "define_state": _df_disk, "critique": [],
+            "summary": _df_disk.get("summary_md", ""), "message": "Loaded FINAL from disk",
+        }
+        if not _dd_disk:
+            prefill_define_form_from_state(active_pid, _df_disk)
 
 
 # ============================================
@@ -565,10 +591,9 @@ import copy
 
 view, res = _get_current_result()
 
-tab_input, tab1, tab2, tab3, tab4 = st.tabs([
-    "✏️ Input",
-    "📄 Report", "📊 Tables", "Charter", "Benefit"
-])
+_TAB_LABELS = ["✏️ Input", "📄 Report", "Charter", "Benefit"]
+tab_input, tab1, tab3, tab4 = st.tabs(_TAB_LABELS)
+render_tab_quicknav(_TAB_LABELS)
 
 with tab_input:
 
@@ -811,80 +836,81 @@ with tab_input:
             disabled=is_locked,
         )
 # ── Charter & Benefit Upload (standard path, OUTSIDE form) ──
-if _form_path == "standard" and not is_locked:
-    st.divider()
-    st.markdown("#### 📋 Project Charter & Benefit Estimate")
-    st.caption(
-        "Download template, isi secara offline, lalu upload kembali. "
-        "Agent akan membaca dan memvalidasi isi file."
-    )
-
-    # Download template
-    _tpl_bytes = generate_charter_benefit_template()
-    st.download_button(
-        label="⬇️ Download Template (Charter + Benefit)",
-        data=_tpl_bytes,
-        file_name="DMAIC_Charter_Benefit_Template.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="define_template_download_btn",
-    )
-
-    # Upload
-    _uploaded_charter_file = st.file_uploader(
-        "Upload completed template (.xlsx)",
-        type=["xlsx"],
-        key=f"define_charter_upload_{active_pid}",
-    )
-
-    if _uploaded_charter_file is not None:
-        _charter_data  = extract_charter_from_upload(_uploaded_charter_file)
-        _uploaded_charter_file.seek(0)
-        _benefit_data  = extract_benefit_from_upload(_uploaded_charter_file)
-        st.session_state["define_charter_upload_data"] = _charter_data
-        st.session_state["define_benefit_upload_data"] = _benefit_data
-
-        if _charter_data.get("available"):
-            st.success("✅ Charter extracted successfully.")
-            with st.expander("Preview Charter", expanded=False):
-                st.write(f"**Project Leader:** {_charter_data.get('project_leader','-')}")
-                st.write(f"**Champion:** {_charter_data.get('champion','-')}")
-                st.write(f"**Process Owner:** {_charter_data.get('process_owner','-')}")
-                st.write(f"**Controller:** {_charter_data.get('controller','-')}")
-                import pandas as pd
-                team = _charter_data.get("team_members") or []
-                if team:
-                    st.dataframe(pd.DataFrame(team), use_container_width=True, hide_index=True)
-                timeline = _charter_data.get("timeline") or {}
-                if timeline:
-                    tl_rows = [{"Milestone": k.replace("_"," ").title(), "Target": v}
-                               for k, v in timeline.items()]
-                    st.dataframe(pd.DataFrame(tl_rows), use_container_width=True, hide_index=True)
-        else:
-            st.warning(f"⚠️ Charter: {_charter_data.get('error','Gagal dibaca.')}")
-
-        if _benefit_data.get("available"):
-            st.success("✅ Benefit estimate extracted successfully.")
-            with st.expander("Preview Benefit Estimate", expanded=False):
-                kpi_rows = _benefit_data.get("kpi_table") or []
-                if kpi_rows:
-                    st.dataframe(pd.DataFrame(kpi_rows), use_container_width=True, hide_index=True)
-                else:
-                    st.caption("KPI table kosong.")
-        else:
-            st.warning(f"⚠️ Benefit: {_benefit_data.get('error','Gagal dibaca.')}")
-
-    # Justifikasi jika tidak upload
-    _has_upload = st.session_state.get("define_charter_upload_data") is not None
-    if not _has_upload:
-        st.caption("Belum upload? Berikan justifikasi:")
-        _charter_reason = st.text_area(
-            "Alasan belum upload Charter & Benefit template",
-            key=f"define_no_upload_reason_{active_pid}",
-            height=70,
-            placeholder="Contoh: Data masih dalam proses validasi dengan Finance, akan diupload sebelum approval.",
+with tab_input:
+    if _form_path == "standard" and not is_locked:
+        st.divider()
+        st.markdown("#### 📋 Project Charter & Benefit Estimate")
+        st.caption(
+            "Download template, isi secara offline, lalu upload kembali. "
+            "Agent akan membaca dan memvalidasi isi file."
         )
-    else:
-        _charter_reason = ""
+
+        # Download template
+        _tpl_bytes = generate_charter_benefit_template()
+        st.download_button(
+            label="⬇️ Download Template (Charter + Benefit)",
+            data=_tpl_bytes,
+            file_name="DMAIC_Charter_Benefit_Template.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="define_template_download_btn",
+        )
+
+        # Upload
+        _uploaded_charter_file = st.file_uploader(
+            "Upload completed template (.xlsx)",
+            type=["xlsx"],
+            key=f"define_charter_upload_{active_pid}",
+        )
+
+        if _uploaded_charter_file is not None:
+            _charter_data  = extract_charter_from_upload(_uploaded_charter_file)
+            _uploaded_charter_file.seek(0)
+            _benefit_data  = extract_benefit_from_upload(_uploaded_charter_file)
+            st.session_state["define_charter_upload_data"] = _charter_data
+            st.session_state["define_benefit_upload_data"] = _benefit_data
+
+            if _charter_data.get("available"):
+                st.success("✅ Charter extracted successfully.")
+                with st.expander("Preview Charter", expanded=False):
+                    st.write(f"**Project Leader:** {_charter_data.get('project_leader','-')}")
+                    st.write(f"**Champion:** {_charter_data.get('champion','-')}")
+                    st.write(f"**Process Owner:** {_charter_data.get('process_owner','-')}")
+                    st.write(f"**Controller:** {_charter_data.get('controller','-')}")
+                    import pandas as pd
+                    team = _charter_data.get("team_members") or []
+                    if team:
+                        st.dataframe(pd.DataFrame(team), use_container_width=True, hide_index=True)
+                    timeline = _charter_data.get("timeline") or {}
+                    if timeline:
+                        tl_rows = [{"Milestone": k.replace("_"," ").title(), "Target": v}
+                                   for k, v in timeline.items()]
+                        st.dataframe(pd.DataFrame(tl_rows), use_container_width=True, hide_index=True)
+            else:
+                st.warning(f"⚠️ Charter: {_charter_data.get('error','Gagal dibaca.')}")
+
+            if _benefit_data.get("available"):
+                st.success("✅ Benefit estimate extracted successfully.")
+                with st.expander("Preview Benefit Estimate", expanded=False):
+                    kpi_rows = _benefit_data.get("kpi_table") or []
+                    if kpi_rows:
+                        st.dataframe(pd.DataFrame(kpi_rows), use_container_width=True, hide_index=True)
+                    else:
+                        st.caption("KPI table kosong.")
+            else:
+                st.warning(f"⚠️ Benefit: {_benefit_data.get('error','Gagal dibaca.')}")
+
+        # Justifikasi jika tidak upload
+        _has_upload = st.session_state.get("define_charter_upload_data") is not None
+        if not _has_upload:
+            st.caption("Belum upload? Berikan justifikasi:")
+            _charter_reason = st.text_area(
+                "Alasan belum upload Charter & Benefit template",
+                key=f"define_no_upload_reason_{active_pid}",
+                height=70,
+                placeholder="Contoh: Data masih dalam proses validasi dengan Finance, akan diupload sebelum approval.",
+            )
+        else:
+            _charter_reason = ""
 
 # OUTSIDE the form, but still can be anywhere (I put it after cols)
 if submitted:
@@ -924,6 +950,8 @@ if submitted:
         user_feedback=user_feedback,
     )
     st.session_state["define_draft"] = result
+    # Refresh agar tab Report ikut draft terbaru di run yang sama (tanpa generate ulang/panggil agent lagi)
+    view, res = _get_current_result()
 
 # --- Revision Guidance (agent coaching) — ditempatkan di tab Input, bukan global ---
 with tab_input:
@@ -1044,78 +1072,13 @@ else:
             st.markdown("### 🧭 Agent Coaching")
             st.markdown(_coaching)
 
-    with tab2:
-
-        _tab_path = define_state.get("project_path", "standard")
-
-        if _tab_path == "quick":
-            # Quick path tables: Scope, Y Variable, Benefit Estimate
-
-            # --- Scope table ---
-            scope = outs.get("project_scope") or {}
-            in_scope  = scope.get("in_scope")    or [] if isinstance(scope, dict) else []
-            out_scope = scope.get("out_of_scope") or [] if isinstance(scope, dict) else []
-            if in_scope or out_scope:
-                st.markdown("### Project Scope")
-                max_len = max(len(in_scope), len(out_scope), 1)
-                scope_rows = []
-                for i in range(max_len):
-                    scope_rows.append({
-                        "In Scope":    in_scope[i]  if i < len(in_scope)  else "",
-                        "Out of Scope": out_scope[i] if i < len(out_scope) else "",
-                    })
-                st.dataframe(pd.DataFrame(scope_rows), use_container_width=True, hide_index=True)
-
-            # --- Y Variable ---
-            ctq = outs.get("ctq_list") or []
-            y_ctq = ctq[0] if ctq and isinstance(ctq[0], dict) else {}
-            if y_ctq:
-                st.markdown("### Y Variable (Success Metric)")
-                y_rows = [{
-                    "Name":        y_ctq.get("name", "-"),
-                    "Metric":      y_ctq.get("metric", "-"),
-                    "Unit":        y_ctq.get("unit", "-"),
-                    "Description": y_ctq.get("description", "-"),
-                }]
-                st.dataframe(pd.DataFrame(y_rows), use_container_width=True, hide_index=True)
-
-        else:
-            # Standard: tampilkan semua table seperti sebelumnya
-            _voc_display_key = f"define_voc_table_{active_pid}"
-            voc_tbl_display = inputs.get("voc_table") or st.session_state.get(_voc_display_key) or []
-            if voc_tbl_display:
-                st.markdown("### Tool I — VOC/VOB → CTQ/CTB")
-                st.dataframe(pd.DataFrame(voc_tbl_display), use_container_width=True, hide_index=True)
-
-            ctq = outs.get("ctq_list") or []
-            if ctq:
-                st.markdown("### CTQ List")
-                rows = [{"Name": c.get("name",""), "Metric": c.get("metric",""),
-                         "Unit": c.get("unit",""), "Description": c.get("description","")}
-                        for c in ctq if isinstance(c, dict)]
-                if rows:
-                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-
-            sipoc_data = outs.get("sipoc") or {}
-            if sipoc_data:
-                st.markdown("### SIPOC")
-                sipoc_keys = ["Suppliers","Inputs","Process","Outputs","Customers"]
-                sipoc_lists = [sipoc_data.get(k) or sipoc_data.get(k.lower()) or [] for k in sipoc_keys]
-                sipoc_lists = [v if isinstance(v, list) else [str(v)] if v else [] for v in sipoc_lists]
-                max_len = max([len(x) for x in sipoc_lists], default=1)
-                sipoc_rows = []
-                for i in range(max_len):
-                    row = {}
-                    for j, k in enumerate(sipoc_keys):
-                        row[k] = sipoc_lists[j][i] if i < len(sipoc_lists[j]) else ""
-                    sipoc_rows.append(row)
-                st.dataframe(pd.DataFrame(sipoc_rows), use_container_width=True, hide_index=True)
-
     with tab3:
+        if _proj_path == "quick":
+            st.info("📋 Tab **Charter** tidak berlaku untuk **Quick path** — charter formal di-skip. Lihat tab Report & Benefit.")
         # Project Charter — dari upload atau dari LLM output
         _charter_upload_data = st.session_state.get("define_charter_upload_data") or {}
         charter = _charter_upload_data if _charter_upload_data.get("available") else (outs.get("project_charter") or {})
-        if charter and charter.get("available") is not False:
+        if _proj_path != "quick" and charter and charter.get("available") is not False:
             st.markdown("### 📋 Project Charter")
             _res_rows = []
             for role_label, key in [
@@ -1143,6 +1106,24 @@ else:
                            for k, v in timeline.items() if v]
                 if tl_rows:
                     st.dataframe(pd.DataFrame(tl_rows), use_container_width=True, hide_index=True)
+
+        # ── Ending Dates per Fase (Planned vs Actual) — rekap dari semua fase ──
+        _actual_tl  = memory.load_project_timeline(active_pid) or {}
+        _planned_tl = (charter.get("timeline") if isinstance(charter, dict) else {}) or {}
+        _phase_rows = [
+            ("Define",  "define_end",  "define"),
+            ("Measure", "measure_end", "measure"),
+            ("Analyze", "analyze_end", "analyze"),
+            ("Improve", "improve_end", "improve"),
+            ("Control", "control_end", "control"),
+        ]
+        st.markdown("#### 📅 Ending Dates per Fase (Planned vs Actual)")
+        st.caption("Tanggal aktual diisi tiap fase sebelum Finalize, lalu direkap di sini.")
+        st.dataframe(pd.DataFrame([{
+            "Fase":        _lbl,
+            "Planned End": _planned_tl.get(_pk) or "-",
+            "Actual End":  _actual_tl.get(_ak) or "— (belum selesai)",
+        } for _lbl, _pk, _ak in _phase_rows]), use_container_width=True, hide_index=True)
 
     with tab4:            # Benefit Estimate dari upload
         _benefit_upload_data = st.session_state.get("define_benefit_upload_data") or {}
@@ -1175,7 +1156,10 @@ with tab_input:
     with c1:
         # Finalize: only if there is a draft AND no final yet (efficient, no double-finalize)
         if draft_state:
-            if st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn"):
+            # Standard: wajib isi tanggal aktual selesai fase sebelum finalize.
+            _has_end = render_phase_end_date(active_pid, "define", disabled=False)
+            _no_actual_end = (_proj_path != "quick") and not _has_end
+            if st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn", disabled=_no_actual_end):
                 final_result = finalize_define_agent(
                     project_id=active_pid,
                     define_state=draft_state,
@@ -1188,6 +1172,8 @@ with tab_input:
                 memory.save_project_leader_name(active_pid, auth.get_current_display_name())
                 st.success("Finalized. Final tersimpan dan terkunci.")
                 st.rerun()
+            if _no_actual_end:
+                st.caption("⚠️ Finalize diblokir: isi **Tanggal aktual selesai fase** dulu.")
         elif final_state:
             st.button("✅ Finalized", key="define_finalized_badge_btn", disabled=True)
         else:
@@ -1252,12 +1238,17 @@ with tab_input:
     reviewer_action  = (approval_status.get("reviewer")  or {}).get("action")
     champion_action  = (approval_status.get("champion")   or {}).get("action")
     can_advance      = approval_status.get("can_advance", False)
+    # Champion hanya mandatory di Control — di Define tidak ditampilkan sbagai gate
+    _champ_required  = "champion" in approval_status.get("required_approvers", [])
 
     if not final_exists:
         st.info("Finalize DEFINE dulu sebelum bisa di-approve.")
     else:
         # Status display — hanya setelah finalized
-        col_r, col_c, col_adv = st.columns(3)
+        if _champ_required:
+            col_r, col_c, col_adv = st.columns(3)
+        else:
+            col_r, col_adv = st.columns(2)
 
         with col_r:
             if reviewer_action == "approve":
@@ -1267,13 +1258,14 @@ with tab_input:
             else:
                 st.warning("⏳ Reviewer: Pending")
 
-        with col_c:
-            if champion_action == "approve":
-                st.success("✅ Champion: Approved")
-            elif champion_action == "reject":
-                st.error("❌ Champion: Rejected")
-            else:
-                st.warning("⏳ Champion: Pending")
+        if _champ_required:
+            with col_c:
+                if champion_action == "approve":
+                    st.success("✅ Champion: Approved")
+                elif champion_action == "reject":
+                    st.error("❌ Champion: Rejected")
+                else:
+                    st.warning("⏳ Champion: Pending")
 
         with col_adv:
             if can_advance:
@@ -1283,7 +1275,9 @@ with tab_input:
 
         # Approval actions
         role = auth.get_current_role()
-        if role in ("reviewer", "champion"):
+        if role == "champion" and not _champ_required:
+            st.info("ℹ️ Champion tidak diperlukan di DEFINE. Champion hanya melakukan approval di fase **Control**.")
+        elif role in approval_status.get("required_approvers", []):
             _role_action = (approval_status.get(role) or {}).get("action")
             st.markdown(f"**Aksi kamu sebagai {role.title()}:**")
             if _role_action == "approve":
@@ -1312,9 +1306,9 @@ with tab_input:
                     st.rerun()
         elif role == "project_leader":
             if can_advance:
-                st.success("✅ Semua approval lengkap. Kamu bisa lanjut ke fase Measure.")
+                st.success("✅ Approval lengkap. Kamu bisa lanjut ke fase Measure.")
             else:
-                st.info("Menunggu approval dari Reviewer dan Champion.")
+                st.info("Menunggu approval dari Reviewer.")
 
 
     st.divider()

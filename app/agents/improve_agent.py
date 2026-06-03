@@ -410,8 +410,9 @@ def _improve_gate_evaluate(
         conditional.append("B0_no_must_criteria")
         actions.append("Pertimbangkan menambah must criteria, atau klik Skip Must Criteria jika tidak diperlukan.")
 
+    # Potential solutions: Standard wajib (Step 3); Quick path input langsung di Step 4 (skip)
     solutions = outputs.get("potential_solutions") or []
-    if not solutions:
+    if not solutions and enforce_b_rules:
         failed.append("A2_no_potential_solutions")
         actions.append("Buat potential solutions — minimal satu per confirmed root cause.")
 
@@ -420,8 +421,9 @@ def _improve_gate_evaluate(
         failed.append("A3_no_selected_solution")
         actions.append("Pilih minimal satu selected solution di Step 4 (Selected Solution).")
 
+    # Implementation plan: Standard wajib; Quick path dilacak via Step 8 + bukti (skip)
     impl = outputs.get("implementation_plan") or []
-    if not impl:
+    if not impl and enforce_b_rules:
         failed.append("A4_no_implementation_plan")
         actions.append("Buat implementation plan dengan steps, owner, dan timeline.")
 
@@ -431,12 +433,13 @@ def _improve_gate_evaluate(
         failed.append("A5_no_pilot_plan")
         actions.append("Definisikan pilot plan: scope, success criteria, rollback.")
 
+    # Communication plan: Standard wajib; Quick path skip (Step 6 disembunyikan)
     comm = outputs.get("communication_plan") or []
-    if not comm:
+    if not comm and enforce_b_rules:
         failed.append("A6_no_communication_plan")
         actions.append("Buat communication plan: siapa perlu diinformasikan, tentang apa, oleh siapa, kapan.")
 
-    # A7: implementation status harus done semua (hanya berlaku jika ada selected solutions)
+    # A7: implementation status harus done semua (hanya berlaku jika ada selected solutions).
     impl_status = outputs.get("implementation_status") or []
     if selected_solutions:
         if not impl_status or not all(
@@ -523,7 +526,8 @@ You are a Lean Six Sigma Master Black Belt coaching a project leader on the Impr
 Tujuan coaching: meningkatkan PELUANG SUKSES implementasi dengan mengkritisi KUALITAS ISI Improve — bukan sekadar mengingatkan status administratif.
 
 Execution path: {"Quick Improvement" if project_path == "quick" else "Standard DMAIC"}
-{"Note: This is a Quick Improvement project — coaching must be concise, focus on critical gaps only (A-rules). Do NOT require Must Criteria matrix or formal Pilot Plan (B-rule items skipped in Quick path)." if project_path == "quick" else ""}
+{"Note: This is a Quick Improvement project — coaching must be concise, focus only on the truly critical/mandatory gaps. Do NOT require a Must Criteria matrix or a formal Pilot Plan (these formal deliverables are simplified in the Quick path)." if project_path == "quick" else ""}
+IMPORTANT: write for a non-technical project leader. Use plain business language. NEVER mention internal rule codes or terms like "A-rules", "B-rules", or codes such as "A1_...".
 
 Gate Status: {status}
 
@@ -677,6 +681,103 @@ User feedback: {json.dumps(user_feedback or {})}
     return parsed or {"solution_approach": "To be determined", "key_constraints": []}
 
 
+def _build_solution_logic_md_llm(
+    upstream: dict,
+    outputs: dict,
+    project_path: str = "standard",
+) -> dict:
+    """
+    CRITICAL (kedua path): uji NALAR tiap selected solution terhadap:
+      (1) apakah solusi secara logis MENJAWAB confirmed root cause, dan
+      (2) apakah masuk akal MENCAPAI target (menutup gap baseline→target).
+    Bukan checklist. Mengembalikan {"md": <markdown>, "has_red": bool}.
+      - quick   : 🔴 = catatan saja (tidak memblokir).
+      - standard: 🔴 = sinyal blokir (caller men-FAIL-kan gate).
+    """
+    selected = outputs.get("selected_solutions") or []
+    if not selected:
+        return {"md": "", "has_red": False}
+
+    confirmed_rc = upstream.get("confirmed_root_causes") or []
+    _rc_brief = [
+        {"xn": r.get("xn", ""), "root_cause": r.get("root_cause", "") or r.get("cause", "")}
+        for r in confirmed_rc if isinstance(r, dict)
+    ]
+    _sol_brief = [
+        {
+            "solution": s.get("solution", "") or s.get("idea", ""),
+            "ctq_ctb_impacted": s.get("ctq_ctb_impacted", ""),
+            "addresses": s.get("comments", "") or s.get("addresses_root_cause", ""),
+        }
+        for s in selected if isinstance(s, dict)
+    ]
+    target_info = upstream.get("baseline_target") or {}
+
+    prompt = f"""
+You are a Lean Six Sigma Master Black Belt. Your job is NOT to check boxes — CRITICALLY EVALUATE,
+for each selected solution: (1) does it LOGICALLY address a confirmed root cause, and (2) is it
+plausible that implementing it will MOVE Y toward the target and close the baseline-to-target gap?
+A solution that does not logically tie to a root cause, or that cannot plausibly hit the target, is WRONG.
+
+Project context:
+- Problem: "{upstream.get('problem_statement','')}"
+- Goal/Target: "{upstream.get('goal_statement','')}"
+- Y Variable: "{upstream.get('y_variable','')}"
+- Baseline (current Y): {upstream.get('baseline_mean')}
+- Target: {target_info.get('direction','')} {target_info.get('value','')}
+
+Confirmed root causes:
+{json.dumps(_rc_brief, ensure_ascii=False, indent=2)}
+
+Selected solutions:
+{json.dumps(_sol_brief, ensure_ascii=False, indent=2)}
+
+For EACH solution assess BOTH:
+- Root-cause fit: does it directly attack a confirmed root cause (not a symptom / unrelated)?
+- Target attainment: is the mechanism strong enough to plausibly reach the target given the baseline?
+
+Verdict per solution:
+- 🟢 Logis & cukup — jelas menjawab root cause DAN masuk akal mencapai target.
+- 🟡 Lemah / kurang jelas — sebagian nyambung tapi mekanisme/dampak ke target belum meyakinkan.
+- 🔴 Tidak nyambung — tidak menjawab root cause, atau tidak mungkin mencapai target.
+
+Rules:
+- Be a critical reasoner, NOT a checklister. If sound, mark 🟢 plainly (do NOT invent objections).
+- For every 🟡 or 🔴, give a CONCRETE fix: perkuat/ubah solusi, atau apa yang harus diperjelas user.
+- Do NOT add any overall blocking/closing note — give ONLY per-solution verdicts and fixes.
+- Output Bahasa Indonesia, markdown. Keep technical terms (root cause, Y, baseline, target, CTQ) in English.
+- Concise (max ~250 words). Start directly with the heading "### 🧪 Validasi Logika Solusi".
+""".strip()
+
+    md = ""
+    try:
+        raw = llm(prompt)
+        if raw and len(raw.strip()) > 60:
+            md = raw.strip()
+    except Exception:
+        md = ""
+
+    if not md:
+        lines = [
+            "### 🧪 Validasi Logika Solusi",
+            "_Pastikan tiap solusi benar-benar menjawab root cause DAN masuk akal mencapai target:_",
+        ]
+        for s in _sol_brief:
+            lines.append(f"- **{s['solution']}** → {s['addresses'] or '(kaitan ke root cause belum jelas)'}")
+        md = "\n".join(lines)
+
+    has_red = "🔴" in md
+    if has_red:
+        if project_path == "quick":
+            md += ("\n\n> ⚠️ **Catatan:** ada solusi yang lemah/tidak nyambung ke root cause atau target. "
+                   "Quick path tetap bisa lanjut, tapi sangat disarankan memperbaiki solusi agar tepat sasaran.")
+        else:
+            md += ("\n\n> ⛔ **Blokir:** ada solusi yang tidak menjawab root cause atau tidak mungkin mencapai "
+                   "target. Perbaiki solusi sebelum finalize Improve.")
+
+    return {"md": md, "has_red": has_red}
+
+
 # ======================================================
 # MAIN ENTRYPOINT
 # ======================================================
@@ -802,12 +903,36 @@ def run_improve_agent(
         upstream=upstream,
     )
 
-    # Coaching — LLM only on FAIL/WEAK_PASS
+    # Validasi LOGIKA solusi — CRITICAL, selalu jalan bila ada selected solution
+    # (quick & standard, termasuk saat gate PASS). Bukan checklist.
+    _logic   = _build_solution_logic_md_llm(upstream=upstream, outputs=outputs, project_path=project_path)
+    logic_md = _logic.get("md", "")
+
+    # Standard: solusi yang tidak nyambung secara logika → BLOKIR gate.
+    # Quick: tidak memblokir (cukup catatan di section validasi).
+    if project_path != "quick" and _logic.get("has_red"):
+        gate["failed_rules"] = (gate.get("failed_rules") or []) + ["A8_solution_logic_invalid"]
+        gate["status"] = "FAIL"
+        gate["policy"] = "BLOCK"
+        gate["next_actions"] = (
+            ["Perbaiki solusi yang tidak menjawab root cause / tidak mencapai target (lihat Validasi Logika Solusi)."]
+            + (gate.get("next_actions") or [])
+        )
+
+    # Coaching gate — LLM only on FAIL/WEAK_PASS
     gate_status = gate.get("status","")
     if gate_status in ("FAIL","WEAK_PASS"):
         coaching_md = _build_improve_coaching_llm(gate, outputs, upstream, user_inputs, project_path=project_path)
     else:
-        coaching_md = "✅ Gate PASS — must criteria defined, solutions selected, implementation and communication plan complete."
+        coaching_md = ""
+
+    # Validasi logika selalu di atas; tanpa footer "Gate PASS" yang redundant.
+    if logic_md and coaching_md:
+        coaching_md = f"{logic_md}\n\n---\n\n{coaching_md}"
+    elif logic_md:
+        coaching_md = logic_md
+    elif not coaching_md:
+        coaching_md = "✅ Gate PASS — solutions selected, implementation complete."
 
     improve_state = {
         "schema_version": IMPROVE_SCHEMA,
@@ -858,7 +983,7 @@ def finalize_improve_agent(
     if gate.get("status") == "FAIL":
         return {
             "status":        "blocked",
-            "reason":        "IMPROVE gate FAIL — selesaikan A-rules sebelum finalize.",
+            "reason":        "Improve belum bisa di-finalize — masih ada item wajib yang perlu diperbaiki.",
             "gate":          gate,
             "improve_state": improve_state,
             "word_path":     None,

@@ -59,13 +59,23 @@ def _extract_upstream_context(
     mea_outs = (measure_final or {}).get("outputs") or {}
     perf_sum = (mea_outs.get("process_performance_summary") or {}).get("summary") or {}
 
+    # Baseline dari dataset; fallback ke baseline hasil ekstraksi gambar chart (quick path).
+    cib = mea_outs.get("chart_image_baseline") or {}
+    _baseline_mean = perf_sum.get("mean")
+    _baseline_source = "dataset"
+    if _baseline_mean is None and isinstance(cib, dict) and cib.get("average"):
+        _baseline_mean = cib.get("average")          # estimasi visual dari gambar chart
+        _baseline_source = "chart_image_visual_estimate"
+
     return {
         "problem_statement":   def_outs.get("problem_statement") or def_ins.get("problem_text") or "",
         "goal_statement":      def_outs.get("goal_statement") or def_ins.get("goal_text") or "",
         "y_variable":          mea_outs.get("y_variable_confirmed") or def_outs.get("y_variable") or "",
         "ctq_list":            def_outs.get("ctq_list") or [],
-        "baseline_mean":       perf_sum.get("mean"),
+        "baseline_mean":       _baseline_mean,
         "baseline_std":        perf_sum.get("std"),
+        "baseline_source":     _baseline_source,
+        "chart_image_baseline": cib if isinstance(cib, dict) else {},
         "baseline_target":     (mea_outs.get("process_performance_summary") or {}).get("target_info") or {},
         "op_defs":             mea_outs.get("operational_definitions") or [],
         "dq_issues":           (mea_outs.get("data_quality_results") or {}).get("consistency", {}).get("issues") or [],
@@ -560,7 +570,7 @@ def _analyze_gate_evaluate(
     if not _pm_ok:
         if enforce_b_rules:
             conditional.append("B1_process_map_missing")
-        actions.append("Buat process map di Step 2: upload foto (Opsi A) atau generate swimlane diagram (Opsi B).")
+            actions.append("Buat process map di Step 2: upload foto (Opsi A) atau generate swimlane diagram (Opsi B).")
 
     # B2: fishbone — OK jika ada text 6M ATAU foto fishbone sudah diupload (offline mode)
     fishbone          = outputs.get("fishbone_inputs") or {}
@@ -569,7 +579,7 @@ def _analyze_gate_evaluate(
     if not _fb_ok:
         if enforce_b_rules:
             conditional.append("B2_fishbone_not_documented")
-        actions.append("Upload foto hasil fishbone analysis di Step 3 sebagai dokumentasi.")
+            actions.append("Upload foto hasil fishbone analysis di Step 3 sebagai dokumentasi.")
 
     def _is_confirmed(val):
         """Robust check: handle bool, numpy.bool_, string 'True'/'true'/'1', int 1."""
@@ -588,7 +598,7 @@ def _analyze_gate_evaluate(
     if not confirmed_rc:
         if enforce_b_rules:
             conditional.append("B3_no_confirmed_root_causes")
-        actions.append("Minimal 1 root cause harus terkonfirmasi dari verifikasi di Step 7.")
+            actions.append("Minimal 1 root cause harus terkonfirmasi dari verifikasi di Step 7.")
 
     if failed:
         status = "FAIL"
@@ -646,7 +656,8 @@ def _build_analyze_coaching_llm(
 You are a Lean Six Sigma Master Black Belt coaching a project leader on the Analyze phase.
 
 Execution path: {"Quick Improvement" if project_path == "quick" else "Standard DMAIC"}
-{"Note: This is a Quick Improvement project — coaching must be concise, focus on critical gaps only (A-rules), and avoid requiring full Standard DMAIC rigor for B-rule items (formal verification plan/results, detailed 6M fishbone, etc.)." if project_path == "quick" else ""}
+{"Note: This is a Quick Improvement project — coaching must be concise, focus only on the truly critical/mandatory gaps, and do NOT require the heavier formal deliverables that are simplified in the Quick path (formal verification plan/results, detailed 6M fishbone, etc.)." if project_path == "quick" else ""}
+IMPORTANT: write for a non-technical project leader. Use plain business language. NEVER mention internal rule codes or terms like "A-rules", "B-rules", or codes such as "A1_...".
 
 Gate Status: {status}
 Failed rules: {json.dumps(failed)}
@@ -697,6 +708,129 @@ Provide MBB coaching in Bahasa Indonesia:
     for a in actions[:6]:
         lines.append(f"- {a}")
     return "\n".join(lines)
+
+
+def _build_rootcause_logic_md_llm(
+    upstream: dict,
+    outputs: dict,
+    project_path: str = "standard",
+) -> dict:
+    """
+    CRITICAL (kedua path): nilai NALAR KAUSAL tiap confirmed root cause terhadap
+    target yang tidak tercapai. Bukan checklist.
+
+    Mengembalikan {"md": <markdown>, "has_red": bool}.
+    - quick   : 🔴 = catatan saja (tidak memblokir).
+    - standard: 🔴 = sinyal blokir (caller men-FAIL-kan gate).
+    """
+    def _is_confirmed_local(val):
+        if val is None or val is False or val == "":
+            return False
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, str):
+            return val.strip().lower() in ("true", "yes", "1", "✅ yes", "✅")
+        try:
+            return bool(val)
+        except Exception:
+            return False
+
+    vresults  = outputs.get("verification_results") or []
+    confirmed = [r for r in vresults if _is_confirmed_local(r.get("is_root_cause", False))]
+    if not confirmed:
+        return {"md": "", "has_red": False}
+
+    # Verification Plan: penjelasan user soal kaitan X→Y ada di kolom 'relation_to_y'
+    _vplan_map = {
+        str(p.get("xn", "")): p
+        for p in (outputs.get("verification_plan") or []) if isinstance(p, dict)
+    }
+    _rc_list = []
+    for r in confirmed:
+        _rc  = r.get("root_cause") or r.get("cause") or r.get("description") or ""
+        _hyp = r.get("hypothesis") or f"Target tidak tercapai karena {_rc}"
+        _vp  = _vplan_map.get(str(r.get("xn", "")), {})
+        _rc_list.append({
+            "xn": r.get("xn", ""),
+            "root_cause": _rc,
+            "hypothesis": _hyp,
+            # Penjelasan user (jika ada) — kaitan X ke Y & mekanismenya
+            "relation_to_y": _vp.get("relation_to_y", "") or r.get("relation_to_y", ""),
+            "input_measurement_x": _vp.get("input_measurement_x", ""),
+            "verification_finding": r.get("verification_result", "") or r.get("finding", ""),
+        })
+
+    target_info = upstream.get("baseline_target") or {}
+    prompt = f"""
+You are a Lean Six Sigma Master Black Belt. Your job here is NOT to check boxes — it is to
+CRITICALLY EVALUATE THE CAUSAL LOGIC linking each confirmed root cause to the UNMET TARGET.
+A root cause that is "filled in" but does not logically explain why Y misses the target is WRONG
+and must be fixed.
+
+Project context:
+- Problem: "{upstream.get('problem_statement','')}"
+- Goal/Target: "{upstream.get('goal_statement','')}"
+- Y Variable (outcome being measured): "{upstream.get('y_variable','')}"
+- Baseline (current level of Y): {upstream.get('baseline_mean')}
+- Target: {target_info.get('direction','')} {target_info.get('value','')}
+
+Confirmed root causes (with the project leader's own explanation in "relation_to_y"):
+{json.dumps(_rc_list, ensure_ascii=False, indent=2)}
+
+IMPORTANT — READ "relation_to_y" and "verification_finding" FIRST. That is the project leader's OWN
+explanation of HOW this X drives Y. If it already gives a clear, plausible causal mechanism to Y/target,
+treat the logic as SOUND (🟢) and do NOT demand re-explanation or invent objections. Only flag 🟡/🔴 when
+"relation_to_y" is empty, vague, or genuinely does NOT connect the cause to Y/target.
+
+For EACH root cause, reason explicitly (using relation_to_y as the primary evidence):
+- Does the stated relation_to_y give a CLEAR, PLAUSIBLE causal mechanism: root cause -> affects Y -> causes Y to miss target?
+- Is it a true root cause (underlying driver) or just a symptom / restatement of the problem?
+- Does it actually explain the GAP between baseline and target?
+
+Give a verdict per root cause:
+- 🟢 Logis & nyambung — mechanism clear and plausibly drives the target miss.
+- 🟡 Lemah / kurang jelas — plausible but mechanism vague, too broad, or a symptom; needs sharpening.
+- 🔴 Tidak nyambung — no logical causal path to Y/target, or contradicts the data; must be reframed.
+
+Rules:
+- Be a critical reasoner, NOT a checklister. If the logic is sound, say so plainly (do NOT invent objections).
+- For every 🟡 or 🔴, give a CONCRETE fix: either PROPOSE a corrected hypothesis sentence
+  ("Target tidak tercapai karena ...") OR state exactly what the user must clarify/verify.
+- Do NOT add any overall blocking/closing/conclusion note — give ONLY per-root-cause verdicts and fixes.
+- Output in Bahasa Indonesia, markdown. Keep technical terms (root cause, Y, baseline, target) in English.
+- Be concise (max ~250 words). Start directly with the heading "### 🔎 Validasi Logika Root Cause".
+""".strip()
+
+    md = ""
+    try:
+        raw = llm(prompt)
+        if raw and len(raw.strip()) > 60:
+            md = raw.strip()
+    except Exception:
+        md = ""
+
+    if not md:
+        # Fallback deterministik
+        lines = [
+            "### 🔎 Validasi Logika Root Cause",
+            "_Pastikan tiap root cause benar-benar menjelaskan MENGAPA target tidak tercapai "
+            "(ada mekanisme kausal jelas ke Y), bukan sekadar gejala:_",
+        ]
+        for rc in _rc_list:
+            lines.append(f"- **{rc['xn']}** {rc['hypothesis']}")
+        md = "\n".join(lines)
+
+    # 🔴 = root cause tidak nyambung secara logika.
+    has_red = "🔴" in md
+    if has_red:
+        if project_path == "quick":
+            md += ("\n\n> ⚠️ **Catatan:** ada root cause yang lemah/tidak nyambung secara logika. "
+                   "Quick path tetap bisa lanjut, tapi disarankan memperbaiki framing-nya agar solusi tepat sasaran.")
+        else:
+            md += ("\n\n> ⛔ **Blokir:** ada root cause yang tidak nyambung secara logika. Perbaiki framing "
+                   "hipotesis atau verifikasi ulang sebelum lanjut ke fase Improve.")
+
+    return {"md": md, "has_red": has_red}
 
 
 # ======================================================
@@ -940,11 +1074,35 @@ def run_analyze_agent(
         enforce_b_rules=gate_mode["enforce_b_rules"],
     )
 
-    # Coaching — LLM only on FAIL/WEAK_PASS
+    # Validasi LOGIKA root cause — CRITICAL, selalu jalan bila ada confirmed RC
+    # (quick & standard, termasuk saat gate PASS). Bukan checklist.
+    _logic   = _build_rootcause_logic_md_llm(outputs=outputs, upstream=upstream, project_path=project_path)
+    logic_md = _logic.get("md", "")
+
+    # Standard: root cause yang tidak nyambung secara logika → BLOKIR gate.
+    # Quick: tidak memblokir (cukup catatan di section validasi).
+    if project_path != "quick" and _logic.get("has_red"):
+        gate["failed_rules"] = (gate.get("failed_rules") or []) + ["A6_root_cause_logic_invalid"]
+        gate["status"] = "FAIL"
+        gate["policy"] = "BLOCK"
+        gate["next_actions"] = (
+            ["Perbaiki framing root cause yang tidak nyambung secara logika (lihat Validasi Logika Root Cause)."]
+            + (gate.get("next_actions") or [])
+        )
+
+    # Coaching gate — LLM only on FAIL/WEAK_PASS
     gate_status = gate.get("status","")
     if gate_status in ("FAIL","WEAK_PASS"):
         coaching_md = _build_analyze_coaching_llm(gate, outputs, upstream, user_inputs, project_path=project_path)
     else:
+        coaching_md = ""
+
+    # Validasi logika selalu di atas; tanpa footer "Gate PASS" yang redundant.
+    if logic_md and coaching_md:
+        coaching_md = f"{logic_md}\n\n---\n\n{coaching_md}"
+    elif logic_md:
+        coaching_md = logic_md
+    elif not coaching_md:
         coaching_md = "✅ Gate PASS — root causes identified, drilled, and verified."
 
     analyze_state = {
@@ -996,7 +1154,7 @@ def finalize_analyze_agent(
     if gate.get("status") == "FAIL":
         return {
             "status":        "blocked",
-            "reason":        "ANALYZE gate FAIL — selesaikan A-rules sebelum finalize.",
+            "reason":        "Analyze belum bisa di-finalize — masih ada item wajib yang perlu diperbaiki.",
             "gate":          gate,
             "analyze_state": analyze_state,
             "word_path":     None,

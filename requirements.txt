@@ -1,6 +1,7 @@
-streamlit>=1.35.0
+streamlit==1.45.1
 openai>=1.30.0
 pandas>=2.0.0
 numpy>=1.26.0
 python-docx>=1.1.0
 attrs>=23.0.0
+graphviz>=0.20

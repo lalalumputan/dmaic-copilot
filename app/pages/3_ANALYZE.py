@@ -7,7 +7,7 @@ import pandas as pd
 
 from app.agents.analyze_agent import run_analyze_agent, finalize_analyze_agent
 from app.utils import memory, reporting, audit, auth
-from app.utils.ui_helpers import render_sidebar_header
+from app.utils.ui_helpers import render_sidebar_header, render_tab_quicknav, render_phase_end_date, compact_dot
 
 # ============================================
 # Helpers
@@ -301,6 +301,7 @@ if active_pid:
             st.sidebar.info("🔒 Gate LOCKED")
 else:
     st.sidebar.warning("Belum ada project aktif.")
+st.sidebar.divider()
 
 # ============================================
 # Gate: no project / no measure final
@@ -399,6 +400,9 @@ _fishbone_key        = f"analyze_fishbone_{active_pid}"
 _pot_causes_key      = f"analyze_pot_causes_{active_pid}"
 _vplan_key           = f"analyze_vplan_{active_pid}"
 _vresults_key        = f"analyze_vresults_{active_pid}"
+_pm_image_key        = f"analyze_pm_image_{active_pid}"
+_pm_imgtype_key      = f"analyze_pm_imgtype_{active_pid}"
+_gemba_key           = f"analyze_gemba_rc_{active_pid}"
 
 # Pre-load saved state into session state keys
 _saved_state = (final_on_disk or draft_on_disk or {})
@@ -459,15 +463,12 @@ if _get_current_result()[0] == "none" and active_pid:
 view, res = _get_current_result()
 analyze_state = res["analyze_state"] if (res and res.get("analyze_state")) else None
 
-tab_input, tab_report, tab_causes, tab_verification, tab_rca, tab_asis, tab_fishbone = st.tabs([
-    "✏️ Input",
-    "📄 Report",
-    "🦴 Potential Causes",
-    "🔬 Verification Analysis",
-    "📊 Root Cause Summary",
-    "🗺️ As-Is Process Map",
-    "🦴 Fishbone",
-])
+_TAB_LABELS = [
+    "✏️ Input", "📄 Report", "🦴 Potential Causes", "🔬 Verification Analysis",
+    "📊 Root Cause Summary", "🗺️ As-Is Process Map", "🦴 Fishbone",
+]
+tab_input, tab_report, tab_causes, tab_verification, tab_rca, tab_asis, tab_fishbone = st.tabs(_TAB_LABELS)
+render_tab_quicknav(_TAB_LABELS)
 
 # ============================================
 # TAB INPUT
@@ -521,8 +522,19 @@ with tab_input:
         with c2:
             st.markdown("**From MEASURE:**")
             st.markdown(f"- Y Confirmed: {mea_outs.get('y_variable_confirmed') or '-'}")
-            st.markdown(f"- Baseline Mean: {perf_sum.get('mean') or '-'}")
-            st.markdown(f"- Baseline Std: {perf_sum.get('std') or '-'}")
+            _cib = mea_outs.get("chart_image_baseline") or {}
+            if perf_sum.get("mean") is not None:
+                st.markdown(f"- Baseline Mean: {perf_sum.get('mean')}")
+                st.markdown(f"- Baseline Std: {perf_sum.get('std') or '-'}")
+            elif isinstance(_cib, dict) and _cib.get("average"):
+                st.markdown(f"- Baseline Mean: {_cib.get('average')} _(estimasi visual dari gambar chart)_")
+                _q = _cib.get("quartiles") or {}
+                if isinstance(_q, dict) and _q.get("median"):
+                    st.markdown(f"- Quartile (Q1/Median/Q3): {_q.get('q1','-')}/{_q.get('median','-')}/{_q.get('q3','-')} _(visual)_")
+                if _cib.get("vs_target"):
+                    st.markdown(f"- Vs Target: {_cib.get('vs_target')} _(visual)_")
+            else:
+                st.markdown("- Baseline Mean: -")
             if target_info.get("available"):
                 st.markdown(f"- Target: {target_info.get('direction','')} {target_info.get('value','')}")
             op_defs = mea_outs.get("operational_definitions") or []
@@ -551,470 +563,503 @@ with tab_input:
     )
     st.divider()
 
-    # ── Step 2: Process Map ──
-    st.markdown("### Step 2 — Process Map")
-    st.caption("Isi langkah-langkah proses yang relevan. Agent akan mengecek kelengkapan dan menandai area masalah.")
+    if _proj_path != "quick":
+        # ── Step 2: Process Map ──
+        st.markdown("### Step 2 — Process Map")
+        st.caption("Isi langkah-langkah proses yang relevan. Agent akan mengecek kelengkapan dan menandai area masalah.")
 
-    # SIPOC dari Define sebagai referensi
-    _def_outs_pm = (define_final or {}).get("outputs") or {}
-    _sipoc = (
-        _def_outs_pm.get("sipoc")
-        or _def_outs_pm.get("sipoc_table")
-        or _def_outs_pm.get("sipoc_analysis")
-        or {}
-    )
-    with st.expander("📋 SIPOC dari DEFINE (referensi)", expanded=False):
-        if _sipoc and isinstance(_sipoc, dict) and any(_sipoc.values()):
-            st.markdown(
-                _render_sipoc_html(_sipoc),
-                unsafe_allow_html=True,
-            )
-        elif _sipoc and isinstance(_sipoc, list):
-            st.dataframe(pd.DataFrame(_sipoc), use_container_width=True, hide_index=True)
-        else:
-            st.caption("SIPOC tidak ditemukan di output Define.")
+        # SIPOC dari Define sebagai referensi
+        _def_outs_pm = (define_final or {}).get("outputs") or {}
+        _sipoc = (
+            _def_outs_pm.get("sipoc")
+            or _def_outs_pm.get("sipoc_table")
+            or _def_outs_pm.get("sipoc_analysis")
+            or {}
+        )
+        with st.expander("📋 SIPOC dari DEFINE (referensi)", expanded=False):
+            if _sipoc and isinstance(_sipoc, dict) and any(_sipoc.values()):
+                st.markdown(
+                    _render_sipoc_html(_sipoc),
+                    unsafe_allow_html=True,
+                )
+            elif _sipoc and isinstance(_sipoc, list):
+                st.dataframe(pd.DataFrame(_sipoc), use_container_width=True, hide_index=True)
+            else:
+                st.caption("SIPOC tidak ditemukan di output Define.")
 
     
-    # ── Process Map: Upload OR table ──
-    st.markdown("**Opsi A — Upload file/foto process map (agent akan verifikasi):**")
-    pm_file = st.file_uploader(
-        "Upload process map",
-        type=["png","jpg","jpeg","pdf","xlsx","vsdx"],
-        key=f"pm_upload_{active_pid}",
-        disabled=is_locked,
-    )
-
-    _pm_image_key   = f"analyze_pm_image_{active_pid}"
-    _pm_imgtype_key = f"analyze_pm_imgtype_{active_pid}"
-    _pm_verified_key = f"analyze_pm_verified_{active_pid}"
-
-    if pm_file is not None:
-        import base64 as _b64
-
-        # Handle image files via vision
-        if pm_file.type.startswith("image/"):
-            img_bytes = pm_file.read()
-            img_b64   = _b64.b64encode(img_bytes).decode("utf-8")
-            st.session_state[_pm_image_key]   = img_b64
-            st.session_state[_pm_imgtype_key] = pm_file.type
-            # Simpan ke WIP agar tidak hilang saat refresh
-            _cur_wip_img = memory.load_analyze_wip(active_pid)
-            _cur_wip_img["pm_image_b64"]  = img_b64
-            _cur_wip_img["pm_image_type"] = pm_file.type
-            memory.save_analyze_wip(active_pid, _cur_wip_img)
-            st.image(img_bytes, caption=f"Uploaded: {pm_file.name}", use_container_width=True)
-
-            if st.button("🤖 Analyze Process Map via Agent", key=f"pm_vision_{active_pid}", disabled=is_locked):
-                with st.spinner("Agent menganalisis process map..."):
-                    from app.agents.analyze_agent import (
-                        _check_process_map_from_image_llm,
-                        _extract_upstream_context,
-                    )
-                    _upstream_pm = _extract_upstream_context(define_final, measure_final)
-                    _pm_result = _check_process_map_from_image_llm(img_b64, pm_file.type, _upstream_pm)
-                    st.session_state[_pm_verified_key] = _pm_result
-
-            _pm_result = st.session_state.get(_pm_verified_key)
-            if _pm_result:
-                verified = _pm_result.get("verified", False)
-                if verified:
-                    st.success(f"✅ Process map **verified** oleh agent.")
-                else:
-                    st.warning(f"⚠️ {_pm_result.get('verification_note','Perlu perbaikan.')}")
-                st.markdown(f"**Agent feedback:** {_pm_result.get('feedback','')}")
-                if _pm_result.get("problem_area_steps"):
-                    st.markdown(f"**Problem area:** {', '.join(_pm_result['problem_area_steps'])}")
-                if _pm_result.get("missing_elements"):
-                    st.markdown("**Missing elements:**")
-                    for m in _pm_result["missing_elements"]:
-                        st.write(f"- {m}")
-        else:
-            # Non-image files: store name only for documentation
-            st.caption(f"📎 File dokumentasi tersimpan: {pm_file.name}")
-            st.info("File non-image tidak bisa dianalisis langsung. Gunakan foto/PNG/JPG untuk analisis vision, atau isi tabel di bawah.")
-
-    # Tampilkan image dari session state (WIP) meski file_uploader kosong setelah refresh
-    elif st.session_state.get(_pm_image_key):
-        import base64 as _b64
-        try:
-            st.image(
-                _b64.b64decode(st.session_state[_pm_image_key]),
-                caption="📎 Process map tersimpan sebelumnya",
-                use_container_width=True,
-            )
-        except Exception:
-            pass
-
-    # ── Opsi B: Free-form → Swimlane (Agent) ──
-    st.markdown("**Opsi B — Deskripsikan proses secara bebas, agent generate swimlane diagram:**")
-    st.caption("Ketik deskripsi proses (kalimat, bullet point, apapun). Agent generate swimlane diagram otomatis — bisa direvisi berkali-kali.")
-
-    _pm_dot_key = f"analyze_pm_dot_{active_pid}"
-
-    # Load dari WIP jika belum di session_state
-    if _pm_dot_key not in st.session_state:
-        _wip_dot = memory.load_analyze_wip(active_pid)
-        # Support lama (pm_mermaid_code) dan baru (pm_dot_code)
-        st.session_state[_pm_dot_key] = _wip_dot.get("pm_dot_code") or _wip_dot.get("pm_mermaid_code", "")
-
-    _pm_desc_input = st.text_area(
-        "Deskripsi proses (bebas — sebutkan aktor/PIC untuk swimlane yang tepat):",
-        key=f"pm_desc_input_{active_pid}",
-        height=140,
-        placeholder=(
-            "Contoh:\n"
-            "- Customer kirim PO via email\n"
-            "- Sales/Admin terima dan cek kelengkapan PO\n"
-            "- Jika OK, CSD buat Sales Order dan koordinasi ke Planning\n"
-            "- Logistic siapkan barang dan buat Delivery Note\n"
-            "- Transporter kirim barang, customer tanda-tangan DN\n"
-            "- Finance proses invoice dan kirim ke customer"
-        ),
-        disabled=is_locked,
-    )
-
-    _col_pm_gen, _col_pm_clear = st.columns([2, 1])
-    with _col_pm_gen:
-        _gen_disabled = is_locked or not (str(_pm_desc_input or "")).strip()
-        if st.button("🤖 Generate Swimlane Diagram", key=f"pm_gen_dot_{active_pid}", disabled=_gen_disabled):
-            with st.spinner("Agent membuat swimlane diagram..."):
-                from app.agents.analyze_agent import generate_process_map_graphviz, _extract_upstream_context
-                _up_ctx = _extract_upstream_context(define_final, measure_final)
-                _result_m = generate_process_map_graphviz(_pm_desc_input, _up_ctx)
-                if _result_m.get("dot_code"):
-                    st.session_state[_pm_dot_key] = _result_m["dot_code"]
-                    _wip_c = memory.load_analyze_wip(active_pid)
-                    _wip_c["pm_dot_code"] = _result_m["dot_code"]
-                    _wip_c["pm_dot_desc"] = _pm_desc_input
-                    memory.save_analyze_wip(active_pid, _wip_c)
-                    st.rerun()
-                else:
-                    st.error("Agent tidak berhasil generate diagram. Coba perjelas deskripsi atau sebutkan aktor-aktornya.")
-    with _col_pm_clear:
-        if st.button("🗑️ Hapus Diagram", key=f"pm_clear_dot_{active_pid}", disabled=is_locked):
-            st.session_state[_pm_dot_key] = ""
-            _wip_cl = memory.load_analyze_wip(active_pid)
-            _wip_cl["pm_dot_code"] = ""
-            memory.save_analyze_wip(active_pid, _wip_cl)
-            st.rerun()
-
-    _cur_dot_c = st.session_state.get(_pm_dot_key, "")
-    if _cur_dot_c:
-        st.markdown("**Swimlane Diagram (Current State):**")
-        try:
-            st.graphviz_chart(_cur_dot_c, use_container_width=True)
-        except Exception as _e:
-            st.error(f"Diagram tidak valid: {_e}")
-            st.code(_cur_dot_c, language="text")
-
-        with st.expander("🔄 Revisi Diagram", expanded=False):
-            _rev_desc = st.text_area(
-                "Apa yang perlu diubah/ditambah?",
-                key=f"pm_revise_desc_{active_pid}",
-                height=80,
-                placeholder="Contoh: Tambahkan decision point di CSD, pisahkan path reject kembali ke Sales...",
-                disabled=is_locked,
-            )
-            if st.button("🔄 Apply Revisi", key=f"pm_revise_btn_{active_pid}",
-                         disabled=is_locked or not str(_rev_desc or "").strip()):
-                with st.spinner("Agent merevisi diagram..."):
-                    from app.agents.analyze_agent import revise_process_map_graphviz
-                    _rev_r = revise_process_map_graphviz(_cur_dot_c, _rev_desc)
-                    if _rev_r.get("dot_code"):
-                        st.session_state[_pm_dot_key] = _rev_r["dot_code"]
-                        _wip_rv = memory.load_analyze_wip(active_pid)
-                        _wip_rv["pm_dot_code"] = _rev_r["dot_code"]
-                        memory.save_analyze_wip(active_pid, _wip_rv)
-                        st.rerun()
-
-
-    st.divider()
-    # ── Step 3: Fishbone Diagram (6M) — Panduan RCA ──
-    st.markdown("### Step 3 — Fishbone & Root Cause Analysis")
-    st.caption("Lakukan analisis fishbone secara offline menggunakan panduan di bawah, lalu masukkan hasilnya ke tabel Xn di Step 4.")
-
-    _rca_guide_html = (
-        "<div style='font-family:ui-sans-serif,system-ui,sans-serif;padding:4px 0;'>"
-        "<p style='text-align:center;font-weight:700;font-size:1rem;color:#0f172a;margin-bottom:14px;'>"
-        "🎯 Diagram Analisis Akar Masalah (RCA) — Proses Kompak &amp; Efektif</p>"
-        "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;'>"
-        "<div style='background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:10px;padding:12px;'>"
-        "<div style='font-weight:700;color:#0369a1;font-size:0.85rem;margin-bottom:4px;'>1. DEFINISIKAN MASALAH</div>"
-        "<div style='font-size:0.78rem;color:#0f172a;'>Jelas, Spesifik, Terukur:<br>"
-        "&bull; <b>Lokasi</b> — di mana terjadi<br>"
-        "&bull; <b>Waktu</b> — kapan / seberapa sering<br>"
-        "&bull; <b>Dampak</b> — berapa besar</div></div>"
-        "<div style='background:#d1fae5;border:1.5px solid #34d399;border-radius:10px;padding:12px;'>"
-        "<div style='font-weight:700;color:#065f46;font-size:0.85rem;margin-bottom:4px;'>2. BRAINSTORMING</div>"
-        "<div style='font-size:0.78rem;color:#0f172a;'>Maks. <b>15 Menit</b><br>"
-        "Identifikasi <b>semua kemungkinan penyebab</b><br>"
-        "<i>(Tanpa diskusi solusi dulu)</i></div></div>"
-        "<div style='background:#ede9fe;border:1.5px solid #a78bfa;border-radius:10px;padding:12px;'>"
-        "<div style='font-weight:700;color:#5b21b6;font-size:0.85rem;margin-bottom:4px;'>3. PENGELOMPOKAN 6M</div>"
-        "<div style='font-size:0.78rem;color:#0f172a;'>"
-        "<b>Man &middot; Machine &middot; Method</b><br>"
-        "<b>Material &middot; Measurement &middot; Mother Nature</b></div></div>"
-        "</div>"
-        "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;'>"
-        "<div style='background:#fce7f3;border:1.5px solid #f472b6;border-radius:10px;padding:12px;'>"
-        "<div style='font-weight:700;color:#9d174d;font-size:0.85rem;margin-bottom:4px;'>4. REVIEW HASIL</div>"
-        "<div style='font-size:0.78rem;color:#0f172a;'>Hapus cause yang:<br>"
-        "&bull; <b>Duplikat</b><br>"
-        "&bull; <b>Tidak Relevan</b><br>"
-        "&bull; <b>Kurang Fakta/Data</b></div></div>"
-        "<div style='background:#fef3c7;border:1.5px solid #fbbf24;border-radius:10px;padding:12px;'>"
-        "<div style='font-weight:700;color:#92400e;font-size:0.85rem;margin-bottom:4px;'>5. ANALISIS 5 WHY</div>"
-        "<div style='font-size:0.78rem;color:#0f172a;'>"
-        "Why 1 &rarr; Why 2 &rarr; Why 3 &rarr; Why 4 &rarr; Why 5<br>"
-        "<i>Temukan penyebab <b>mendasar &amp; sistemik</b></i></div></div>"
-        "<div style='background:#fee2e2;border:1.5px solid #f87171;border-radius:10px;padding:12px;'>"
-        "<div style='font-weight:700;color:#991b1b;font-size:0.85rem;margin-bottom:4px;'>6. TETAPKAN POTENTIAL ROOT CAUSE</div>"
-        "<div style='font-size:0.78rem;color:#0f172a;'>"
-        "Hasil akhir 5 Why<br>= <b>Potential Root Cause</b></div></div>"
-        "</div>"
-        "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;'>"
-        "<div style='background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;padding:12px;'>"
-        "<div style='font-weight:700;color:#14532d;font-size:0.85rem;margin-bottom:6px;'>7. KLASIFIKASI C-N-X</div>"
-        "<div style='font-size:0.78rem;color:#0f172a;'>"
-        "<span style='background:#e2e8f0;padding:1px 6px;border-radius:4px;font-weight:600;'>C</span> Constant — Tetap/Tidak Bisa Diubah<br>"
-        "<span style='background:#bfdbfe;padding:1px 6px;border-radius:4px;font-weight:600;'>N</span> Noise — Alami/Luar Kendali<br>"
-        "<span style='background:#bbf7d0;padding:1px 6px;border-radius:4px;font-weight:600;color:#14532d;'>X</span> <b>Variable — Dapat Dikendalikan ✅</b>"
-        "</div></div>"
-        "<div style='background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:12px;'>"
-        "<div style='font-weight:700;color:#14532d;font-size:0.85rem;margin-bottom:4px;'>8. FOKUS PADA X (VARIABLE)</div>"
-        "<div style='font-size:0.78rem;color:#0f172a;'>"
-        "Fokus perbaikan <b>hanya pada kategori X</b><br>"
-        "yang dapat dikendalikan &amp; diperbaiki</div></div>"
-        "<div style='background:#f0f9ff;border:1.5px solid #38bdf8;border-radius:10px;padding:12px;'>"
-        "<div style='font-weight:700;color:#0369a1;font-size:0.85rem;margin-bottom:4px;'>9. PRIORITISASI (JIKA PERLU)</div>"
-        "<div style='font-size:0.78rem;color:#0f172a;'>"
-        "Prioritisasi &amp; <b>voting</b> jika X terlalu banyak<br>"
-        "&rarr; Pilih yang paling kritikal<br>"
-        "&rarr; <b>Rencana Tindakan Lanjut</b></div></div>"
-        "</div></div>"
-    )
-    if _proj_path == "quick":
-        st.markdown(
-            "<div style='padding:8px 0;font-size:0.9rem;'>"
-            "<b>🟢 Quick Path — Fishbone 3M:</b> cukup kelompokkan penyebab ke "
-            "<b>Man &middot; Method &middot; Machine</b>, pilih root cause yang paling "
-            "berdampak, lalu isi langsung ke tabel Xn di Step 4. "
-            "<i>5-Why chain & verification plan formal tidak wajib di Quick Path.</i>"
-            "</div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(_rca_guide_html, unsafe_allow_html=True)
-
-    # ── Upload foto fishbone (offline) ──
-    st.markdown("**📸 Upload foto hasil fishbone analysis (offline):**")
-    _fb_photo_key     = f"analyze_fb_photo_{active_pid}"
-    _fb_phototype_key = f"analyze_fb_phototype_{active_pid}"
-
-    if _fb_photo_key not in st.session_state:
-        _wip_fb3 = memory.load_analyze_wip(active_pid)
-        st.session_state[_fb_photo_key]     = _wip_fb3.get("fb_photo_b64", "")
-        st.session_state[_fb_phototype_key] = _wip_fb3.get("fb_photo_type", "image/jpeg")
-
-    _fb_photo_file = st.file_uploader(
-        "Upload foto fishbone (PNG/JPG)",
-        type=["png", "jpg", "jpeg"],
-        key=f"fb_photo_upload_{active_pid}",
-        disabled=is_locked,
-    )
-    if _fb_photo_file is not None:
-        import base64 as _b64
-        _fb_bytes = _fb_photo_file.read()
-        _fb_b64   = _b64.b64encode(_fb_bytes).decode("utf-8")
-        st.session_state[_fb_photo_key]     = _fb_b64
-        st.session_state[_fb_phototype_key] = _fb_photo_file.type
-        _wip_fb3 = memory.load_analyze_wip(active_pid)
-        _wip_fb3["fb_photo_b64"]  = _fb_b64
-        _wip_fb3["fb_photo_type"] = _fb_photo_file.type
-        memory.save_analyze_wip(active_pid, _wip_fb3)
-        st.image(_fb_bytes, caption=f"📎 {_fb_photo_file.name}", use_container_width=True)
-    elif st.session_state.get(_fb_photo_key):
-        import base64 as _b64
-        try:
-            st.image(
-                _b64.b64decode(st.session_state[_fb_photo_key]),
-                caption="📎 Foto fishbone tersimpan",
-                use_container_width=True,
-            )
-        except Exception:
-            pass
-
-    # Parse fishbone text → list per category (kept for backward compat with agent)
-    def _parse_fb(fb_dict):
-        result = {}
-        for cat, text in (fb_dict or {}).items():
-            lines = [l.strip() for l in str(text).splitlines() if l.strip()]
-            if lines:
-                result[cat] = lines
-        return result
-
-    st.divider()
-
-    # ── Step 4: Potential Causes (Xn) ──
-    st.markdown("### Step 4 — Potential Causes (Xn List)")
-    st.caption("Isi daftar potential root causes hasil analisis fishbone & 5-Why yang sudah dilakukan secara offline. Tabel ini bersifat final dan menjadi dasar verifikasi di Step 6–7.")
-
-    col_gen, col_save_pc = st.columns([1,1])
-    with col_gen:
-        # Generate bisa dilakukan jika ada DOT code (Opsi B) atau image (Opsi A)
-        _has_dot_for_gen = bool(st.session_state.get(_pm_dot_key, ""))
-        _has_img_for_gen = bool(st.session_state.get(_pm_image_key, ""))
-        _gen_causes_disabled = is_locked or (not _has_dot_for_gen and not _has_img_for_gen)
-        if _gen_causes_disabled and not is_locked:
-            st.caption("⚠️ Generate swimlane/upload process map di Step 2 terlebih dahulu.")
-
-        if st.button("🤖 Generate Potential Causes", key=f"gen_pot_{active_pid}",
-                    disabled=_gen_causes_disabled):
-            _pm_dot_ctx = st.session_state.get(_pm_dot_key, "")
-            with st.spinner("Agent generating potential causes dari fishbone & process map..."):
-                from app.agents.analyze_agent import (
-                    _propose_potential_causes_llm,
-                    _extract_upstream_context,
-                )
-                _upstream_pc = _extract_upstream_context(define_final, measure_final)
-                # Pass DOT code as process context (fishbone offline)
-                _pm_as_steps = [{"step_name": "Lihat DOT process map", "dot_code_context": _pm_dot_ctx[:800]}] if _pm_dot_ctx else []
-                _new_causes  = _propose_potential_causes_llm({}, _pm_as_steps, _upstream_pc)
-                if _new_causes:
-                    st.session_state[_pot_causes_key] = _new_causes
-                    st.session_state.pop(_vplan_key, None)
-                    st.rerun()
-                else:
-                    st.error("Agent tidak menghasilkan causes. Coba lagi atau isi tabel secara manual.")
-
-    if _pot_causes_key not in st.session_state:
-        st.session_state[_pot_causes_key] = []
-
-    pot_causes = st.session_state.get(_pot_causes_key, [])
-
-    if pot_causes:
-        _pc_df = pd.DataFrame([{
-            "xn":               c.get("xn", ""),
-            "description":      c.get("description", "") or c.get("cause", ""),
-            "in_process_step":  c.get("in_process_step", "") or c.get("source", ""),
-            "direct_effect_on_y": c.get("direct_effect_on_y", ""),
-        } for c in pot_causes])
-        _pc_edit = st.data_editor(
-            _pc_df,
-            num_rows="dynamic",
-            use_container_width=True,
-            key=f"pc_editor_{active_pid}",
+        # ── Process Map: Upload OR table ──
+        st.markdown("**Opsi A — Upload file/foto process map (agent akan verifikasi):**")
+        pm_file = st.file_uploader(
+            "Upload process map",
+            type=["png","jpg","jpeg","pdf","xlsx","vsdx"],
+            key=f"pm_upload_{active_pid}",
             disabled=is_locked,
-            column_config={
-                "xn":               st.column_config.TextColumn("Xn", width="small", disabled=True),
-                "description":      st.column_config.TextColumn("Description", width="large"),
-                "in_process_step":  st.column_config.TextColumn("In Process Step?", width="medium"),
-                "direct_effect_on_y": st.column_config.TextColumn("Direct Effect on Y", width="large"),
-            },
         )
-        with col_save_pc:
-            if st.button("💾 Simpan Causes", key=f"pc_save_{active_pid}", disabled=is_locked):
-                _raw = _pc_edit.to_dict(orient="records") if isinstance(_pc_edit, pd.DataFrame) else []
-                # Rebuild clean — re-number Xn, skip baris kosong
-                _saved_pc = []
-                _n = 1
-                for _row in _raw:
-                    _desc = str(_row.get("description", "") or "").strip()
-                    if not _desc:
-                        continue  # skip baris kosong
-                    _saved_pc.append({
-                        "xn":               f"X{_n}",
-                        "cause":            _desc,
-                        "description":      _desc,
-                        "in_process_step":  str(_row.get("in_process_step", "") or "").strip(),
-                        "direct_effect_on_y": str(_row.get("direct_effect_on_y", "") or "").strip(),
-                        "root_cause":       _desc,
-                    })
-                    _n += 1
-                st.session_state[_pot_causes_key] = _saved_pc
-                _wip_pc = memory.load_analyze_wip(active_pid)
-                _wip_pc["potential_causes"] = _saved_pc
-                memory.save_analyze_wip(active_pid, _wip_pc)
-                st.success(f"✅ {len(_saved_pc)} causes tersimpan (X1–X{len(_saved_pc)}).")
-    else:
-        st.info("Klik 'Generate Potential Causes' atau 'Tambah Baris Xn' untuk mengisi daftar causes.")
 
-    # ── Link X causes → Process Map (⚡ markers) ──
-    st.markdown("---")
-    _pm_linked_dot_key = f"analyze_pm_linked_dot_{active_pid}"
+        _pm_image_key   = f"analyze_pm_image_{active_pid}"
+        _pm_imgtype_key = f"analyze_pm_imgtype_{active_pid}"
+        _pm_verified_key = f"analyze_pm_verified_{active_pid}"
 
-    # Load dari WIP jika belum ada di session_state
-    if _pm_linked_dot_key not in st.session_state:
-        _wip_linked = memory.load_analyze_wip(active_pid)
-        st.session_state[_pm_linked_dot_key] = _wip_linked.get("pm_linked_dot_code", "")
+        if pm_file is not None:
+            import base64 as _b64
 
-    _cur_base_dot  = st.session_state.get(_pm_dot_key, "")
-    _cur_x_causes  = st.session_state.get(_pot_causes_key, [])
-    _linked_dot    = st.session_state.get(_pm_linked_dot_key, "")
+            # Handle image files via vision
+            if pm_file.type.startswith("image/"):
+                img_bytes = pm_file.read()
+                img_b64   = _b64.b64encode(img_bytes).decode("utf-8")
+                st.session_state[_pm_image_key]   = img_b64
+                st.session_state[_pm_imgtype_key] = pm_file.type
+                # Simpan ke WIP agar tidak hilang saat refresh
+                _cur_wip_img = memory.load_analyze_wip(active_pid)
+                _cur_wip_img["pm_image_b64"]  = img_b64
+                _cur_wip_img["pm_image_type"] = pm_file.type
+                memory.save_analyze_wip(active_pid, _cur_wip_img)
+                st.image(img_bytes, caption=f"Uploaded: {pm_file.name}", use_container_width=True)
 
-    st.markdown("### Step 5 — Link Root Causes ke Process Map")
-    st.caption(
-        "Setelah tabel Xn terisi, klik tombol ini — agent akan menandai node proses yang terkait "
-        "dengan tiap root cause menggunakan penanda ⚡ dan warna amber."
-    )
+                if st.button("🤖 Analyze Process Map via Agent", key=f"pm_vision_{active_pid}", disabled=is_locked):
+                    with st.spinner("Agent menganalisis process map..."):
+                        from app.agents.analyze_agent import (
+                            _check_process_map_from_image_llm,
+                            _extract_upstream_context,
+                        )
+                        _upstream_pm = _extract_upstream_context(define_final, measure_final)
+                        _pm_result = _check_process_map_from_image_llm(img_b64, pm_file.type, _upstream_pm)
+                        st.session_state[_pm_verified_key] = _pm_result
 
-    _link_col1, _link_col2 = st.columns([2, 1])
-    with _link_col1:
-        _no_dot   = not _cur_base_dot
-        _no_xn    = not _cur_x_causes
-        _link_dis = is_locked or _no_dot or _no_xn
-        _link_hint = ""
-        if _no_dot:
-            _link_hint = "⚠️ Generate swimlane diagram dulu (Opsi B di Step 2)."
-        elif _no_xn:
-            _link_hint = "⚠️ Generate atau isi tabel Xn terlebih dahulu."
-        if _link_hint:
-            st.caption(_link_hint)
+                _pm_result = st.session_state.get(_pm_verified_key)
+                if _pm_result:
+                    verified = _pm_result.get("verified", False)
+                    if verified:
+                        st.success(f"✅ Process map **verified** oleh agent.")
+                    else:
+                        st.warning(f"⚠️ {_pm_result.get('verification_note','Perlu perbaikan.')}")
+                    st.markdown(f"**Agent feedback:** {_pm_result.get('feedback','')}")
+                    if _pm_result.get("problem_area_steps"):
+                        st.markdown(f"**Problem area:** {', '.join(_pm_result['problem_area_steps'])}")
+                    if _pm_result.get("missing_elements"):
+                        st.markdown("**Missing elements:**")
+                        for m in _pm_result["missing_elements"]:
+                            st.write(f"- {m}")
+            else:
+                # Non-image files: store name only for documentation
+                st.caption(f"📎 File dokumentasi tersimpan: {pm_file.name}")
+                st.info("File non-image tidak bisa dianalisis langsung. Gunakan foto/PNG/JPG untuk analisis vision, atau isi tabel di bawah.")
 
-        if st.button(
-            "⚡ Link to Process Mapping",
-            key=f"pm_link_causes_{active_pid}",
-            disabled=_link_dis,
-            help="Agent akan match Xn ke step proses dan beri tanda ⚡ pada node yang relevan.",
-        ):
-            with st.spinner("Agent menandai node process map yang terkait root causes..."):
-                from app.agents.analyze_agent import link_causes_to_process_map as _link_fn
-                _lnk_result = _link_fn(_cur_base_dot, _cur_x_causes)
-                if _lnk_result.get("dot_code"):
-                    st.session_state[_pm_linked_dot_key] = _lnk_result["dot_code"]
-                    _wip_lnk = memory.load_analyze_wip(active_pid)
-                    _wip_lnk["pm_linked_dot_code"] = _lnk_result["dot_code"]
-                    memory.save_analyze_wip(active_pid, _wip_lnk)
-                    st.rerun()
-                else:
-                    st.error("Agent tidak berhasil mapping causes ke proses. Coba lagi.")
+        # Tampilkan image dari session state (WIP) meski file_uploader kosong setelah refresh
+        elif st.session_state.get(_pm_image_key):
+            import base64 as _b64
+            try:
+                st.image(
+                    _b64.b64decode(st.session_state[_pm_image_key]),
+                    caption="📎 Process map tersimpan sebelumnya",
+                    use_container_width=True,
+                )
+            except Exception:
+                pass
 
-    with _link_col2:
-        if _linked_dot:
-            if st.button("🗑️ Reset ⚡ Markers", key=f"pm_link_reset_{active_pid}", disabled=is_locked):
-                st.session_state[_pm_linked_dot_key] = ""
-                _wip_rl = memory.load_analyze_wip(active_pid)
-                _wip_rl["pm_linked_dot_code"] = ""
-                memory.save_analyze_wip(active_pid, _wip_rl)
+        # ── Opsi B: Free-form → Swimlane (Agent) ──
+        st.markdown("**Opsi B — Deskripsikan proses secara bebas, agent generate swimlane diagram:**")
+        st.caption("Ketik deskripsi proses (kalimat, bullet point, apapun). Agent generate swimlane diagram otomatis — bisa direvisi berkali-kali.")
+
+        _pm_dot_key = f"analyze_pm_dot_{active_pid}"
+
+        # Load dari WIP jika belum di session_state
+        if _pm_dot_key not in st.session_state:
+            _wip_dot = memory.load_analyze_wip(active_pid)
+            # Support lama (pm_mermaid_code) dan baru (pm_dot_code)
+            st.session_state[_pm_dot_key] = _wip_dot.get("pm_dot_code") or _wip_dot.get("pm_mermaid_code", "")
+
+        _pm_desc_input = st.text_area(
+            "Deskripsi proses (bebas — sebutkan aktor/PIC untuk swimlane yang tepat):",
+            key=f"pm_desc_input_{active_pid}",
+            height=140,
+            placeholder=(
+                "Contoh:\n"
+                "- Customer kirim PO via email\n"
+                "- Sales/Admin terima dan cek kelengkapan PO\n"
+                "- Jika OK, CSD buat Sales Order dan koordinasi ke Planning\n"
+                "- Logistic siapkan barang dan buat Delivery Note\n"
+                "- Transporter kirim barang, customer tanda-tangan DN\n"
+                "- Finance proses invoice dan kirim ke customer"
+            ),
+            disabled=is_locked,
+        )
+
+        _col_pm_gen, _col_pm_clear = st.columns([2, 1])
+        with _col_pm_gen:
+            _gen_disabled = is_locked or not (str(_pm_desc_input or "")).strip()
+            if st.button("🤖 Generate Swimlane Diagram", key=f"pm_gen_dot_{active_pid}", disabled=_gen_disabled):
+                with st.spinner("Agent membuat swimlane diagram..."):
+                    from app.agents.analyze_agent import generate_process_map_graphviz, _extract_upstream_context
+                    _up_ctx = _extract_upstream_context(define_final, measure_final)
+                    _result_m = generate_process_map_graphviz(_pm_desc_input, _up_ctx)
+                    if _result_m.get("dot_code"):
+                        st.session_state[_pm_dot_key] = _result_m["dot_code"]
+                        _wip_c = memory.load_analyze_wip(active_pid)
+                        _wip_c["pm_dot_code"] = _result_m["dot_code"]
+                        _wip_c["pm_dot_desc"] = _pm_desc_input
+                        memory.save_analyze_wip(active_pid, _wip_c)
+                        st.rerun()
+                    else:
+                        st.error("Agent tidak berhasil generate diagram. Coba perjelas deskripsi atau sebutkan aktor-aktornya.")
+        with _col_pm_clear:
+            if st.button("🗑️ Hapus Diagram", key=f"pm_clear_dot_{active_pid}", disabled=is_locked):
+                st.session_state[_pm_dot_key] = ""
+                _wip_cl = memory.load_analyze_wip(active_pid)
+                _wip_cl["pm_dot_code"] = ""
+                memory.save_analyze_wip(active_pid, _wip_cl)
                 st.rerun()
 
-    if _linked_dot:
-        st.markdown(
-            "<div style='background:#fffbeb;border:1px solid #fbbf24;border-radius:10px;"
-            "padding:10px 14px;margin:8px 0 4px 0;font-size:0.82rem;color:#78350f;'>"
-            "⚡ <b>Node berwarna amber</b> = area proses yang terkait dengan potential root causes (Xn). "
-            "Verifikasi relevansinya sebelum masuk ke tahap improvement.</div>",
-            unsafe_allow_html=True,
-        )
-        try:
-            st.graphviz_chart(_linked_dot, use_container_width=True)
-        except Exception as _le:
-            st.error(f"Diagram error: {_le}")
-            st.code(_linked_dot, language="text")
-    elif _cur_base_dot and _cur_x_causes:
-        st.info("Klik **⚡ Link to Process Mapping** untuk menandai node yang terkait root causes.")
+        _cur_dot_c = st.session_state.get(_pm_dot_key, "")
+        if _cur_dot_c:
+            st.markdown("**Swimlane Diagram (Current State):**")
+            try:
+                st.graphviz_chart(compact_dot(_cur_dot_c), use_container_width=False)
+            except Exception as _e:
+                st.error(f"Diagram tidak valid: {_e}")
+                st.code(_cur_dot_c, language="text")
 
-    st.divider()
+            with st.expander("🔄 Revisi Diagram", expanded=False):
+                _rev_desc = st.text_area(
+                    "Apa yang perlu diubah/ditambah?",
+                    key=f"pm_revise_desc_{active_pid}",
+                    height=80,
+                    placeholder="Contoh: Tambahkan decision point di CSD, pisahkan path reject kembali ke Sales...",
+                    disabled=is_locked,
+                )
+                if st.button("🔄 Apply Revisi", key=f"pm_revise_btn_{active_pid}",
+                             disabled=is_locked or not str(_rev_desc or "").strip()):
+                    with st.spinner("Agent merevisi diagram..."):
+                        from app.agents.analyze_agent import revise_process_map_graphviz
+                        _rev_r = revise_process_map_graphviz(_cur_dot_c, _rev_desc)
+                        if _rev_r.get("dot_code"):
+                            st.session_state[_pm_dot_key] = _rev_r["dot_code"]
+                            _wip_rv = memory.load_analyze_wip(active_pid)
+                            _wip_rv["pm_dot_code"] = _rev_r["dot_code"]
+                            memory.save_analyze_wip(active_pid, _wip_rv)
+                            st.rerun()
+
+
+        st.divider()
+        # ── Step 3: Fishbone Diagram (6M) — Panduan RCA ──
+        st.markdown("### Step 3 — Fishbone & Root Cause Analysis")
+        st.caption("Lakukan analisis fishbone secara offline menggunakan panduan di bawah, lalu masukkan hasilnya ke tabel Xn di Step 4.")
+
+        _rca_guide_html = (
+            "<div style='font-family:ui-sans-serif,system-ui,sans-serif;padding:4px 0;'>"
+            "<p style='text-align:center;font-weight:700;font-size:1rem;color:#0f172a;margin-bottom:14px;'>"
+            "🎯 Diagram Analisis Akar Masalah (RCA) — Proses Kompak &amp; Efektif</p>"
+            "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;'>"
+            "<div style='background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:10px;padding:12px;'>"
+            "<div style='font-weight:700;color:#0369a1;font-size:0.85rem;margin-bottom:4px;'>1. DEFINISIKAN MASALAH</div>"
+            "<div style='font-size:0.78rem;color:#0f172a;'>Jelas, Spesifik, Terukur:<br>"
+            "&bull; <b>Lokasi</b> — di mana terjadi<br>"
+            "&bull; <b>Waktu</b> — kapan / seberapa sering<br>"
+            "&bull; <b>Dampak</b> — berapa besar</div></div>"
+            "<div style='background:#d1fae5;border:1.5px solid #34d399;border-radius:10px;padding:12px;'>"
+            "<div style='font-weight:700;color:#065f46;font-size:0.85rem;margin-bottom:4px;'>2. BRAINSTORMING</div>"
+            "<div style='font-size:0.78rem;color:#0f172a;'>Maks. <b>15 Menit</b><br>"
+            "Identifikasi <b>semua kemungkinan penyebab</b><br>"
+            "<i>(Tanpa diskusi solusi dulu)</i></div></div>"
+            "<div style='background:#ede9fe;border:1.5px solid #a78bfa;border-radius:10px;padding:12px;'>"
+            "<div style='font-weight:700;color:#5b21b6;font-size:0.85rem;margin-bottom:4px;'>3. PENGELOMPOKAN 6M</div>"
+            "<div style='font-size:0.78rem;color:#0f172a;'>"
+            "<b>Man &middot; Machine &middot; Method</b><br>"
+            "<b>Material &middot; Measurement &middot; Mother Nature</b></div></div>"
+            "</div>"
+            "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;'>"
+            "<div style='background:#fce7f3;border:1.5px solid #f472b6;border-radius:10px;padding:12px;'>"
+            "<div style='font-weight:700;color:#9d174d;font-size:0.85rem;margin-bottom:4px;'>4. REVIEW HASIL</div>"
+            "<div style='font-size:0.78rem;color:#0f172a;'>Hapus cause yang:<br>"
+            "&bull; <b>Duplikat</b><br>"
+            "&bull; <b>Tidak Relevan</b><br>"
+            "&bull; <b>Kurang Fakta/Data</b></div></div>"
+            "<div style='background:#fef3c7;border:1.5px solid #fbbf24;border-radius:10px;padding:12px;'>"
+            "<div style='font-weight:700;color:#92400e;font-size:0.85rem;margin-bottom:4px;'>5. ANALISIS 5 WHY</div>"
+            "<div style='font-size:0.78rem;color:#0f172a;'>"
+            "Why 1 &rarr; Why 2 &rarr; Why 3 &rarr; Why 4 &rarr; Why 5<br>"
+            "<i>Temukan penyebab <b>mendasar &amp; sistemik</b></i></div></div>"
+            "<div style='background:#fee2e2;border:1.5px solid #f87171;border-radius:10px;padding:12px;'>"
+            "<div style='font-weight:700;color:#991b1b;font-size:0.85rem;margin-bottom:4px;'>6. TETAPKAN POTENTIAL ROOT CAUSE</div>"
+            "<div style='font-size:0.78rem;color:#0f172a;'>"
+            "Hasil akhir 5 Why<br>= <b>Potential Root Cause</b></div></div>"
+            "</div>"
+            "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;'>"
+            "<div style='background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;padding:12px;'>"
+            "<div style='font-weight:700;color:#14532d;font-size:0.85rem;margin-bottom:6px;'>7. KLASIFIKASI C-N-X</div>"
+            "<div style='font-size:0.78rem;color:#0f172a;'>"
+            "<span style='background:#e2e8f0;padding:1px 6px;border-radius:4px;font-weight:600;'>C</span> Constant — Tetap/Tidak Bisa Diubah<br>"
+            "<span style='background:#bfdbfe;padding:1px 6px;border-radius:4px;font-weight:600;'>N</span> Noise — Alami/Luar Kendali<br>"
+            "<span style='background:#bbf7d0;padding:1px 6px;border-radius:4px;font-weight:600;color:#14532d;'>X</span> <b>Variable — Dapat Dikendalikan ✅</b>"
+            "</div></div>"
+            "<div style='background:#dcfce7;border:2px solid #22c55e;border-radius:10px;padding:12px;'>"
+            "<div style='font-weight:700;color:#14532d;font-size:0.85rem;margin-bottom:4px;'>8. FOKUS PADA X (VARIABLE)</div>"
+            "<div style='font-size:0.78rem;color:#0f172a;'>"
+            "Fokus perbaikan <b>hanya pada kategori X</b><br>"
+            "yang dapat dikendalikan &amp; diperbaiki</div></div>"
+            "<div style='background:#f0f9ff;border:1.5px solid #38bdf8;border-radius:10px;padding:12px;'>"
+            "<div style='font-weight:700;color:#0369a1;font-size:0.85rem;margin-bottom:4px;'>9. PRIORITISASI (JIKA PERLU)</div>"
+            "<div style='font-size:0.78rem;color:#0f172a;'>"
+            "Prioritisasi &amp; <b>voting</b> jika X terlalu banyak<br>"
+            "&rarr; Pilih yang paling kritikal<br>"
+            "&rarr; <b>Rencana Tindakan Lanjut</b></div></div>"
+            "</div></div>"
+        )
+        if _proj_path == "quick":
+            st.markdown(
+                "<div style='padding:8px 0;font-size:0.9rem;'>"
+                "<b>🟢 Quick Path — Fishbone 3M:</b> cukup kelompokkan penyebab ke "
+                "<b>Man &middot; Method &middot; Machine</b>, pilih root cause yang paling "
+                "berdampak, lalu isi langsung ke tabel Xn di Step 4. "
+                "<i>5-Why chain & verification plan formal tidak wajib di Quick Path.</i>"
+                "</div>",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(_rca_guide_html, unsafe_allow_html=True)
+
+        # ── Upload foto fishbone (offline) ──
+        st.markdown("**📸 Upload foto hasil fishbone analysis (offline):**")
+        _fb_photo_key     = f"analyze_fb_photo_{active_pid}"
+        _fb_phototype_key = f"analyze_fb_phototype_{active_pid}"
+
+        if _fb_photo_key not in st.session_state:
+            _wip_fb3 = memory.load_analyze_wip(active_pid)
+            st.session_state[_fb_photo_key]     = _wip_fb3.get("fb_photo_b64", "")
+            st.session_state[_fb_phototype_key] = _wip_fb3.get("fb_photo_type", "image/jpeg")
+
+        _fb_photo_file = st.file_uploader(
+            "Upload foto fishbone (PNG/JPG)",
+            type=["png", "jpg", "jpeg"],
+            key=f"fb_photo_upload_{active_pid}",
+            disabled=is_locked,
+        )
+        if _fb_photo_file is not None:
+            import base64 as _b64
+            _fb_bytes = _fb_photo_file.read()
+            _fb_b64   = _b64.b64encode(_fb_bytes).decode("utf-8")
+            st.session_state[_fb_photo_key]     = _fb_b64
+            st.session_state[_fb_phototype_key] = _fb_photo_file.type
+            _wip_fb3 = memory.load_analyze_wip(active_pid)
+            _wip_fb3["fb_photo_b64"]  = _fb_b64
+            _wip_fb3["fb_photo_type"] = _fb_photo_file.type
+            memory.save_analyze_wip(active_pid, _wip_fb3)
+            st.image(_fb_bytes, caption=f"📎 {_fb_photo_file.name}", use_container_width=True)
+        elif st.session_state.get(_fb_photo_key):
+            import base64 as _b64
+            try:
+                st.image(
+                    _b64.b64decode(st.session_state[_fb_photo_key]),
+                    caption="📎 Foto fishbone tersimpan",
+                    use_container_width=True,
+                )
+            except Exception:
+                pass
+
+        # Parse fishbone text → list per category (kept for backward compat with agent)
+        def _parse_fb(fb_dict):
+            result = {}
+            for cat, text in (fb_dict or {}).items():
+                lines = [l.strip() for l in str(text).splitlines() if l.strip()]
+                if lines:
+                    result[cat] = lines
+            return result
+
+        st.divider()
+
+        # ── Step 4: Potential Causes (Xn) ──
+        st.markdown("### Step 4 — Potential Causes (Xn List)")
+        st.caption("Isi daftar potential root causes hasil analisis fishbone & 5-Why yang sudah dilakukan secara offline. Tabel ini bersifat final dan menjadi dasar verifikasi di Step 6–7.")
+
+        col_gen, col_save_pc = st.columns([1,1])
+        with col_gen:
+            # Generate bisa dilakukan jika ada DOT code (Opsi B) atau image (Opsi A)
+            _has_dot_for_gen = bool(st.session_state.get(_pm_dot_key, ""))
+            _has_img_for_gen = bool(st.session_state.get(_pm_image_key, ""))
+            _gen_causes_disabled = is_locked or (not _has_dot_for_gen and not _has_img_for_gen)
+            if _gen_causes_disabled and not is_locked:
+                st.caption("⚠️ Generate swimlane/upload process map di Step 2 terlebih dahulu.")
+
+            if st.button("🤖 Generate Potential Causes", key=f"gen_pot_{active_pid}",
+                        disabled=_gen_causes_disabled):
+                _pm_dot_ctx = st.session_state.get(_pm_dot_key, "")
+                with st.spinner("Agent generating potential causes dari fishbone & process map..."):
+                    from app.agents.analyze_agent import (
+                        _propose_potential_causes_llm,
+                        _extract_upstream_context,
+                    )
+                    _upstream_pc = _extract_upstream_context(define_final, measure_final)
+                    # Pass DOT code as process context (fishbone offline)
+                    _pm_as_steps = [{"step_name": "Lihat DOT process map", "dot_code_context": _pm_dot_ctx[:800]}] if _pm_dot_ctx else []
+                    _new_causes  = _propose_potential_causes_llm({}, _pm_as_steps, _upstream_pc)
+                    if _new_causes:
+                        st.session_state[_pot_causes_key] = _new_causes
+                        st.session_state.pop(_vplan_key, None)
+                        st.rerun()
+                    else:
+                        st.error("Agent tidak menghasilkan causes. Coba lagi atau isi tabel secara manual.")
+
+        if _pot_causes_key not in st.session_state:
+            st.session_state[_pot_causes_key] = []
+
+        pot_causes = st.session_state.get(_pot_causes_key, [])
+
+        if pot_causes:
+            _pc_df = pd.DataFrame([{
+                "xn":               c.get("xn", ""),
+                "description":      c.get("description", "") or c.get("cause", ""),
+                "in_process_step":  c.get("in_process_step", "") or c.get("source", ""),
+                "direct_effect_on_y": c.get("direct_effect_on_y", ""),
+            } for c in pot_causes])
+            _pc_edit = st.data_editor(
+                _pc_df,
+                num_rows="dynamic",
+                use_container_width=True,
+                key=f"pc_editor_{active_pid}",
+                disabled=is_locked,
+                column_config={
+                    "xn":               st.column_config.TextColumn("Xn", width="small", disabled=True),
+                    "description":      st.column_config.TextColumn("Description", width="large"),
+                    "in_process_step":  st.column_config.TextColumn("In Process Step?", width="medium"),
+                    "direct_effect_on_y": st.column_config.TextColumn("Direct Effect on Y", width="large"),
+                },
+            )
+            with col_save_pc:
+                if st.button("💾 Simpan Causes", key=f"pc_save_{active_pid}", disabled=is_locked):
+                    _raw = _pc_edit.to_dict(orient="records") if isinstance(_pc_edit, pd.DataFrame) else []
+                    # Rebuild clean — re-number Xn, skip baris kosong
+                    _saved_pc = []
+                    _n = 1
+                    for _row in _raw:
+                        _desc = str(_row.get("description", "") or "").strip()
+                        if not _desc:
+                            continue  # skip baris kosong
+                        _saved_pc.append({
+                            "xn":               f"X{_n}",
+                            "cause":            _desc,
+                            "description":      _desc,
+                            "in_process_step":  str(_row.get("in_process_step", "") or "").strip(),
+                            "direct_effect_on_y": str(_row.get("direct_effect_on_y", "") or "").strip(),
+                            "root_cause":       _desc,
+                        })
+                        _n += 1
+                    st.session_state[_pot_causes_key] = _saved_pc
+                    _wip_pc = memory.load_analyze_wip(active_pid)
+                    _wip_pc["potential_causes"] = _saved_pc
+                    memory.save_analyze_wip(active_pid, _wip_pc)
+                    st.success(f"✅ {len(_saved_pc)} causes tersimpan (X1–X{len(_saved_pc)}).")
+        else:
+            st.info("Klik 'Generate Potential Causes' atau 'Tambah Baris Xn' untuk mengisi daftar causes.")
+
+        # ── Link X causes → Process Map (⚡ markers) ──
+        st.markdown("---")
+        _pm_linked_dot_key = f"analyze_pm_linked_dot_{active_pid}"
+
+        # Load dari WIP jika belum ada di session_state
+        if _pm_linked_dot_key not in st.session_state:
+            _wip_linked = memory.load_analyze_wip(active_pid)
+            st.session_state[_pm_linked_dot_key] = _wip_linked.get("pm_linked_dot_code", "")
+
+        _cur_base_dot  = st.session_state.get(_pm_dot_key, "")
+        _cur_x_causes  = st.session_state.get(_pot_causes_key, [])
+        _linked_dot    = st.session_state.get(_pm_linked_dot_key, "")
+
+        st.markdown("### Step 5 — Link Root Causes ke Process Map")
+        st.caption(
+            "Setelah tabel Xn terisi, klik tombol ini — agent akan menandai node proses yang terkait "
+            "dengan tiap root cause menggunakan penanda ⚡ dan warna amber."
+        )
+
+        _link_col1, _link_col2 = st.columns([2, 1])
+        with _link_col1:
+            _no_dot   = not _cur_base_dot
+            _no_xn    = not _cur_x_causes
+            _link_dis = is_locked or _no_dot or _no_xn
+            _link_hint = ""
+            if _no_dot:
+                _link_hint = "⚠️ Generate swimlane diagram dulu (Opsi B di Step 2)."
+            elif _no_xn:
+                _link_hint = "⚠️ Generate atau isi tabel Xn terlebih dahulu."
+            if _link_hint:
+                st.caption(_link_hint)
+
+            if st.button(
+                "⚡ Link to Process Mapping",
+                key=f"pm_link_causes_{active_pid}",
+                disabled=_link_dis,
+                help="Agent akan match Xn ke step proses dan beri tanda ⚡ pada node yang relevan.",
+            ):
+                with st.spinner("Agent menandai node process map yang terkait root causes..."):
+                    from app.agents.analyze_agent import link_causes_to_process_map as _link_fn
+                    _lnk_result = _link_fn(_cur_base_dot, _cur_x_causes)
+                    if _lnk_result.get("dot_code"):
+                        st.session_state[_pm_linked_dot_key] = _lnk_result["dot_code"]
+                        _wip_lnk = memory.load_analyze_wip(active_pid)
+                        _wip_lnk["pm_linked_dot_code"] = _lnk_result["dot_code"]
+                        memory.save_analyze_wip(active_pid, _wip_lnk)
+                        st.rerun()
+                    else:
+                        st.error("Agent tidak berhasil mapping causes ke proses. Coba lagi.")
+
+        with _link_col2:
+            if _linked_dot:
+                if st.button("🗑️ Reset ⚡ Markers", key=f"pm_link_reset_{active_pid}", disabled=is_locked):
+                    st.session_state[_pm_linked_dot_key] = ""
+                    _wip_rl = memory.load_analyze_wip(active_pid)
+                    _wip_rl["pm_linked_dot_code"] = ""
+                    memory.save_analyze_wip(active_pid, _wip_rl)
+                    st.rerun()
+
+        if _linked_dot:
+            st.markdown(
+                "<div style='background:#fffbeb;border:1px solid #fbbf24;border-radius:10px;"
+                "padding:10px 14px;margin:8px 0 4px 0;font-size:0.82rem;color:#78350f;'>"
+                "⚡ <b>Node berwarna amber</b> = area proses yang terkait dengan potential root causes (Xn). "
+                "Verifikasi relevansinya sebelum masuk ke tahap improvement.</div>",
+                unsafe_allow_html=True,
+            )
+            try:
+                st.graphviz_chart(compact_dot(_linked_dot), use_container_width=False)
+            except Exception as _le:
+                st.error(f"Diagram error: {_le}")
+                st.code(_linked_dot, language="text")
+        elif _cur_base_dot and _cur_x_causes:
+            st.info("Klik **⚡ Link to Process Mapping** untuk menandai node yang terkait root causes.")
+
+        st.divider()
+    else:
+        # -- Quick Path: Root Cause Terverifikasi (dari Gemba) --
+        st.markdown("### Root Cause Terverifikasi (dari Gemba)")
+        st.caption(
+            "Isi root cause yang sudah diverifikasi langsung di gemba dan akan "
+            "diimplementasi solusinya. Satu root cause per baris (boleh beberapa). "
+            "Dibaca sebagai hipotesis: \"Target tidak tercapai karena [root cause]\"."
+        )
+        if _gemba_key not in st.session_state:
+            _wip_g = memory.load_analyze_wip(active_pid) or {}
+            st.session_state[_gemba_key] = _wip_g.get("gemba_root_causes_text", "")
+        _gemba_text = st.text_area(
+            "Verified root causes (satu per baris)",
+            value=st.session_state.get(_gemba_key, ""),
+            height=140,
+            key=f"analyze_gemba_rc_input_{active_pid}",
+            disabled=is_locked,
+            placeholder="Satu root cause per baris. Contoh: Mesin sering downtime karena perawatan tidak terjadwal",
+        )
+        if _gemba_text != st.session_state.get(_gemba_key, ""):
+            st.session_state[_gemba_key] = _gemba_text
+            _wip_g = memory.load_analyze_wip(active_pid) or {}
+            _wip_g["gemba_root_causes_text"] = _gemba_text
+            memory.save_analyze_wip(active_pid, _wip_g)
+        _gemba_lines = [l.strip() for l in (_gemba_text or "").splitlines() if l.strip()]
+        if _gemba_lines:
+            st.markdown("**Hipotesis (akan diteruskan ke Improve):**")
+            for _gl in _gemba_lines:
+                st.write(f"- Target tidak tercapai karena **{_gl}**")
+        else:
+            st.info("Isi minimal 1 root cause terverifikasi sebelum Generate Draft.")
+        st.divider()
 
     if _proj_path != "quick":
         # ── Step 6: Verification Plan ──
@@ -1234,9 +1279,9 @@ with tab_input:
 
     else:
         st.info(
-            "⚡ **Quick Path** — Verification Plan & Verification Results formal "
-            "tidak wajib. Cukup tandai root cause yang sudah dikonfirmasi langsung di "
-            "tabel Xn (Step 4) dan lanjut ke fase Improve."
+            "⚡ **Quick Path** — Verification Plan & Results formal tidak wajib. "
+            "Cukup isi **Root Cause Terverifikasi (dari Gemba)** di atas, lalu Generate Draft "
+            "untuk lanjut ke fase Improve."
         )
     st.divider()
 
@@ -1255,7 +1300,8 @@ with tab_input:
         )
 
     if submitted:
-        _fb_parsed = _parse_fb(st.session_state.get(_fishbone_key, {}))
+        # _parse_fb hanya terdefinisi di Step 3 (standard). Quick tidak pakai fishbone.
+        _fb_parsed = _parse_fb(st.session_state.get(_fishbone_key, {})) if _proj_path != "quick" else {}
         user_inputs = {
             "industry":              _industry,
             "process_area":          _process,
@@ -1281,6 +1327,30 @@ with tab_input:
             ),
             "project_path":          _proj_path,
         }
+
+        # Quick path: root cause terverifikasi dari gemba → langsung jadi
+        # potential_causes + verification_results (is_root_cause=True) agar
+        # mengalir ke root_cause_summary & fase Improve.
+        if _proj_path == "quick":
+            _g_text = st.session_state.get(_gemba_key, "") or (
+                memory.load_analyze_wip(active_pid).get("gemba_root_causes_text", "")
+            )
+            _g_lines = [l.strip() for l in (_g_text or "").splitlines() if l.strip()]
+            _g_pc, _g_vr = [], []
+            for _i, _rc in enumerate(_g_lines, 1):
+                _xn = f"X{_i}"
+                _g_pc.append({"xn": _xn, "description": _rc, "cause": _rc, "root_cause": _rc})
+                _g_vr.append({
+                    "xn": _xn, "cause": _rc, "description": _rc, "root_cause": _rc,
+                    "is_root_cause": True,
+                    "verification_method": "Gemba — terverifikasi langsung",
+                    "finding": "Dikonfirmasi dari gemba; solusi akan diimplementasi",
+                    "hypothesis": f"Target tidak tercapai karena {_rc}",
+                })
+            user_inputs["potential_causes"]     = _g_pc
+            user_inputs["verification_results"] = _g_vr
+            user_inputs["verification_plan"]    = []
+
         user_feedback = None
 
         with st.spinner("Menjalankan ANALYZE agent..."):
@@ -1369,9 +1439,9 @@ with tab_report:
             st.markdown("**Next Actions:**")
             for i, a in enumerate(actions,1): st.write(f"{i}. {a}")
 
-        # Process map check
+        # Process map check (standard only — Step 2 disembunyikan di quick)
         pm_check = outs.get("process_map_check") or {}
-        if pm_check.get("feedback"):
+        if _proj_path != "quick" and pm_check.get("feedback"):
             st.divider()
             st.markdown("**📋 Process Map Check:**")
             icon = "✅" if pm_check.get("status")=="complete" else "⚠️"
@@ -1379,9 +1449,9 @@ with tab_report:
             if pm_check.get("problem_area_steps"):
                 st.markdown(f"*Problem area steps: {', '.join(pm_check['problem_area_steps'])}*")
 
-        # Fishbone check
+        # Fishbone check (standard only — Step 3 disembunyikan di quick)
         fb_check = outs.get("fishbone_check") or {}
-        if fb_check.get("feedback"):
+        if _proj_path != "quick" and fb_check.get("feedback"):
             st.divider()
             st.markdown("**🦴 Fishbone Check:**")
             icon = "✅" if fb_check.get("status")=="complete" else "⚠️"
@@ -1420,7 +1490,9 @@ with tab_causes:
 
 # ── TAB 4: Verification Analysis ──
 with tab_verification:
-    if not analyze_state:
+    if _proj_path == "quick":
+        st.info("🔬 Tab **Verification Analysis** tidak berlaku untuk **Quick path** — verifikasi formal root cause di-skip (B-rule).")
+    elif not analyze_state:
         st.info("Generate draft untuk melihat verification analysis.")
     else:
         outs = analyze_state.get("outputs") or {}
@@ -1496,7 +1568,7 @@ with tab_asis:
     if _asis_dot:
         st.caption("🟢 Node hijau = area masalah (problem area)")
         try:
-            st.graphviz_chart(_asis_dot, use_container_width=True)
+            st.graphviz_chart(compact_dot(_asis_dot), use_container_width=False)
         except Exception:
             st.code(_asis_dot, language="text")
         with st.expander("📋 Lihat / Copy DOT Code", expanded=False):
@@ -1514,7 +1586,10 @@ with tab_asis:
         except Exception:
             pass
     if not _rendered_asis:
-        st.info("Belum ada As-Is process map. Buat/Upload di tab Input → Step 2.")
+        if _proj_path == "quick":
+            st.info("🗺️ Tab **As-Is Process Map** tidak berlaku untuk **Quick path** — tidak ada input process map (hanya confirmed root cause).")
+        else:
+            st.info("Belum ada As-Is process map. Buat/Upload di tab Input → Step 2.")
 
 # ── TAB: Fishbone ──
 with tab_fishbone:
@@ -1534,6 +1609,8 @@ with tab_fishbone:
             )
         except Exception:
             st.info("Foto fishbone tersimpan tapi tidak dapat ditampilkan.")
+    elif _proj_path == "quick":
+        st.info("🦴 Tab **Fishbone** tidak berlaku untuk **Quick path** — tidak ada input fishbone (hanya confirmed root cause).")
     else:
         st.info("Belum ada file fishbone diupload. Upload di tab Input → Step 3.")
 
@@ -1566,7 +1643,12 @@ with tab_input:
                 not in ("false", "", "none", "0", "❌ no", "❌")
                 for r in _vr_for_fin
             )
-            fin_disabled = (not _has_confirmed_for_fin) or (
+            # Standard: wajib fase sebelumnya di-approve approver. Quick: tidak perlu approval.
+            _prev_block = (_proj_path != "quick") and (not _appr_status.get("prev_approved", False))
+            # Standard: wajib isi tanggal aktual selesai fase sebelum finalize.
+            _has_end = render_phase_end_date(active_pid, "analyze", disabled=is_locked)
+            _no_actual_end = (_proj_path != "quick") and not _has_end
+            fin_disabled = (not _has_confirmed_for_fin) or _prev_block or _no_actual_end or (
                 (_gate_status_now == "FAIL") and not _appr_status.get("can_advance", False)
             )
             if st.button("✅ Finalize (Lock Final)", key="analyze_finalize_btn", disabled=fin_disabled):
@@ -1583,6 +1665,10 @@ with tab_input:
             if fin_disabled:
                 if not _has_confirmed_for_fin:
                     st.caption("⚠️ Finalize diblokir: belum ada root cause terkonfirmasi di Step 7 (Verification Results). Konfirmasi minimal 1 root cause (✅ Yes) terlebih dahulu.")
+                elif _prev_block:
+                    st.caption("⚠️ Finalize diblokir: fase sebelumnya (MEASURE) belum di-approve oleh approver (jalur Standard).")
+                elif _no_actual_end:
+                    st.caption("⚠️ Finalize diblokir: isi **Tanggal aktual selesai fase** dulu.")
                 else:
                     st.caption("⚠️ Finalize diblokir: Gate FAIL.")
         elif _has_final:
