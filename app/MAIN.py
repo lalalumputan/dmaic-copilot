@@ -9,6 +9,18 @@ from app.utils import memory, audit, auth
 from app.utils.ui_helpers import render_sidebar_header
 from app.agents.classification_agent import run_classification_agent, get_gate_mode
 
+# Marker hidrasi per-fase. Tiap page punya markernya sendiri agar tidak saling
+# menimpa (mencegah tab kosong saat menyusuri fase setelah Load dari MAIN).
+PHASE_LOAD_MARKERS = [
+    "_loaded_pid", "_measure_loaded_pid", "_analyze_loaded_pid",
+    "_improve_loaded_pid", "_control_loaded_pid",
+]
+
+def _reset_phase_markers():
+    """Reset semua marker hidrasi agar setiap page re-load penuh dari disk."""
+    for _m in PHASE_LOAD_MARKERS:
+        st.session_state[_m] = None
+
 st.set_page_config(page_title="DMAIC Copilot", layout="wide")
 # ── Slanted Tabs (samakan dengan styling tab di pages) ──
 st.markdown("""
@@ -290,7 +302,7 @@ with tab_dash:
                     # Auto-load project baru
                     st.session_state["active_project_id"]   = copy_dest.strip()
                     st.session_state["active_project_path"] = memory.load_project_meta(copy_dest.strip()).get("path", "standard")
-                    st.session_state["_loaded_pid"] = None
+                    _reset_phase_markers()
                     for _k in ["define_draft", "define_final", "measure_draft", "measure_final",
                                "analyze_draft", "analyze_final", "improve_draft", "improve_final",
                                "control_draft", "control_final"]:
@@ -350,7 +362,7 @@ with tab_dash:
                 _rc[3].markdown("⏳ Menunggu Reviewer")
                 if _rc[4].button("Load", key=f"recap_rev_{_item['pid']}"):
                     st.session_state["active_project_id"] = _item['pid']
-                    st.session_state["_loaded_pid"] = None
+                    _reset_phase_markers()
                     st.rerun()
             st.divider()
 
@@ -385,7 +397,7 @@ with tab_dash:
                 _cc[3].markdown("⏳ Menunggu Champion")
                 if _cc[4].button("Load", key=f"recap_champ_{_item['pid']}_{_item['fase']}"):
                     st.session_state["active_project_id"] = _item['pid']
-                    st.session_state["_loaded_pid"] = None
+                    _reset_phase_markers()
                     st.rerun()
             st.divider()
 
@@ -430,7 +442,7 @@ with tab_dash:
                 _pc[3].markdown(_item['status'])
                 if _pc[4].button("Load", key=f"recap_pl_{_item['pid']}_{_item['fase']}"):
                     st.session_state["active_project_id"] = _item['pid']
-                    st.session_state["_loaded_pid"] = None
+                    _reset_phase_markers()
                     st.rerun()
             st.divider()
 
@@ -649,8 +661,8 @@ with tab_dash:
                 with row[10]:
                     if st.button("Load", key=f"load_{pid}"):
                         st.session_state["active_project_id"] = pid
-                        # Reset _loaded_pid agar pages reload dari disk
-                        st.session_state["_loaded_pid"] = None
+                        # Reset semua marker agar pages reload penuh dari disk
+                        _reset_phase_markers()
                         for key in [
                             "define_draft", "define_final",
                             "measure_draft", "measure_final",

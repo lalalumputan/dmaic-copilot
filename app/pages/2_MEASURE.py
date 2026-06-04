@@ -316,9 +316,9 @@ if not active_pid:
 # ============================================
 # Auto-load (same pattern as Define)
 # ============================================
-loaded_pid = st.session_state.get("_loaded_pid")
+loaded_pid = st.session_state.get("_measure_loaded_pid")
 if active_pid and loaded_pid != active_pid:
-    st.session_state["_loaded_pid"]           = active_pid
+    st.session_state["_measure_loaded_pid"]   = active_pid
     st.session_state["measure_draft"]         = None
     st.session_state["measure_final"]         = None
     st.session_state["define_final_state"]    = None
@@ -363,7 +363,7 @@ if active_pid and not st.session_state.get("measure_draft") and not st.session_s
         }
 
 # Ensure define_final_state loaded
-if active_pid and st.session_state.get("_loaded_pid") == active_pid:
+if active_pid and st.session_state.get("_measure_loaded_pid") == active_pid:
     if not st.session_state.get("define_final_state"):
         st.session_state["define_final_state"] = memory.load_define_final(active_pid)
 

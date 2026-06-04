@@ -24,17 +24,32 @@ DB_PATH = Path("dmaic_memory.db")
 # DB BOOTSTRAP
 # ======================================================
 
-def _turso_cfg():
-    """Ambil kredensial Turso dari st.secrets (cloud) atau env (lokal)."""
-    url = tok = None
+def _secret_or_env(key):
+    val = None
     try:
         import streamlit as st  # type: ignore
-        url = st.secrets.get("TURSO_DATABASE_URL")
-        tok = st.secrets.get("TURSO_AUTH_TOKEN")
+        val = st.secrets.get(key)
     except Exception:
         pass
-    url = url or os.getenv("TURSO_DATABASE_URL")
-    tok = tok or os.getenv("TURSO_AUTH_TOKEN")
+    if val is None:
+        val = os.getenv(key)
+    return val
+
+
+def _turso_enabled() -> bool:
+    """Turso hanya dipakai bila di-opt-in eksplisit lewat USE_TURSO.
+    Tujuannya: lokal/dev tetap memakai SQLite (dataset lokal aman) walau
+    kredensial Turso kebetulan ada; cloud meng-set USE_TURSO=true."""
+    val = _secret_or_env("USE_TURSO")
+    return str(val).strip().lower() in ("1", "true", "yes", "on")
+
+
+def _turso_cfg():
+    """Kredensial Turso — hanya jika USE_TURSO aktif; selain itu (None, None)."""
+    if not _turso_enabled():
+        return None, None
+    url = _secret_or_env("TURSO_DATABASE_URL")
+    tok = _secret_or_env("TURSO_AUTH_TOKEN")
     return url, tok
 
 
