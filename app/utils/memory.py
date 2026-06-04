@@ -9,6 +9,7 @@ old filesystem version — agents and UI require zero changes.
 from __future__ import annotations
 
 import json
+import os
 import re
 import sqlite3
 from contextlib import contextmanager
@@ -23,7 +24,76 @@ DB_PATH = Path("dmaic_memory.db")
 # DB BOOTSTRAP
 # ======================================================
 
-def _conn() -> sqlite3.Connection:
+def _turso_cfg():
+    """Ambil kredensial Turso dari st.secrets (cloud) atau env (lokal)."""
+    url = tok = None
+    try:
+        import streamlit as st  # type: ignore
+        url = st.secrets.get("TURSO_DATABASE_URL")
+        tok = st.secrets.get("TURSO_AUTH_TOKEN")
+    except Exception:
+        pass
+    url = url or os.getenv("TURSO_DATABASE_URL")
+    tok = tok or os.getenv("TURSO_AUTH_TOKEN")
+    return url, tok
+
+
+class _TursoCursor:
+    """Cursor-shim agar .fetchone()/.fetchall() kompatibel sqlite3.
+    Row dari libsql-client mendukung akses index DAN nama (row["col"])."""
+    def __init__(self, rs):
+        self._rs = rs
+
+    def fetchone(self):
+        rows = getattr(self._rs, "rows", [])
+        return rows[0] if rows else None
+
+    def fetchall(self):
+        return list(getattr(self._rs, "rows", []))
+
+
+class _TursoConn:
+    """Facade tipis kompatibel sqlite3.Connection di atas libsql-client
+    (Turso). Hanya method yang dipakai memory.py yang diimplementasi:
+    execute / executescript / commit / close."""
+    def __init__(self, url: str, tok: str):
+        import libsql_client  # type: ignore
+        http = url.replace("libsql://", "https://")
+        self._c = libsql_client.create_client_sync(url=http, auth_token=tok)
+
+    def execute(self, sql: str, params=()):
+        if params:
+            rs = self._c.execute(sql, list(params))
+        else:
+            rs = self._c.execute(sql)
+        return _TursoCursor(rs)
+
+    def executescript(self, script: str):
+        stmts = [s.strip() for s in script.split(";") if s.strip()]
+        if stmts:
+            self._c.batch(stmts)
+        return _TursoCursor(None)
+
+    def commit(self):
+        # libsql-client auto-commit per statement/batch — no-op
+        pass
+
+    def close(self):
+        try:
+            self._c.close()
+        except Exception:
+            pass
+
+
+def _conn():
+    """Turso (persisten) jika kredensial tersedia, selain itu SQLite lokal."""
+    url, tok = _turso_cfg()
+    if url and tok:
+        try:
+            return _TursoConn(url, tok)
+        except Exception:
+            # gagal konek Turso -> fallback ke SQLite lokal agar app tetap jalan
+            pass
     con = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     con.row_factory = sqlite3.Row
     return con
