@@ -94,28 +94,36 @@ class _TursoConn:
         pass
 
     def close(self):
-        try:
-            self._c.close()
-        except Exception:
-            pass
+        # koneksi di-cache & dipakai ulang antar operasi — jangan tutup di sini
+        pass
+
+
+_TURSO_CLIENT = None       # koneksi Turso di-cache (dipakai ulang antar operasi)
+_SCHEMA_DONE = False       # skema Turso cukup dijamin sekali per proses
+_BACKEND_CACHE = None      # hasil backend_status di-cache
 
 
 def _conn():
-    """Turso (persisten) jika kredensial tersedia, selain itu SQLite lokal."""
+    """Turso (persisten, koneksi di-cache) jika tersedia; selain itu SQLite lokal."""
+    global _TURSO_CLIENT
     url, tok = _turso_cfg()
     if url and tok:
         try:
-            return _TursoConn(url, tok)
+            if _TURSO_CLIENT is None:
+                _TURSO_CLIENT = _TursoConn(url, tok)
+            return _TURSO_CLIENT
         except Exception:
-            # gagal konek Turso -> fallback ke SQLite lokal agar app tetap jalan
-            pass
+            _TURSO_CLIENT = None  # gagal konek -> fallback ke SQLite lokal
     con = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     con.row_factory = sqlite3.Row
     return con
 
 
 def backend_status() -> dict:
-    """Diagnostik backend DB aktif + alasan bila fallback ke SQLite."""
+    """Diagnostik backend DB aktif (hasil sukses di-cache agar tak probe tiap render)."""
+    global _BACKEND_CACHE
+    if _BACKEND_CACHE is not None:
+        return _BACKEND_CACHE
     if not _turso_enabled():
         return {"active": "sqlite", "reason": "USE_TURSO belum aktif"}
     url = _secret_or_env("TURSO_DATABASE_URL")
@@ -123,19 +131,27 @@ def backend_status() -> dict:
     if not (url and tok):
         return {"active": "sqlite", "reason": "TURSO_DATABASE_URL/AUTH_TOKEN tidak ditemukan"}
     try:
-        c = _TursoConn(url, tok)
-        c.execute("SELECT 1").fetchone()
-        c.close()
-        return {"active": "turso", "reason": ""}
+        con = _conn()
+        con.execute("SELECT 1").fetchone()
+        if isinstance(con, _TursoConn):
+            _BACKEND_CACHE = {"active": "turso", "reason": ""}
+            return _BACKEND_CACHE
+        return {"active": "sqlite", "reason": "fallback"}
     except Exception as e:
         return {"active": "sqlite", "reason": ("Turso error: %r" % e)[:300]}
 
 
 @contextmanager
 def _db():
+    global _SCHEMA_DONE
     con = _conn()
     try:
-        _ensure_schema(con)
+        if isinstance(con, _TursoConn):
+            if not _SCHEMA_DONE:
+                _ensure_schema(con)
+                _SCHEMA_DONE = True
+        else:
+            _ensure_schema(con)
         yield con
         con.commit()
     finally:
