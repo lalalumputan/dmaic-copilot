@@ -262,65 +262,6 @@ with tab_dash:
                         )
                 st.success(f"✅ Project **{pid_shown}** created. Open **Define** in sidebar.")
 
-        # ── Salin / Copy Project ──────────────────────────────
-        st.markdown("")
-        with st.expander("📋 Salin Project (untuk testing)", expanded=False):
-            st.caption("Salin semua data dari project yang sudah ada ke project baru tanpa harus re-input dari awal. Approval reset otomatis.")
-            _all_src_pids = []
-            try:
-                with memory._db() as _ccon:
-                    _src_rows = _ccon.execute(
-                        "SELECT DISTINCT project_id FROM phase_states ORDER BY project_id"
-                    ).fetchall()
-                    _all_src_pids = [r["project_id"] for r in _src_rows]
-            except Exception:
-                _all_src_pids = []
-
-            copy_col1, copy_col2 = st.columns([2, 2])
-            with copy_col1:
-                copy_src = st.selectbox(
-                    "Project sumber",
-                    options=["— pilih —"] + _all_src_pids,
-                    key="main_copy_src_pid",
-                )
-            with copy_col2:
-                copy_dest = st.text_input(
-                    "Project ID baru (tujuan)",
-                    placeholder="Contoh: PRJ-002-copy",
-                    key="main_copy_dest_pid",
-                )
-
-            copy_reset_appr = st.checkbox(
-                "Reset approvals (recommended untuk testing)",
-                value=True,
-                key="main_copy_reset_approvals",
-            )
-
-            if st.button("📋 Salin Project", type="primary", key="main_copy_btn",
-                         disabled=(copy_src == "— pilih —" or not copy_dest.strip())):
-                _copy_result = memory.copy_project(
-                    source_pid=copy_src,
-                    dest_pid=copy_dest.strip(),
-                    reset_approvals=copy_reset_appr,
-                )
-                if "error" in _copy_result:
-                    st.error(_copy_result["error"])
-                else:
-                    _n = _copy_result["copied_rows"]
-                    _sk = _copy_result.get("skipped", [])
-                    st.success(f"✅ Project **{copy_dest.strip()}** berhasil dibuat dari **{copy_src}** ({_n} entri disalin).")
-                    if _sk:
-                        st.caption(f"Dilewati (approval): {', '.join(_sk)}")
-                    # Auto-load project baru
-                    st.session_state["active_project_id"]   = copy_dest.strip()
-                    st.session_state["active_project_path"] = memory.load_project_meta(copy_dest.strip()).get("path", "standard")
-                    _reset_phase_markers()
-                    for _k in ["define_draft", "define_final", "measure_draft", "measure_final",
-                               "analyze_draft", "analyze_final", "improve_draft", "improve_final",
-                               "control_draft", "control_final"]:
-                        st.session_state.pop(_k, None)
-                    st.rerun()
-
     st.divider()
 
     # ── Recap: Needs Attention (role-based) ──────────────────
