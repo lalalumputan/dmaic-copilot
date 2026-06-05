@@ -88,6 +88,18 @@ render_sidebar_header()
 auth.require_login()
 auth.render_user_badge()
 
+# ── Backend indicator (diagnostik DB) ───────────────────
+try:
+    _bs = memory.backend_status()
+    if _bs.get("active") == "turso":
+        st.sidebar.caption("🟢 DB: Turso (cloud, persisten)")
+    else:
+        st.sidebar.caption("🟡 DB: SQLite (lokal/ephemeral)")
+        if _bs.get("reason"):
+            st.sidebar.caption(f"↳ {_bs['reason']}")
+except Exception:
+    pass
+
 # ── Header ──────────────────────────────────────────────
 logo_path = "app/assets/logo3.jpg"
 h_title, h_logo = st.columns([6, 1])

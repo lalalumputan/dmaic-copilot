@@ -114,6 +114,23 @@ def _conn():
     return con
 
 
+def backend_status() -> dict:
+    """Diagnostik backend DB aktif + alasan bila fallback ke SQLite."""
+    if not _turso_enabled():
+        return {"active": "sqlite", "reason": "USE_TURSO belum aktif"}
+    url = _secret_or_env("TURSO_DATABASE_URL")
+    tok = _secret_or_env("TURSO_AUTH_TOKEN")
+    if not (url and tok):
+        return {"active": "sqlite", "reason": "TURSO_DATABASE_URL/AUTH_TOKEN tidak ditemukan"}
+    try:
+        c = _TursoConn(url, tok)
+        c.execute("SELECT 1").fetchone()
+        c.close()
+        return {"active": "turso", "reason": ""}
+    except Exception as e:
+        return {"active": "sqlite", "reason": ("Turso error: %r" % e)[:300]}
+
+
 @contextmanager
 def _db():
     con = _conn()
