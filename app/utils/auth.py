@@ -110,31 +110,107 @@ def can(action: str) -> bool:
     return ROLES[role].get(f"can_{action}", False)
 
 
+def _send_registration_request(username: str, password: str, role: str, display_name: str):
+    """Kirim permintaan akun baru ke admin via email (blok TOML siap-paste)."""
+    import smtplib, ssl
+    from email.message import EmailMessage
+    try:
+        host = str(st.secrets.get("SMTP_HOST", "smtp.gmail.com"))
+        port = int(st.secrets.get("SMTP_PORT", 587))
+        user = st.secrets["SMTP_USER"]
+        pwd  = st.secrets["SMTP_PASS"]
+        to   = st.secrets["ADMIN_EMAIL"]
+    except Exception:
+        return False, "Konfigurasi email belum diset (SMTP_USER / SMTP_PASS / ADMIN_EMAIL)."
+
+    toml_block = (
+        f"[users.{username}]\n"
+        f'password = "{password}"\n'
+        f'role = "{role}"\n'
+        f'display_name = "{display_name}"\n'
+    )
+    body = (
+        "Permintaan akun baru DMAIC Copilot:\n\n"
+        f"Username     : {username}\n"
+        f"Role         : {role}\n"
+        f"Nama tampilan: {display_name}\n\n"
+        "Untuk mengaktifkan, tambahkan blok berikut ke Secrets Streamlit Cloud "
+        "(di bawah blok [users...] lain), lalu Reboot app:\n\n"
+        f"{toml_block}"
+    )
+    msg = EmailMessage()
+    msg["Subject"] = f"[DMAIC Copilot] Permintaan akun: {username} ({role})"
+    msg["From"] = user
+    msg["To"] = to
+    msg.set_content(body)
+    try:
+        ctx = ssl.create_default_context()
+        with smtplib.SMTP(host, port, timeout=20) as s:
+            s.starttls(context=ctx)
+            s.login(user, pwd)
+            s.send_message(msg)
+        return True, ""
+    except Exception as e:
+        return False, repr(e)
+
+
+def _render_register_form():
+    st.caption("Ajukan akun baru. Permintaan dikirim ke admin untuk diaktifkan.")
+    with st.form("register_form"):
+        role = st.selectbox(
+            "Role", options=list(ROLES.keys()),
+            format_func=lambda r: ROLES[r]["label"],
+        )
+        username     = st.text_input("Username")
+        display_name = st.text_input("Nama tampilan")
+        password     = st.text_input("Password", type="password")
+        password2    = st.text_input("Ulangi password", type="password")
+        submit = st.form_submit_button("Kirim permintaan akun", type="primary")
+
+    if submit:
+        u = username.strip()
+        if not u or not password:
+            st.error("Username dan password wajib diisi."); return
+        if " " in u:
+            st.error("Username tidak boleh mengandung spasi."); return
+        if password != password2:
+            st.error("Password tidak sama."); return
+        ok, err = _send_registration_request(u, password, role, display_name.strip() or u)
+        if ok:
+            st.success("✅ Permintaan akun terkirim ke admin. Anda akan diberi akses setelah disetujui.")
+        else:
+            st.error(f"Gagal mengirim permintaan: {err}")
+
+
 def require_login():
     if is_logged_in():
         return
 
-    st.markdown("## 🔐 Login")
-    st.caption("Masukkan username dan password sesuai akun kamu.")
+    tab_login, tab_register = st.tabs(["🔐 Masuk", "📝 Daftar"])
 
-    with st.form("login_form"):
-        username  = st.text_input("Username")
-        password  = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Login", type="primary")
+    with tab_login:
+        st.caption("Masukkan username dan password sesuai akun kamu.")
+        with st.form("login_form"):
+            username  = st.text_input("Username")
+            password  = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login", type="primary")
 
-    if submitted:
-        user = login(username.strip(), password.strip())
-        if user:
-            role = user.get("role", "")
-            if role not in ROLES:
-                st.error(f"Role '{role}' tidak dikenali. Hubungi administrator.")
+        if submitted:
+            user = login(username.strip(), password.strip())
+            if user:
+                role = user.get("role", "")
+                if role not in ROLES:
+                    st.error(f"Role '{role}' tidak dikenali. Hubungi administrator.")
+                else:
+                    st.session_state["auth_role"]         = role
+                    st.session_state["auth_user"]         = username.strip()
+                    st.session_state["auth_display_name"] = user.get("display_name", username)
+                    st.switch_page("MAIN.py")
             else:
-                st.session_state["auth_role"]         = role
-                st.session_state["auth_user"]         = username.strip()
-                st.session_state["auth_display_name"] = user.get("display_name", username)
-                st.switch_page("MAIN.py")
-        else:
-            st.error("Username atau password salah.")
+                st.error("Username atau password salah.")
+
+    with tab_register:
+        _render_register_form()
 
     st.stop()
 
