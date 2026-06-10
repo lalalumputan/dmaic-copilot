@@ -6,3 +6,5 @@ python-docx>=1.1.0
 attrs>=23.0.0
 graphviz>=0.20
 libsql-client>=0.3.1
+openpyxl>=3.1
+matplotlib>=3.7
