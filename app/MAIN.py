@@ -242,12 +242,12 @@ with tab_dash:
                         f"{clf['overall_reasoning']}"
                     )
 
-                with st.expander("Score breakdown", expanded=False):
-                    for criterion, detail in clf["score_breakdown"].items():
-                        st.markdown(
-                            f"- **{criterion.replace('_',' ').title()}**: "
-                            f"{detail['score']} pt — {detail['reasoning']}"
-                        )
+                st.markdown("**Score breakdown:**")
+                for criterion, detail in clf["score_breakdown"].items():
+                    st.markdown(
+                        f"- **{criterion.replace('_',' ').title()}**: "
+                        f"{detail['score']} pt — {detail['reasoning']}"
+                    )
                 st.success(f"✅ Project **{pid_shown}** created. Open **Define** in sidebar.")
 
     st.divider()
