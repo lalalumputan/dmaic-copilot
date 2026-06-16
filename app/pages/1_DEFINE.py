@@ -149,7 +149,7 @@ def _render_tables_from_outputs(outputs: dict) -> None:
         # Deduplicate
         df = df.drop_duplicates()
 
-        st.dataframe(df, width="stretch")
+        st.dataframe(df, use_container_width=True)
 
 
         # X Categories (6M)
@@ -157,7 +157,7 @@ def _render_tables_from_outputs(outputs: dict) -> None:
     if x_categories:
         st.write("**X Categories (6M):**")
         if isinstance(x_categories, dict):
-            st.dataframe(pd.DataFrame(list(x_categories.items()), columns=["Category", "Details"]), width="stretch")
+            st.dataframe(pd.DataFrame(list(x_categories.items()), columns=["Category", "Details"]), use_container_width=True)
         else:
             st.write(x_categories)
     
@@ -166,7 +166,7 @@ def _render_tables_from_outputs(outputs: dict) -> None:
     if sipoc:
         st.write("**SIPOC:**")
         if isinstance(sipoc, dict):
-            st.dataframe(pd.DataFrame(list(sipoc.items()), columns=["Element", "Description"]), width="stretch")
+            st.dataframe(pd.DataFrame(list(sipoc.items()), columns=["Element", "Description"]), use_container_width=True)
         else:
             st.write(sipoc)
 
@@ -1317,7 +1317,7 @@ with tab_input:
     st.subheader("🧾 Audit Log — DEFINE Phase")
     events = audit.get_recent_events(project_id=active_pid, phase="Define", limit=30)
     if events:
-        st.dataframe(events, width="stretch")
+        st.dataframe(events, use_container_width=True)
     else:
         st.write("Belum ada audit event.")
 
