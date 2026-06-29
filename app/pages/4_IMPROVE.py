@@ -763,7 +763,7 @@ with tab_input:
             type=["png", "jpg", "jpeg"], key=_imp_upload_key, disabled=is_locked,
         )
         if _uploaded_future is not None:
-            st.image(_uploaded_future, caption="Future State (uploaded)", use_container_width=True)
+            st.image(_uploaded_future, caption="Future State (uploaded)", width=700)
 
         _imp_map_desc = st.text_area(
             "Deskripsi tambahan perubahan proses (opsional — agent sudah pakai selected solution):",
@@ -1233,7 +1233,7 @@ with tab_impl:
             _ir_mime = st.session_state.get(f"improve_implresult_mime_{active_pid}") or _ir_wip.get("implementation_result_mime", "")
             st.caption(f"File: {_ir_name}")
             if str(_ir_mime).startswith("image/"):
-                st.image(_b64ti.b64decode(_ir_b64), use_container_width=True)
+                st.image(_b64ti.b64decode(_ir_b64), width=700)
             else:
                 st.download_button(
                     "⬇️ Download bukti", data=_b64ti.b64decode(_ir_b64),

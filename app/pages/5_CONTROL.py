@@ -584,7 +584,7 @@ with tab_input:
             if str(st.session_state.get(_ho_type_k, "")).startswith("image/"):
                 try:
                     st.image(_b64_ho.b64decode(st.session_state[_ho_b64_k]),
-                             use_container_width=True)
+                             width=700)
                 except Exception:
                     pass
     else:
@@ -709,7 +709,7 @@ with tab_input:
                 if str(st.session_state.get(_type_k, "")).startswith("image/"):
                     try:
                         st.image(_b64_ben.b64decode(st.session_state[_b64_k]),
-                                 use_container_width=True)
+                                 width=700)
                     except Exception:
                         pass
 
@@ -866,7 +866,7 @@ with tab_input:
     if st.session_state.get(_ci_name_k):
         st.caption(f"📎 Tersimpan: {st.session_state[_ci_name_k]}")
         try:
-            st.image(_b64_pd.b64decode(st.session_state[_ci_b64_k]), use_container_width=True)
+            st.image(_b64_pd.b64decode(st.session_state[_ci_b64_k]), width=700)
         except Exception:
             pass
 
@@ -1061,7 +1061,7 @@ with tab_report:
                     try:
                         _doc_bytes = _b64_rep.b64decode(_doc_b64)
                         if str(_doc_type).startswith("image/"):
-                            st.image(_doc_bytes, use_container_width=True)
+                            st.image(_doc_bytes, width=700)
                         st.download_button(
                             f"⬇️ Download {_label}",
                             data=_doc_bytes,
@@ -1139,7 +1139,7 @@ with tab_improved:
             st.markdown("#### 🖼️ Chart yang diupload")
             try:
                 _img_bytes = _b64_imp.b64decode(_imp_img["b64"])
-                st.image(_img_bytes, use_container_width=True)
+                st.image(_img_bytes, width=700)
                 st.download_button(
                     "⬇️ Download chart",
                     data=_img_bytes,
@@ -1282,7 +1282,7 @@ with tab_handover:
                             key="ctrl_ho_conf_dl",
                         )
                         if str(_conf_type).startswith("image/"):
-                            st.image(_conf_bytes, use_container_width=True)
+                            st.image(_conf_bytes, width=700)
                     except Exception:
                         pass
 

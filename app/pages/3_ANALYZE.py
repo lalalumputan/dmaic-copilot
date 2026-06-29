@@ -615,7 +615,7 @@ with tab_input:
                 _cur_wip_img["pm_image_b64"]  = img_b64
                 _cur_wip_img["pm_image_type"] = pm_file.type
                 memory.save_analyze_wip(active_pid, _cur_wip_img)
-                st.image(img_bytes, caption=f"Uploaded: {pm_file.name}", use_container_width=True)
+                st.image(img_bytes, caption=f"Uploaded: {pm_file.name}", width=700)
 
                 if st.button("🤖 Analyze Process Map via Agent", key=f"pm_vision_{active_pid}", disabled=is_locked):
                     with st.spinner("Agent menganalisis process map..."):
@@ -653,7 +653,7 @@ with tab_input:
                 st.image(
                     _b64.b64decode(st.session_state[_pm_image_key]),
                     caption="📎 Process map tersimpan sebelumnya",
-                    use_container_width=True,
+                    width=700,
                 )
             except Exception:
                 pass
@@ -845,14 +845,14 @@ with tab_input:
             _wip_fb3["fb_photo_b64"]  = _fb_b64
             _wip_fb3["fb_photo_type"] = _fb_photo_file.type
             memory.save_analyze_wip(active_pid, _wip_fb3)
-            st.image(_fb_bytes, caption=f"📎 {_fb_photo_file.name}", use_container_width=True)
+            st.image(_fb_bytes, caption=f"📎 {_fb_photo_file.name}", width=700)
         elif st.session_state.get(_fb_photo_key):
             import base64 as _b64
             try:
                 st.image(
                     _b64.b64decode(st.session_state[_fb_photo_key]),
                     caption="📎 Foto fishbone tersimpan",
-                    use_container_width=True,
+                    width=700,
                 )
             except Exception:
                 pass
@@ -1580,7 +1580,7 @@ with tab_asis:
             st.image(
                 _b64_asis.b64decode(_asis_img),
                 caption="📎 Process map (uploaded)",
-                use_container_width=True,
+                width=700,
             )
             _rendered_asis = True
         except Exception:
@@ -1605,7 +1605,7 @@ with tab_fishbone:
             st.image(
                 _b64_fb.b64decode(_fb_img),
                 caption="📎 Foto fishbone tersimpan",
-                use_container_width=True,
+                width=700,
             )
         except Exception:
             st.info("Foto fishbone tersimpan tapi tidak dapat ditampilkan.")
