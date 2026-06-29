@@ -1551,6 +1551,20 @@ with tab_rca:
         else:
             st.info("Root cause summary table belum tersedia.")
 
+        # As-Is Process Map dengan node penanda lokasi root cause
+        _linked_rca = st.session_state.get(f"analyze_pm_linked_dot_{active_pid}", "")
+        if not _linked_rca:
+            _w_rca = memory.load_analyze_wip(active_pid) or {}
+            _linked_rca = _w_rca.get("pm_linked_dot_code", "") or (outs.get("pm_linked_dot_code", "") if outs else "")
+        if _linked_rca:
+            st.divider()
+            st.markdown("#### 🗺️ As-Is Process Map — Lokasi Root Cause")
+            st.caption("Process map dengan penanda pada node tempat root cause teridentifikasi.")
+            try:
+                st.graphviz_chart(compact_dot(_linked_rca), use_container_width=False)
+            except Exception:
+                st.code(_linked_rca, language="text")
+
 # ── TAB: As-Is Process Map ──
 with tab_asis:
     st.markdown("### 🗺️ As-Is Process Map")
