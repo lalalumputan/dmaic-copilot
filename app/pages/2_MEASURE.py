@@ -1392,7 +1392,7 @@ with tab_perf:
         elif chart_b64:
             import base64 as _b64
             st.markdown("#### Process Performance Chart")
-            st.image(_b64.b64decode(chart_b64), use_container_width=True)
+            st.image(_b64.b64decode(chart_b64), width=700)
 
             commentary = outs.get("chart_commentary", "")
             if commentary:
