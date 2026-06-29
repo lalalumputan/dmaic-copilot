@@ -1436,7 +1436,7 @@ with tab_perf:
         st.image(
             _b64perf.b64decode(_pi_b64),
             caption=st.session_state.get(_pi_name_key) or _pi_wip.get("chart_image_name", "chart"),
-            use_container_width=True,
+            width=700,
         )
         _pi_eval = st.session_state.get(_pi_eval_key) or _pi_wip.get("chart_image_eval", "")
         if isinstance(_pi_eval, dict) and _pi_eval:
