@@ -882,26 +882,27 @@ with tab_input:
     st.divider()
 
     # ── Input Form ──
-    with st.form(key="control_input_form", clear_on_submit=False):
-        _def_ins = (define_final or {}).get("inputs") or {}
-        _industry    = _def_ins.get("industry","") or "-"
-        _process_area = _def_ins.get("process_area","") or "-"
-        _pain        = _def_ins.get("pain_theme","") or "-"
-        st.caption(f"📌 From Define: **{_industry}** / **{_process_area}** / **{_pain}**")
+    with st.expander("📝 Input & Generate Draft", expanded=True):
+        with st.form(key="control_input_form", clear_on_submit=False):
+            _def_ins = (define_final or {}).get("inputs") or {}
+            _industry    = _def_ins.get("industry","") or "-"
+            _process_area = _def_ins.get("process_area","") or "-"
+            _pain        = _def_ins.get("pain_theme","") or "-"
+            st.caption(f"📌 From Define: **{_industry}** / **{_process_area}** / **{_pain}**")
 
-        lessons = st.text_area(
-            "Lessons learned",
-            height=80, disabled=is_locked,
-            placeholder="Apa yang berhasil? Apa yang tidak? Apa yang akan dilakukan berbeda?",
-        )
-        feedback_text = st.text_area(
-            "Feedback for next draft (optional)",
-            height=60, disabled=is_locked,
-        )
-        submitted = st.form_submit_button(
-            "🔍 Generate / Update Draft" if not is_locked else "🔒 Locked",
-            type="primary", disabled=is_locked,
-        )
+            lessons = st.text_area(
+                "Lessons learned",
+                height=80, disabled=is_locked,
+                placeholder="Apa yang berhasil? Apa yang tidak? Apa yang akan dilakukan berbeda?",
+            )
+            feedback_text = st.text_area(
+                "Feedback for next draft (optional)",
+                height=60, disabled=is_locked,
+            )
+            submitted = st.form_submit_button(
+                "🔍 Generate / Update Draft" if not is_locked else "🔒 Locked",
+                type="primary", disabled=is_locked,
+            )
 
     if submitted:
         # Parse control values — prioritas: sheet ter-upload, fallback text manual
