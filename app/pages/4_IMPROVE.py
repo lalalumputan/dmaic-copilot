@@ -596,13 +596,13 @@ with tab_input:
                 "Pilot scope",
                 key=f"pilot_scope_{active_pid}",
                 placeholder="Contoh: Pilot di line 3, shift pagi, selama 2 minggu",
-                height=60, disabled=is_locked,
+                height=68, disabled=is_locked,
             )
             _pilot_criteria = st.text_area(
                 "Pilot success criteria",
                 key=f"pilot_criteria_{active_pid}",
                 placeholder="Contoh: A/R Overdue % turun dari 27% ke < 20% selama periode pilot",
-                height=60, disabled=is_locked,
+                height=68, disabled=is_locked,
             )
             _pilot_owner = st.text_input(
                 "Pilot owner",
@@ -613,7 +613,7 @@ with tab_input:
                 "Rollback plan",
                 key=f"pilot_rollback_{active_pid}",
                 placeholder="Jika pilot gagal, langkah apa yang diambil?",
-                height=60, disabled=is_locked,
+                height=68, disabled=is_locked,
             )
         else:
             st.caption("⚡ **Quick Path** — Pilot plan tidak wajib. Langsung isi Implementation Plan di bawah.")

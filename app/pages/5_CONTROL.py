@@ -541,7 +541,7 @@ with tab_input:
             "6. Comments / catatan tambahan?",
             key=f"ctrl_ho_comments_{active_pid}",
             placeholder="Contoh: akan ditangani sebagai 3rd gen project, timeline Juni–Maret 2019",
-            height=60, disabled=is_locked,
+            height=68, disabled=is_locked,
         )
         _responsible = st.text_input(
             "7. Responsible? (penanggung jawab proses)",
@@ -642,7 +642,7 @@ with tab_input:
         "Validated benefit (quantitative)",
         key=f"ctrl_benefit_val_{active_pid}",
         placeholder="Contoh: A/R Overdue turun dari 27% ke 11%, setara penghematan Rp 500jt/tahun",
-        height=60, disabled=is_locked,
+        height=68, disabled=is_locked,
     )
     _benefit_type = st.selectbox(
         "Benefit type",
@@ -876,7 +876,7 @@ with tab_input:
             "Post-implementation values (pisahkan dengan koma)",
             key=f"ctrl_values_{active_pid}",
             placeholder="Contoh: 15.2, 14.8, 13.1, 12.5, 11.8, 12.1...",
-            height=60, disabled=is_locked,
+            height=68, disabled=is_locked,
         )
 
     st.divider()
@@ -897,7 +897,7 @@ with tab_input:
             )
             feedback_text = st.text_area(
                 "Feedback for next draft (optional)",
-                height=60, disabled=is_locked,
+                height=68, disabled=is_locked,
             )
             submitted = st.form_submit_button(
                 "🔍 Generate / Update Draft" if not is_locked else "🔒 Locked",
