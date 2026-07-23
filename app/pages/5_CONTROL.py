@@ -1393,7 +1393,7 @@ with tab_input:
             st.button(_dl_label, key="control_dl_word_dis", disabled=True)
 
     # ============================================
-    # Governance — Reviewer + Champion (standard) / Champion (quick) for Control
+    # Governance — Reviewer + Champion (kedua path) for Control
     # ============================================
     st.divider()
     st.subheader("🏛️ Governance — Stage Gate Approval")
