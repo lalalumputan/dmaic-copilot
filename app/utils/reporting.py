@@ -1490,6 +1490,47 @@ def _write_control_section(doc: Document, control_state: Dict, pid: str):
 
     _sn = _SecNum()
 
+    # ── Konteks dari DMAIC Upstream (path-aware) ───────────────────────────
+    _doc_heading(doc, _sn.h("Konteks dari DMAIC Upstream"))
+    for _lbl, _val in [("Problem", upstream.get("problem_statement")),
+                       ("Goal", upstream.get("goal_statement")),
+                       ("Y Variable", upstream.get("y_variable"))]:
+        _pc = doc.add_paragraph(); _pc.add_run(f"{_lbl}: ").bold = True; _pc.add_run(str(_val or "-"))
+    if not _is_quick:
+        # Standard: root cause terverifikasi + solusi per root cause
+        _rcs = upstream.get("confirmed_root_causes") or []
+        if not _rcs:
+            _ana = _load_phase_state(pid, "analyze") or {}
+            _rcs = ((_ana.get("upstream") or {}).get("confirmed_root_causes")
+                    or (_ana.get("outputs") or {}).get("root_cause_summary_table") or [])
+        _imp = _load_phase_state(pid, "improve") or {}
+        _pots = (_imp.get("inputs") or {}).get("potential_solutions") or []
+        def _sol_for(_xn):
+            _k = str(_xn).strip().upper()
+            for _s in _pots:
+                if str(_s.get("addresses_root_cause", "")).strip().upper().startswith(_k):
+                    return _s.get("idea") or _s.get("solution") or ""
+            return ""
+        _rcs = [r for r in _rcs
+                if str(r.get("is_root_cause", "Yes")).strip().lower() not in ("no", "false", "❌")]
+        _rc_rows = [[r.get("xn", ""), r.get("root_cause", ""), _sol_for(r.get("xn", ""))] for r in _rcs]
+        if _rc_rows:
+            doc.add_paragraph().add_run("Root Cause Terverifikasi & Solusi per Root Cause:").bold = True
+            _doc_styled_table(doc, ["Xn", "Root Cause Terverifikasi", "Solusi"],
+                              _rc_rows, header_color="0f5132")
+        else:
+            _pc = doc.add_paragraph(); _pc.add_run("Solution: ").bold = True
+            _pc.add_run(str(upstream.get("selected_solution") or "-"))
+    else:
+        # Quick: ringkas
+        _pc = doc.add_paragraph(); _pc.add_run("Solution: ").bold = True
+        _pc.add_run(str(upstream.get("selected_solution") or "-"))
+    _tinfo = upstream.get("baseline_target") or {}
+    if _tinfo.get("value"):
+        _pc = doc.add_paragraph(); _pc.add_run("Target: ").bold = True
+        _pc.add_run(f"{_tinfo.get('direction','')} {_tinfo.get('value','')}")
+    doc.add_paragraph()
+
     # ── Monitoring & Reaction Plan ─────────────────────────────────────────
     mon_plan = outputs.get("monitoring_reaction_plan") or []
     if mon_plan and not _is_quick:
