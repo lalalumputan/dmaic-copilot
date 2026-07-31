@@ -1153,10 +1153,10 @@ def _write_analyze_section(doc: Document, analyze_state: Dict, pid: str):
     for c in pot_causes:
         if isinstance(c, dict):
             pc_rows.append([c.get("xn", ""), c.get("cause", ""),
-                            c.get("source", ""), c.get("direct_effect_on_y", "")])
+                            c.get("direct_effect_on_y", "")])
     if pc_rows and not _is_quick:
         _doc_heading(doc, _sn.h("Potential Causes (Xn List)"))
-        _doc_styled_table(doc, ["Xn", "Cause", "Source", "Direct Effect on Y"], pc_rows)
+        _doc_styled_table(doc, ["Xn", "Cause", "Direct Effect on Y"], pc_rows)
 
     # ── Verification Plan ──────────────────────────────────────────────────
     vplan = outputs.get("verification_plan") or []
