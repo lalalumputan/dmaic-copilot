@@ -1020,7 +1020,41 @@ with tab_report:
             st.markdown(f"**Problem:** {upstream.get('problem_statement') or '-'}")
             st.markdown(f"**Goal:** {upstream.get('goal_statement') or '-'}")
             st.markdown(f"**Y Variable:** {upstream.get('y_variable') or '-'}")
-            st.markdown(f"**Solution:** {upstream.get('selected_solution') or '-'}")
+
+            if _proj_path != "quick":
+                # Standard: konteks lengkap — root cause terverifikasi + solusi per root cause
+                _rcs = upstream.get("confirmed_root_causes") or []
+                if not _rcs:
+                    _ana_f = memory.load_analyze_final(active_pid) or {}
+                    _rcs = ((_ana_f.get("upstream") or {}).get("confirmed_root_causes")
+                            or (_ana_f.get("outputs") or {}).get("root_cause_summary_table") or [])
+                _imp_f = memory.load_improve_final(active_pid) or {}
+                _pots  = (_imp_f.get("inputs") or {}).get("potential_solutions") or []
+
+                def _sol_for(_xn):
+                    _key = str(_xn).strip().upper()
+                    for _s in _pots:
+                        if str(_s.get("addresses_root_cause", "")).strip().upper().startswith(_key):
+                            return _s.get("idea") or _s.get("solution") or ""
+                    return ""
+
+                _rcs = [r for r in _rcs if str(r.get("is_root_cause", "Yes")).strip().lower() not in ("no", "false", "❌")]
+                if _rcs:
+                    st.markdown("**Root Cause Terverifikasi & Solusi:**")
+                    for r in _rcs:
+                        _xn = r.get("xn", "")
+                        _rc = r.get("root_cause", "")
+                        _sol = _sol_for(_xn)
+                        _line = f"- **{_xn}** {_rc}"
+                        if _sol:
+                            _line += f"  \n&nbsp;&nbsp;&nbsp;↳ **Solusi:** {_sol}"
+                        st.markdown(_line)
+                else:
+                    st.markdown(f"**Solution:** {upstream.get('selected_solution') or '-'}")
+            else:
+                # Quick: ringkas
+                st.markdown(f"**Solution:** {upstream.get('selected_solution') or '-'}")
+
             t_info = upstream.get("baseline_target") or {}
             if t_info.get("value"):
                 st.markdown(f"**Target:** {t_info.get('direction','')} {t_info.get('value','')}")
