@@ -1159,7 +1159,15 @@ with tab_input:
             # Standard: wajib isi tanggal aktual selesai fase sebelum finalize.
             _has_end = render_phase_end_date(active_pid, "define", disabled=False)
             _no_actual_end = (_proj_path != "quick") and not _has_end
-            if st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn", disabled=_no_actual_end):
+            # A-rules FAIL → kunci finalize sampai diperbaiki & generate draft ulang
+            _gs_def = ((draft_state or {}).get("gate_result") or {}).get("status")
+            if not _gs_def:
+                _dw_def = st.session_state.get("define_draft") or {}
+                _gs_def = ((_dw_def.get("define_state") or {}).get("gate_result") or {}).get("status") \
+                          if isinstance(_dw_def, dict) else None
+            _gate_fail_def = (_gs_def == "FAILED")
+            if st.button("✅ Finalize (Lock Final)", key="define_finalize_from_downloads_btn",
+                         disabled=(_no_actual_end or _gate_fail_def)):
                 final_result = finalize_define_agent(
                     project_id=active_pid,
                     define_state=draft_state,
@@ -1172,7 +1180,9 @@ with tab_input:
                 memory.save_project_leader_name(active_pid, auth.get_current_display_name())
                 st.success("Finalized. Final tersimpan dan terkunci.")
                 st.rerun()
-            if _no_actual_end:
+            if _gate_fail_def:
+                st.caption("⚠️ Finalize diblokir: Gate FAIL (A-rules). Perbaiki item wajib lalu generate draft ulang.")
+            elif _no_actual_end:
                 st.caption("⚠️ Finalize diblokir: isi **Tanggal aktual selesai fase** dulu.")
         elif final_state:
             st.button("✅ Finalized", key="define_finalized_badge_btn", disabled=True)
